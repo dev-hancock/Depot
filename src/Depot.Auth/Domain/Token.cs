@@ -5,13 +5,13 @@ public enum TokenType
     Refresh
 }
 
-public class Token
+public record Token
 {
     public Guid Id { get; init; }
 
     public Guid UserId { get; init; }
 
-    public string Hash { get; init; } = null!;
+    public string Value { get; init; } = null!;
 
     public TokenType Type { get; init; }
 
@@ -26,19 +26,6 @@ public class Token
     public void Revoke()
     {
         IsRevoked = true;
-    }
-
-    public static Token Refresh(User user, RefreshToken token, DateTime now, TimeSpan lifetime)
-    {
-        return new Token
-        {
-            Id = token.Id,
-            User = user,
-            Type = TokenType.Refresh,
-            Hash = token.Secret,
-            CreatedAt = now,
-            ExpiresAt = now.Add(lifetime)
-        };
     }
 
     public bool IsExpired(TimeProvider time)

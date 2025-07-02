@@ -1,83 +1,94 @@
 ﻿namespace Depot.Auth.Tests;
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Security.Cryptography;
+using System.Reactive.Linq;
+using AutoFixture;
+using AutoFixture.AutoMoq;
 using Domain;
+using Handlers;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Moq;
+using Persistence;
 using Services;
 
 public sealed class TokenServiceTests
 {
+    private static IOptions<JwtOptions> ValidOptions()
+    {
+        return Options.Create(new JwtOptions
+        {
+            Issuer = "Depot",
+            Audience = "DepotClients",
+            AccessTokenLifetime = TimeSpan.FromHours(1),
+            RefreshTokenLifetime = TimeSpan.FromDays(30)
+        });
+    }
+
     [Fact]
-    public void IssueToken_Should_Produce_Valid_Jwt_With_Expected_Claims()
+    public async Task IssueToken_AddsTokenRow()
     {
         // Arrange
-        using var ecdsa = ECDsa.Create(ECCurve.NamedCurves.nistP256);
-        var key = new ECDsaSecurityKey(ecdsa);
+        var fixture = new Fixture().Customize(new AutoMoqCustomization
+        {
+            ConfigureMembers = true
+        });
 
-        const int duration = 30;
+        var options = new DbContextOptionsBuilder<AuthDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
 
-        var opts = Options.Create(new JwtOptions(
-            "Depot",
-            "DepotClient",
-            TimeSpan.FromMinutes(duration)));
+        var factory = new PooledDbContextFactory<AuthDbContext>(options);
 
-        var now = DateTime.UtcNow;
+        await using var seed = await factory.CreateDbContextAsync();
+
+        var user = fixture
+            .Build<User>()
+            .Without(x => x.Id)
+            .Without(x => x.UserRoles)
+            .Without(x => x.Tokens)
+            .Create();
+
+        await seed.Users.AddAsync(user);
+
+        await seed.SaveChangesAsync();
+
+        var now = DateTimeOffset.Now;
+
         var time = new Mock<TimeProvider>();
-
         time.Setup(x => x.GetUtcNow())
             .Returns(now);
 
-        var sut = new TokenService(opts, key, time.Object);
+        var random = new Mock<ISecureRandom>();
+        random.Setup(x => x.Next(It.IsAny<int>()))
+            .Returns(fixture.Create<string>());
 
-        var user = new User
-        {
-            Id = Guid.NewGuid(),
-            Username = "alice",
-            UserRoles =
-            {
-                new UserRole
-                {
-                    Role = new Role
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = "Administrator"
-                    }
-                }
-            }
-        };
+        var hasher = new Mock<ISecretHasher>();
+        hasher.Setup(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(true);
+        hasher.Setup(x => x.Hash(It.IsAny<string>()))
+            .Returns(fixture.Create<string>());
+
+        var tokens = new Mock<ITokenGenerator>();
+        tokens.Setup(x => x.CreateAccessToken(It.IsAny<User>(), It.IsAny<DateTime>()))
+            .Returns(fixture.Create<string>());
+
+        var sut = new LoginHandler(
+            ValidOptions(),
+            factory,
+            time.Object,
+            hasher.Object,
+            random.Object,
+            tokens.Object);
 
         // Act
-        var jwt = sut.IssueToken(user);
+        var result = await sut.Handle(new LoginHandler.Request(user.Username, fixture.Create<string>()));
 
         // Assert
-        var handler = new JwtSecurityTokenHandler();
-        var parameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = key,
-            ValidateIssuer = true,
-            ValidIssuer = "Depot",
-            ValidateAudience = true,
-            ValidAudience = "DepotClient",
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
+        await using var context = await factory.CreateDbContextAsync();
 
-        var principal = handler.ValidateToken(jwt, parameters, out var token);
-
-        Assert.NotNull(token);
-        Assert.IsType<JwtSecurityToken>(token);
-
-        Assert.Equal(user.Id.ToString(), principal.FindFirstValue(ClaimTypes.NameIdentifier));
-        Assert.Equal("alice", principal.FindFirstValue(ClaimTypes.Name));
-        Assert.True(principal.IsInRole("Administrator"));
-
-        var delta = (token.ValidTo - now.AddMinutes(duration)).TotalSeconds;
-
-        Assert.InRange(delta, -1, 1);
+        Assert.False(result.IsError);
+        Assert.Single(context.Tokens);
+        Assert.Equal(user.Id, context.Users.First().Id);
     }
 }

@@ -1,8 +1,9 @@
 namespace Depot.Auth.Domain;
 
+using System.Reactive;
 using ErrorOr;
 
-public sealed record RefreshToken
+public sealed record RefreshToken : Token
 {
     private const string Split = ":";
 
@@ -10,11 +11,7 @@ public sealed record RefreshToken
     {
     }
 
-    public Guid Id { get; private init; }
-
-    public string Token => $"{Id}{Split}{Secret}";
-
-    public string Secret { get; private init; } = null!;
+    public string Combined => $"{Id}{Split}{Value}";
 
     public static ErrorOr<RefreshToken> Parse(string token)
     {
@@ -33,21 +30,27 @@ public sealed record RefreshToken
         return new RefreshToken
         {
             Id = id,
-            Secret = parts[1]
+            Value = parts[1]
         };
     }
 
-    public static RefreshToken New(ISecureRandom random, int length = 32)
+    public static RefreshToken New(User user, ISecureRandom random, ISecretHasher hasher, DateTime now, TimeSpan lifetime,
+        int length = 32)
     {
         if (length < 32)
         {
             throw new ArgumentOutOfRangeException(nameof(length), "Token must be at least 32 characters");
         }
 
+        var secret = random.Next(length);
+
         return new RefreshToken
         {
-            Id = Guid.NewGuid(),
-            Secret = random.Next(length)
+            User = user,
+            Type = TokenType.Refresh,
+            Value = hasher.Hash(secret),
+            CreatedAt = now,
+            ExpiresAt = now.Add(lifetime)
         };
     }
 
@@ -68,7 +71,7 @@ public sealed record RefreshToken
             return Errors.TokenInvalid(TokenType.Refresh);
         }
 
-        if (!hasher.Verify(token.Hash, secret))
+        if (!hasher.Verify(token.Value, secret))
         {
             return Errors.TokenInvalid(TokenType.Refresh);
         }

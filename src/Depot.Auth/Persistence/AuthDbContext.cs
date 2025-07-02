@@ -79,7 +79,7 @@ public class AuthDbContext : DbContext
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            e.HasIndex(x => x.Hash).IsUnique();
+            e.HasIndex(x => x.Value).IsUnique();
         });
     }
 }

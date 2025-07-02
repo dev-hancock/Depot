@@ -1,29 +1,24 @@
 namespace Depot.Auth.Endpoints;
 
 using System.ComponentModel.DataAnnotations;
+using System.Reactive.Linq;
 using System.Text.Json.Serialization;
 using Extensions;
-using Services;
+using Handlers;
+using Mestra.Abstractions;
 
 public static class LoginEndpoint
 {
-    public async static Task<IResult> Handle(LoginRequest request, IUserService users, ITokenService tokens, HttpContext context)
+    public async static Task<IResult> Handle(LoginRequest request, IMediator mediator, HttpContext context)
     {
-        var user = await users.LoginAsync(request.Username, request.Password, context.RequestAborted);
-
-        if (user.IsError)
-        {
-            return user.Errors.ToResult();
-        }
-
-        var result = await tokens.IssueTokenAsync(user.Value, context.RequestAborted);
+        var result = await mediator.Send(new LoginHandler.Request(request.Username, request.Password));
 
         return result
             .Match(
                 token => Results.Ok(new LoginResponse
                 {
                     AccessToken = token.Access,
-                    RefreshToken = token.Refresh.Token
+                    RefreshToken = token.Refresh.Combined
                 }),
                 errors => errors.ToResult());
     }

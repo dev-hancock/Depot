@@ -14,11 +14,12 @@ public sealed class User
 
     public ICollection<Token> Tokens { get; init; } = new List<Token>();
 
-    public TokenPair IssueToken(ISecureRandom random, TimeProvider time, ITokenGenerator tokens, TimeSpan lifetime)
+    public TokenPair IssueToken(ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens,
+        TimeSpan lifetime)
     {
         var now = time.GetUtcNow().UtcDateTime;
 
-        var refresh = RefreshToken.New(random);
+        var refresh = RefreshToken.New(this, random, hasher, now, lifetime);
 
         var pair = new TokenPair
         {
@@ -26,7 +27,7 @@ public sealed class User
             Refresh = refresh
         };
 
-        Tokens.Add(Token.Refresh(this, refresh, now, lifetime));
+        Tokens.Add(refresh);
 
         return pair;
     }

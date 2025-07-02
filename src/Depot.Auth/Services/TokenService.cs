@@ -29,8 +29,13 @@ public sealed class TokenService : ITokenService
 
     private readonly ITokenGenerator _tokens;
 
-    public TokenService(IOptions<JwtOptions> options, IDbContextFactory<AuthDbContext> factory, ISecureRandom random,
-        ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens)
+    public TokenService(
+        IOptions<JwtOptions> options,
+        IDbContextFactory<AuthDbContext> factory,
+        ISecureRandom random,
+        ISecretHasher hasher,
+        TimeProvider time,
+        ITokenGenerator tokens)
     {
         _options = options.Value;
         _factory = factory;
@@ -42,13 +47,18 @@ public sealed class TokenService : ITokenService
 
     public async Task<ErrorOr<TokenPair>> IssueTokenAsync(User user, CancellationToken token = default)
     {
-        var pair = user.IssueToken(_random, _time, _tokens, _options.RefreshTokenLifetime);
+        var pair = user.IssueToken(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
         await using var context = await _factory.CreateDbContextAsync(token);
 
-        context.Users.Update(user);
+        // context.Attach(user);
 
-        await context.SaveChangesAsync(token);
+        foreach (var t in user.Tokens)
+        {
+            context.Entry(t).State = EntityState.Added;
+        }
+
+        var count = await context.SaveChangesAsync(token);
 
         return pair;
     }
@@ -63,7 +73,8 @@ public sealed class TokenService : ITokenService
         }
 
         var id = current.Value.Id;
-        var secret = current.Value.Secret;
+        // var secret = current.Value.;
+        var secret = string.Empty;
 
         await using var context = await _factory.CreateDbContextAsync(token);
 
@@ -85,7 +96,7 @@ public sealed class TokenService : ITokenService
             return ErrorOr<TokenPair>.From(valid.Errors);
         }
 
-        var pair = stored.User.IssueToken(_random, _time, _tokens, _options.RefreshTokenLifetime);
+        var pair = stored.User.IssueToken(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
         stored.Revoke();
 

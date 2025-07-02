@@ -40,7 +40,7 @@ public class UserService : IUserService
             .ThenInclude(x => x.Role)
             .SingleOrDefaultAsync(x => x.Username == username, token);
 
-        if (user is null || _hasher.Verify(user!.PasswordHash, password))
+        if (user is null || !_hasher.Verify(user!.PasswordHash, password))
         {
             return Error.Unauthorized(
                 "USER_NOT_FOUND",
@@ -65,7 +65,7 @@ public class UserService : IUserService
         var user = new User
         {
             Username = username,
-            PasswordHash = Argon2.Hash(password)
+            PasswordHash = _hasher.Hash(password)
         };
 
         foreach (var name in roles)
