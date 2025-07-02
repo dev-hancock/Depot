@@ -1,9 +1,23 @@
 namespace Depot.Auth.Domain;
 
-using System.Reactive;
 using ErrorOr;
 
-public sealed record RefreshToken : Token
+public sealed record AccessToken
+{
+    private AccessToken(string value)
+    {
+        Value = value;
+    }
+
+    public string Value { get; private set; }
+
+    public static AccessToken New(string token)
+    {
+        return new AccessToken(token);
+    }
+}
+
+public sealed record RefreshToken
 {
     private const string Split = ":";
 
@@ -11,7 +25,11 @@ public sealed record RefreshToken : Token
     {
     }
 
-    public string Combined => $"{Id}{Split}{Value}";
+    public Guid Id { get; private init; }
+
+    public string Combined => $"{Id}{Split}{Secret}";
+
+    public string Secret { get; private init; } = null!;
 
     public static ErrorOr<RefreshToken> Parse(string token)
     {
@@ -30,52 +48,21 @@ public sealed record RefreshToken : Token
         return new RefreshToken
         {
             Id = id,
-            Value = parts[1]
+            Secret = parts[1]
         };
     }
 
-    public static RefreshToken New(User user, ISecureRandom random, ISecretHasher hasher, DateTime now, TimeSpan lifetime,
-        int length = 32)
+    public static RefreshToken New(ISecureRandom random, int length = 32)
     {
         if (length < 32)
         {
             throw new ArgumentOutOfRangeException(nameof(length), "Token must be at least 32 characters");
         }
 
-        var secret = random.Next(length);
-
         return new RefreshToken
         {
-            User = user,
-            Type = TokenType.Refresh,
-            Value = hasher.Hash(secret),
-            CreatedAt = now,
-            ExpiresAt = now.Add(lifetime)
+            Id = Guid.NewGuid(),
+            Secret = random.Next(length)
         };
-    }
-
-    public static ErrorOr<Unit> Validate(Token? token, ISecretHasher hasher, TimeProvider time, string secret)
-    {
-        if (token is null)
-        {
-            return Errors.TokenInvalid(TokenType.Refresh);
-        }
-
-        if (token.IsRevoked)
-        {
-            return Errors.TokenInvalid(TokenType.Refresh);
-        }
-
-        if (token.IsExpired(time))
-        {
-            return Errors.TokenInvalid(TokenType.Refresh);
-        }
-
-        if (!hasher.Verify(token.Value, secret))
-        {
-            return Errors.TokenInvalid(TokenType.Refresh);
-        }
-
-        return Unit.Default;
     }
 }

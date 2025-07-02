@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using Persistence;
 using Services;
 
-public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Session>>
+public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<RegisterHandler.Response>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -23,7 +23,7 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
 
     private readonly ITokenGenerator _tokens;
 
-    public LoginHandler(IOptions<JwtOptions> options, IDbContextFactory<AuthDbContext> factory, TimeProvider time,
+    public RegisterHandler(IOptions<JwtOptions> options, IDbContextFactory<AuthDbContext> factory, TimeProvider time,
         ISecretHasher hasher, ISecureRandom random, ITokenGenerator tokens)
     {
         _options = options.Value;
@@ -34,33 +34,42 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
         _tokens = tokens;
     }
 
-    public IObservable<ErrorOr<Session>> Handle(Request message)
+    public IObservable<ErrorOr<Response>> Handle(Request message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<Session>> Handle(Request request, CancellationToken token)
+    private async Task<ErrorOr<Response>> Handle(Request message, CancellationToken token)
     {
         await using var context = await _factory.CreateDbContextAsync(token);
 
-        var user = await context.Users
-            .Include(x => x.UserRoles)
-            .ThenInclude(x => x.Role)
-            .Include(x => x.Tokens)
-            .Where(x => x.Username == request.Username)
-            .SingleOrDefaultAsync(token);
+        var exists = await context.Users.AnyAsync(x => x.Username == message.Username, token);
 
-        if (user is null || !user.Password.Verify(request.Password, _hasher))
+        if (exists)
         {
-            return Errors.UserNotFound();
+            return Errors.UserAlreadyExists();
         }
+
+        var password = SecurePassword.New(message.Password, _hasher);
+
+        var user = User.New(message.Username, password, _time.GetUtcNow().DateTime);
+
+        var roles = await context.Roles
+            .Where(x => message.Roles.Contains(x.Name))
+            .ToListAsync(token);
+
+        user.AssignRoles(roles);
 
         var session = user.CreateSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
+        context.Users.Add(user);
+
         await context.SaveChangesAsync(token);
 
-        return session;
+        return new Response(user, session);
     }
 
-    public record Request(string Username, string Password) : IRequest<ErrorOr<Session>>;
+    public record Request(string Username, string Password, string[] Roles) : IRequest<ErrorOr<Response>>;
+
+    public record Response(User User, Session Session);
 }

@@ -20,7 +20,7 @@ public class TokenGenerator : ITokenGenerator
         _signing = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
     }
 
-    public string CreateAccessToken(User user, DateTime now)
+    public AccessToken CreateAccessToken(User user, DateTime now)
     {
         var claims = new List<Claim>
         {
@@ -45,6 +45,6 @@ public class TokenGenerator : ITokenGenerator
             now + _options.AccessTokenLifetime,
             _signing);
 
-        return _handler.WriteToken(access);
+        return AccessToken.New(_handler.WriteToken(access));
     }
 }

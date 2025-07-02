@@ -1,7 +1,5 @@
 namespace Depot.Auth.Endpoints;
 
-using Services;
-
 public static class AuthEndpoints
 {
     public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
@@ -27,29 +25,5 @@ public static class AuthEndpoints
 
 
         return routes;
-    }
-}
-
-public static class RefreshEndpoint
-{
-    public async static Task<IResult> Handle(string token, IUserService users, ITokenService tokens, HttpContext context)
-    {
-        return Results.Ok();
-    }
-
-    public sealed class Response
-    {
-    }
-}
-
-public static class ChangePasswordEndpoint
-{
-    public async static Task<IResult> Handle(HttpContext context)
-    {
-        return Results.Ok();
-    }
-
-    public sealed class Request
-    {
     }
 }

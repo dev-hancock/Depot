@@ -1,42 +1,41 @@
 namespace Depot.Auth.Endpoints;
 
 using System.IdentityModel.Tokens.Jwt;
+using System.Reactive.Linq;
 using System.Text.Json.Serialization;
+using Common;
 using Extensions;
-using Services;
+using Handlers;
+using Mestra.Abstractions;
 
 public static class MeEndpoint
 {
-    public async static Task<IResult> Handle(IUserService users, HttpContext context)
+    public async static Task<IResult> Handle(IMediator mediator, HttpContext context)
     {
-        var principal = context.User;
-
-        if (principal.Identity is not { IsAuthenticated: true })
-        {
-            return Results.Unauthorized();
-        }
-
-        var id = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var id = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
 
         if (id is null)
         {
             return Results.Unauthorized();
         }
 
-        var result = await users.GetUserAsync(Guid.Parse(id), context.RequestAborted);
+        var result = await mediator.Send(new MeHandler.Request(Guid.Parse(id)));
 
         return result
             .Match(
-                user => Results.Ok(new Response
+                ok => Results.Ok(new Response
                 {
-                    Username = user.Username
+                    User = new User
+                    {
+                        Username = ok.Username
+                    }
                 }),
                 errors => errors.ToResult());
     }
 
     private sealed class Response
     {
-        [JsonPropertyName("username")]
-        public string Username { get; init; } = null!;
+        [JsonPropertyName("user")]
+        public User User { get; init; } = null!;
     }
 }

@@ -28,7 +28,11 @@ public class AuthDbContext : DbContext
             e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
 
             e.Property(x => x.Username).HasMaxLength(64).HasColumnType("citext");
-            e.Property(x => x.PasswordHash).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Password).HasConversion(
+                    x => x.Encoded,
+                    x => SecurePassword.Parse(x))
+                .HasMaxLength(200)
+                .IsRequired();
 
             e.HasIndex(x => x.Username).IsUnique();
         });
@@ -66,7 +70,7 @@ public class AuthDbContext : DbContext
         {
             e.ToTable("tokens");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(x => x.Id).ValueGeneratedNever();
 
             e.Property(x => x.UserId).IsRequired();
             e.Property(x => x.Type).IsRequired();

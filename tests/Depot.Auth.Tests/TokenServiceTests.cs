@@ -38,22 +38,7 @@ public sealed class TokenServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        var factory = new PooledDbContextFactory<AuthDbContext>(options);
-
-        await using var seed = await factory.CreateDbContextAsync();
-
-        var user = fixture
-            .Build<User>()
-            .Without(x => x.Id)
-            .Without(x => x.UserRoles)
-            .Without(x => x.Tokens)
-            .Create();
-
-        await seed.Users.AddAsync(user);
-
-        await seed.SaveChangesAsync();
-
-        var now = DateTimeOffset.Now;
+        var now = DateTime.Now;
 
         var time = new Mock<TimeProvider>();
         time.Setup(x => x.GetUtcNow())
@@ -71,7 +56,20 @@ public sealed class TokenServiceTests
 
         var tokens = new Mock<ITokenGenerator>();
         tokens.Setup(x => x.CreateAccessToken(It.IsAny<User>(), It.IsAny<DateTime>()))
-            .Returns(fixture.Create<string>());
+            .Returns(fixture.Create<AccessToken>());
+
+        var factory = new PooledDbContextFactory<AuthDbContext>(options);
+
+        await using var seed = await factory.CreateDbContextAsync();
+
+        var username = fixture.Create<string>();
+        var password = fixture.Create<string>();
+
+        var user = User.New(username, SecurePassword.New(password, hasher.Object), now);
+
+        await seed.Users.AddAsync(user);
+
+        await seed.SaveChangesAsync();
 
         var sut = new LoginHandler(
             ValidOptions(),

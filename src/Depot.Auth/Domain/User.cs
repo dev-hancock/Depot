@@ -1,34 +1,78 @@
 namespace Depot.Auth.Domain;
 
+using ErrorOr;
+
 public sealed class User
 {
+    private User()
+    {
+    }
+
     public Guid Id { get; init; }
 
-    public string Username { get; set; } = null!;
+    public string Username { get; private set; } = null!;
 
-    public string PasswordHash { get; set; } = null!;
+    public SecurePassword Password { get; private set; } = null!;
 
-    public DateTimeOffset CreatedAt { get; init; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset CreatedAt { get; private set; }
 
-    public ICollection<UserRole> UserRoles { get; init; } = new List<UserRole>();
+    public List<UserRole> UserRoles { get; } = [];
 
-    public ICollection<Token> Tokens { get; init; } = new List<Token>();
+    public List<Token> Tokens { get; } = [];
 
-    public TokenPair IssueToken(ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens,
+    public static User New(string username, SecurePassword password, DateTime now)
+    {
+        return new User
+        {
+            Username = username,
+            Password = password,
+            CreatedAt = now
+        };
+    }
+
+    public Session CreateSession(ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens,
         TimeSpan lifetime)
     {
         var now = time.GetUtcNow().UtcDateTime;
 
-        var refresh = RefreshToken.New(this, random, hasher, now, lifetime);
+        var access = tokens.CreateAccessToken(this, now);
 
-        var pair = new TokenPair
+        var refresh = RefreshToken.New(random);
+
+        Tokens.Add(Token.New(
+            refresh.Id,
+            this,
+            TokenType.Refresh,
+            hasher.Hash(refresh.Secret),
+            now,
+            lifetime
+        ));
+
+        return Session.New(access, refresh, now.Add(lifetime));
+    }
+
+    public ErrorOr<Session> RefreshSession(RefreshToken token)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RevokeTokens()
+    {
+        Tokens.RemoveAll(x => x.Type == TokenType.Refresh);
+    }
+
+    public void AssignRoles(IEnumerable<Role> roles)
+    {
+        foreach (var role in roles)
         {
-            Access = tokens.CreateAccessToken(this, now),
-            Refresh = refresh
-        };
-
-        Tokens.Add(refresh);
-
-        return pair;
+            if (UserRoles.All(ur => ur.RoleId != role.Id))
+            {
+                UserRoles.Add(new UserRole
+                {
+                    User = this,
+                    Role = role
+                });
+            }
+        }
     }
 }
