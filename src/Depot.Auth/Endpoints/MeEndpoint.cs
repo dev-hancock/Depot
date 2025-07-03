@@ -1,7 +1,7 @@
 namespace Depot.Auth.Endpoints;
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Common;
 using Extensions;
@@ -12,14 +12,16 @@ public static class MeEndpoint
 {
     public async static Task<IResult> Handle(IMediator mediator, HttpContext context)
     {
-        var id = context.User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+        var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (id is null)
         {
             return Results.Unauthorized();
         }
 
-        var result = await mediator.Send(new MeHandler.Request(Guid.Parse(id)));
+        var result = await mediator
+            .Send(new MeHandler.Request(Guid.Parse(id)))
+            .ToTask(context.RequestAborted);
 
         return result
             .Match(

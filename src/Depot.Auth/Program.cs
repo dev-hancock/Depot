@@ -1,11 +1,10 @@
 ﻿namespace Depot.Auth;
 
-using System.Reflection;
 using System.Security.Cryptography;
 using Domain;
 using Endpoints;
+using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
-using Mestra.FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -53,8 +52,11 @@ public class Program
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .ValidateOnStart();
 
-        services.AddMestra(opt => opt.AddHandlersFromAssembly(Assembly.GetCallingAssembly()));
-        services.AddMestraFluentValidation();
+        services.AddMestra(opt => { opt.AddHandlersFromAssembly(typeof(Program).Assembly); });
+
+        // TEMP
+        services.AddTransient<IMessageHandlerFactory, MessageHandlerFactory>();
+        services.AddTransient<IPipelineFactory, PipelineFactory>();
 
         services.AddDbContextFactory<AuthDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Default")));
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Depot.Auth.Migrations
+namespace Depot.Auth.Migrator.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -11,15 +11,12 @@ namespace Depot.Auth.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterDatabase()
-                .Annotation("Npgsql:PostgresExtension:citext", ",,");
-
             migrationBuilder.CreateTable(
                 name: "roles",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Name = table.Column<string>(type: "citext", maxLength: 64, nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -30,9 +27,9 @@ namespace Depot.Auth.Migrations
                 name: "users",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
-                    Username = table.Column<string>(type: "citext", maxLength: 64, nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Username = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Password = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -44,9 +41,9 @@ namespace Depot.Auth.Migrations
                 name: "tokens",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false, defaultValueSql: "gen_random_uuid()"),
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Hash = table.Column<string>(type: "text", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     ExpiresAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -94,15 +91,15 @@ namespace Depot.Auth.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_tokens_Hash",
-                table: "tokens",
-                column: "Hash",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_tokens_UserId",
                 table: "tokens",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_tokens_Value",
+                table: "tokens",
+                column: "Value",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_user_roles_RoleId",

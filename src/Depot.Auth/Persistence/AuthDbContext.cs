@@ -19,15 +19,13 @@ public class AuthDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.HasPostgresExtension("citext");
-
         builder.Entity<User>(e =>
         {
             e.ToTable("users");
             e.HasKey(x => x.Id);
-            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
+            e.Property(x => x.Id).ValueGeneratedNever();
 
-            e.Property(x => x.Username).HasMaxLength(64).HasColumnType("citext");
+            e.Property(x => x.Username).HasMaxLength(64);
             e.Property(x => x.Password).HasConversion(
                     x => x.Encoded,
                     x => SecurePassword.Parse(x))
@@ -42,8 +40,7 @@ public class AuthDbContext : DbContext
             e.ToTable("roles");
             e.HasKey(x => x.Id);
 
-            e.Property(x => x.Id).HasDefaultValueSql("gen_random_uuid()");
-            e.Property(x => x.Name).HasMaxLength(64).HasColumnType("citext");
+            e.Property(x => x.Name).HasMaxLength(64);
 
             e.HasIndex(x => x.Name).IsUnique();
         });

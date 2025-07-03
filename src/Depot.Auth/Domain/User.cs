@@ -1,5 +1,6 @@
 namespace Depot.Auth.Domain;
 
+using System.Reactive;
 using ErrorOr;
 
 public sealed class User
@@ -24,6 +25,7 @@ public sealed class User
     {
         return new User
         {
+            Id = Guid.NewGuid(),
             Username = username,
             Password = password,
             CreatedAt = now
@@ -53,7 +55,26 @@ public sealed class User
 
     public ErrorOr<Session> RefreshSession(RefreshToken token)
     {
-        throw new NotImplementedException();
+        var refresh = Tokens.SingleOrDefault(t => t.Id == token.Id);
+
+        if (refresh is null)
+        {
+            
+        }
+    }
+
+    public ErrorOr<Unit> RevokeToken(RefreshToken token)
+    {
+        var refresh = Tokens.SingleOrDefault(t => t.Id == token.Id);
+
+        if (refresh == null)
+        {
+            return Errors.TokenInvalid(TokenType.Refresh);
+        }
+
+        Tokens.Remove(refresh);
+
+        return Unit.Default;
     }
 
     public void RevokeTokens()

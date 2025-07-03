@@ -9,10 +9,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Depot.Auth.Migrations
+namespace Depot.Auth.Migrator.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20250630183946_Initial")]
+    [Migration("20250703061956_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -23,20 +23,18 @@ namespace Depot.Auth.Migrations
                 .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
-            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Depot.Auth.Domain.Role", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("citext");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
@@ -49,19 +47,13 @@ namespace Depot.Auth.Migrations
             modelBuilder.Entity("Depot.Auth.Domain.Token", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Hash")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<bool>("IsRevoked")
                         .HasColumnType("boolean");
@@ -72,12 +64,16 @@ namespace Depot.Auth.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Hash")
-                        .IsUnique();
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("Value")
+                        .IsUnique();
 
                     b.ToTable("tokens", (string)null);
                 });
@@ -85,14 +81,12 @@ namespace Depot.Auth.Migrations
             modelBuilder.Entity("Depot.Auth.Domain.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasDefaultValueSql("gen_random_uuid()");
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("PasswordHash")
+                    b.Property<string>("Password")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
@@ -100,7 +94,7 @@ namespace Depot.Auth.Migrations
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("citext");
+                        .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
 
