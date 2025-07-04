@@ -3,6 +3,7 @@ namespace Depot.Auth.Endpoints;
 using System.ComponentModel.DataAnnotations;
 using System.Reactive.Threading.Tasks;
 using System.Text.Json.Serialization;
+using Common;
 using Extensions;
 using Handlers;
 using Mestra.Abstractions;
@@ -21,8 +22,11 @@ public static class LoginEndpoint
             .Match(
                 ok => Results.Ok(new LoginResponse
                 {
-                    AccessToken = ok.AccessToken.Value,
-                    RefreshToken = ok.RefreshToken.Combined
+                    Session = new Session
+                    {
+                        AccessToken = ok.AccessToken.Value,
+                        RefreshToken = ok.RefreshToken.Combined
+                    }
                 }),
                 errors => errors.ToResult());
     }
@@ -40,10 +44,7 @@ public static class LoginEndpoint
 
     public sealed class LoginResponse
     {
-        [JsonPropertyName("access_token")]
-        public string AccessToken { get; init; } = null!;
-
-        [JsonPropertyName("refresh_token")]
-        public string RefreshToken { get; init; } = null!;
+        [JsonPropertyName("session")]
+        public Session Session { get; init; } = null!;
     }
 }
