@@ -44,11 +44,14 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
 
         if (message.Token is null)
         {
-            user.ClearSessions();
+            _ = user.ClearSessions();
         }
         else
         {
-            var result = RefreshToken.Parse(message.Token).Then(x => user.RevokeSession(x, _hasher, _time));
+            var result = RefreshToken
+                .Parse(message.Token)
+                .Then(x => user
+                    .RevokeSession(x, _hasher, _time));
 
             if (result.IsError)
             {

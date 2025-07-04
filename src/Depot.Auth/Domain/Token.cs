@@ -3,11 +3,6 @@ namespace Depot.Auth.Domain;
 using System.Reactive;
 using ErrorOr;
 
-public enum TokenType
-{
-    Refresh
-}
-
 public record Token
 {
     public Guid Id { get; init; }

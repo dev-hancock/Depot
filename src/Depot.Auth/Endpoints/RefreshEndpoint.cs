@@ -1,6 +1,7 @@
 namespace Depot.Auth.Endpoints;
 
 using System.Reactive.Threading.Tasks;
+using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Common;
 using Extensions;
@@ -11,8 +12,17 @@ public static class RefreshEndpoint
 {
     public async static Task<IResult> Handle(RefreshRequest request, IMediator mediator, HttpContext context)
     {
+        var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (id is null)
+        {
+            return Results.Unauthorized();
+        }
+
         var result = await mediator
-            .Send(new RefreshHandler.Request(request.RefreshToken))
+            .Send(new RefreshHandler.Request(
+                Guid.Parse(id),
+                request.RefreshToken))
             .ToTask(context.RequestAborted);
 
         return result.Match(
