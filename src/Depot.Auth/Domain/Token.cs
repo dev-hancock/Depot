@@ -1,5 +1,8 @@
 namespace Depot.Auth.Domain;
 
+using System.Reactive;
+using ErrorOr;
+
 public enum TokenType
 {
     Refresh
@@ -33,42 +36,41 @@ public record Token
         return ExpiresAt < time.GetUtcNow();
     }
 
-    public static Token New(Guid id, User user, TokenType type, string value, DateTime now, TimeSpan lifetime)
+    public static Token New(Guid id, User user, TokenType type, string secret, DateTime now, TimeSpan lifetime, ISecretHasher hasher)
     {
         return new Token
         {
             Id = id,
             User = user,
             Type = type,
-            Value = value,
+            Value = hasher.Hash(secret),
             CreatedAt = now,
             ExpiresAt = now.Add(lifetime)
         };
     }
-}
 
-//
-// public static ErrorOr<Unit> Validate(Token? token, ISecretHasher hasher, TimeProvider time, string secret)
-// {
-//     if (token is null)
-//     {
-//         return Errors.TokenInvalid(TokenType.Refresh);
-//     }
-//
-//     if (token.IsRevoked)
-//     {
-//         return Errors.TokenInvalid(TokenType.Refresh);
-//     }
-//
-//     if (token.IsExpired(time))
-//     {
-//         return Errors.TokenInvalid(TokenType.Refresh);
-//     }
-//
-//     if (!hasher.Verify(token.Value, secret))
-//     {
-//         return Errors.TokenInvalid(TokenType.Refresh);
-//     }
-//
-//     return Unit.Default;
-// }
+    public ErrorOr<Unit> Verify(string secret, ISecretHasher hasher, TimeProvider time)
+    {
+        if (string.IsNullOrWhiteSpace(secret))
+        {
+            return Errors.TokenInvalid(Type);
+        }
+
+        if (IsRevoked)
+        {
+            return Errors.TokenInvalid(Type);
+        }
+
+        if (IsExpired(time))
+        {
+            return Errors.TokenInvalid(Type);
+        }
+
+        if (!hasher.Verify(Value, secret))
+        {
+            return Errors.TokenInvalid(Type);
+        }
+
+        return Unit.Default;
+    }
+}

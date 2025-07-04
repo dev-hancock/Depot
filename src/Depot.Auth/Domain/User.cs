@@ -5,15 +5,19 @@ using ErrorOr;
 
 public sealed class User
 {
-    private User()
+    internal User(string username, Password password, DateTimeOffset createdAt)
     {
+        Id = Guid.NewGuid();
+        Username = username;
+        Password = password;
+        CreatedAt = createdAt;
     }
 
-    public Guid Id { get; init; }
+    public Guid Id { get; private set; }
 
-    public string Username { get; private set; } = null!;
+    public string Username { get; private set; }
 
-    public SecurePassword Password { get; private set; } = null!;
+    public Password Password { get; private set; }
 
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -21,18 +25,12 @@ public sealed class User
 
     public List<Token> Tokens { get; } = [];
 
-    public static User New(string username, SecurePassword password, DateTime now)
+    public static ErrorOr<User> New(string username, Password password, TimeProvider time)
     {
-        return new User
-        {
-            Id = Guid.NewGuid(),
-            Username = username,
-            Password = password,
-            CreatedAt = now
-        };
+        return new User(username, password, time.GetUtcNow());
     }
 
-    public Session CreateSession(ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens,
+    public Session IssueSession(ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens,
         TimeSpan lifetime)
     {
         var now = time.GetUtcNow().UtcDateTime;
@@ -45,41 +43,69 @@ public sealed class User
             refresh.Id,
             this,
             TokenType.Refresh,
-            hasher.Hash(refresh.Secret),
+            refresh.Secret,
             now,
-            lifetime
+            lifetime,
+            hasher
         ));
 
         return Session.New(access, refresh, now.Add(lifetime));
     }
 
-    public ErrorOr<Session> RefreshSession(RefreshToken token)
+    public ErrorOr<Session> RefreshSession(RefreshToken token, ISecureRandom random, ISecretHasher hasher, TimeProvider time,
+        ITokenGenerator tokens, TimeSpan lifetime)
     {
-        var refresh = Tokens.SingleOrDefault(t => t.Id == token.Id);
+        var result = RevokeSession(token, hasher, time);
 
-        if (refresh is null)
+        if (result.IsError)
         {
-            
+            return ErrorOr<Session>.From(result.Errors);
         }
+
+        return IssueSession(random, hasher, time, tokens, lifetime);
     }
 
-    public ErrorOr<Unit> RevokeToken(RefreshToken token)
+    public bool HasSession(RefreshToken token)
     {
-        var refresh = Tokens.SingleOrDefault(t => t.Id == token.Id);
+        return FindToken(token) != null;
+    }
 
-        if (refresh == null)
+    private Token? FindToken(RefreshToken token)
+    {
+        return Tokens.FirstOrDefault(t => t.Id == token.Id);
+    }
+
+    public ErrorOr<Unit> RevokeSession(RefreshToken token, ISecretHasher hasher, TimeProvider time)
+    {
+        var current = FindToken(token);
+
+        if (current is null)
         {
             return Errors.TokenInvalid(TokenType.Refresh);
         }
 
-        Tokens.Remove(refresh);
+        var result = current.Verify(token.Secret, hasher, time);
+
+        if (result.IsError)
+        {
+            return result;
+        }
+
+        Tokens.Remove(current);
 
         return Unit.Default;
     }
 
-    public void RevokeTokens()
+    public ErrorOr<Unit> ClearSessions()
     {
-        Tokens.RemoveAll(x => x.Type == TokenType.Refresh);
+        var count = Tokens.RemoveAll(x => x.Type == TokenType.Refresh);
+
+        if (count == 0)
+        {
+            return Errors.TokenInvalid(TokenType.Refresh);
+        }
+
+        return Unit.Default;
     }
 
     public void AssignRoles(IEnumerable<Role> roles)

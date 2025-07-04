@@ -28,7 +28,7 @@ public class AuthDbContext : DbContext
             e.Property(x => x.Username).HasMaxLength(64);
             e.Property(x => x.Password).HasConversion(
                     x => x.Encoded,
-                    x => SecurePassword.Parse(x))
+                    x => Password.Parse(x))
                 .HasMaxLength(200)
                 .IsRequired();
 

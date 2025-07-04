@@ -12,9 +12,15 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
-    public LogoutHandler(IDbContextFactory<AuthDbContext> factory)
+    private readonly ISecretHasher _hasher;
+
+    private readonly TimeProvider _time;
+
+    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, ISecretHasher hasher, TimeProvider time)
     {
         _factory = factory;
+        _hasher = hasher;
+        _time = time;
     }
 
     public IObservable<ErrorOr<Unit>> Handle(Request message)
@@ -38,11 +44,11 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
 
         if (message.Token is null)
         {
-            user.RevokeTokens();
+            user.ClearSessions();
         }
         else
         {
-            var result = RefreshToken.Parse(message.Token).Then(x => user.RevokeToken(x));
+            var result = RefreshToken.Parse(message.Token).Then(x => user.RevokeSession(x, _hasher, _time));
 
             if (result.IsError)
             {

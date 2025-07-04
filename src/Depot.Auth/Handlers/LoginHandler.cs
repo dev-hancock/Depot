@@ -55,7 +55,7 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
             return Errors.UserNotFound();
         }
 
-        var session = user.CreateSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
+        var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
         await context.SaveChangesAsync(token);
 

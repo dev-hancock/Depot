@@ -38,7 +38,7 @@ public sealed class TokenServiceTests
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
-        var now = DateTime.Now;
+        var now = DateTimeOffset.UtcNow;
 
         var time = new Mock<TimeProvider>();
         time.Setup(x => x.GetUtcNow())
@@ -65,7 +65,7 @@ public sealed class TokenServiceTests
         var username = fixture.Create<string>();
         var password = fixture.Create<string>();
 
-        var user = User.New(username, SecurePassword.New(password, hasher.Object), now);
+        var user = new User(username, new Password(password), now);
 
         await seed.Users.AddAsync(user);
 
@@ -80,7 +80,7 @@ public sealed class TokenServiceTests
             tokens.Object);
 
         // Act
-        var result = await sut.Handle(new LoginHandler.Request(user.Username, fixture.Create<string>()));
+        var result = await sut.Handle(new LoginHandler.Request(username, password));
 
         // Assert
         await using var context = await factory.CreateDbContextAsync();

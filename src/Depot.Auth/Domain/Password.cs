@@ -1,22 +1,29 @@
 namespace Depot.Auth.Domain;
 
-public class SecurePassword
+using ErrorOr;
+
+public class Password
 {
-    private SecurePassword(string encoded)
+    internal Password(string encoded)
     {
         Encoded = encoded;
     }
 
     public string Encoded { get; }
 
-    public static SecurePassword Parse(string password)
+    public static Password Parse(string password)
     {
-        return new SecurePassword(password);
+        return new Password(password);
     }
 
-    public static SecurePassword New(string password, ISecretHasher hasher)
+    public static ErrorOr<Password> New(string password, ISecretHasher hasher)
     {
-        return new SecurePassword(hasher.Hash(password));
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            return Error.Validation("");
+        }
+
+        return new Password(hasher.Hash(password));
     }
 
     public bool Verify(string secret, ISecretHasher hasher)

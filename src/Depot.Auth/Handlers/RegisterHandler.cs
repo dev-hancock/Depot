@@ -50,9 +50,17 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
             return Errors.UserAlreadyExists();
         }
 
-        var password = SecurePassword.New(message.Password, _hasher);
+        var result = Password
+            .New(message.Password, _hasher)
+            .Then(password => User
+                .New(message.Username, password, _time));
 
-        var user = User.New(message.Username, password, _time.GetUtcNow().DateTime);
+        if (result.IsError)
+        {
+            return ErrorOr<Response>.From(result.Errors);
+        }
+
+        var user = result.Value;
 
         var roles = await context.Roles
             .Where(x => message.Roles.Contains(x.Name))
@@ -60,7 +68,7 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
 
         user.AssignRoles(roles);
 
-        var session = user.CreateSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
+        var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
         context.Users.Add(user);
 
