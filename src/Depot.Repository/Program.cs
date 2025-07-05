@@ -1,16 +1,11 @@
-﻿namespace Depot.Auth;
+﻿namespace Depot.Repository;
 
-using Domain;
 using Endpoints;
 using Extensions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Middleware;
-using Persistence;
 using Scalar.AspNetCore;
 using Serilog;
-using Services;
 
 public class Program
 {
@@ -21,7 +16,7 @@ public class Program
             .Enrich.FromLogContext()
             .WriteTo.Console()
             .WriteTo.File(
-                "/var/log/depot/auth-.log",
+                "/var/log/depot/repo-.log",
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 14)
             .CreateLogger();
@@ -47,20 +42,7 @@ public class Program
 
         services.AddOpenApi();
 
-        services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
-        services
-            .AddOptions<JwtOptions>()
-            .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
-            .ValidateOnStart();
-
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
-
-        services.AddDbContextFactory<AuthDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-
-        services.AddSingleton<ISecureRandom, SecureRandom>();
-        services.AddSingleton<ISecretHasher, SecretHasher>();
-
-        services.AddSingleton<ITokenGenerator, TokenGenerator>();
 
         services.AddSingleton(TimeProvider.System);
 

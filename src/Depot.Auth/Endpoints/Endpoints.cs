@@ -1,6 +1,6 @@
 namespace Depot.Auth.Endpoints;
 
-public static class AuthEndpoints
+public static class Endpoints
 {
     public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
     {
