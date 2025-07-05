@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 public static class UploadEndpoint
 {
-    public async static Task<IResult> Handle([FromRoute] string repository, IMediator mediator, HttpContext context)
+    public async static Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, IMediator mediator,
+        HttpContext context)
     {
         var user = context.User?.Identity?.Name;
 

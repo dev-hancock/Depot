@@ -1,17 +1,13 @@
-namespace Depot.Repository.Endpoints;
-
-using Artifacts;
+namespace Depot.Repository.Endpoints.Artifacts;
 
 public static class Endpoints
 {
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
+    public static IEndpointRouteBuilder MapArtifactsEndpoints(this IEndpointRouteBuilder routes)
     {
-        return routes
-            .MapGroup("api")
-            .MapArtifactsEndpoints();
-
         var api = routes
-            ;
+            .MapGroup("artifacts")
+            .WithTags("artifacts")
+            .RequireAuthorization();
 
         api.MapPost("{repository}/{*path}", UploadEndpoint.Handle)
             .Accepts<IFormFileCollection>("multipart/form-data")

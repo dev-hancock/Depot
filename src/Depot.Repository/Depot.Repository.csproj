@@ -43,4 +43,10 @@
         <ProjectReference Include="..\Depot.Storage\Depot.Storage.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Folder Include="Endpoints\Policies\"/>
+        <Folder Include="Endpoints\Repos\"/>
+        <Folder Include="Events\" />
+    </ItemGroup>
+
 </Project>

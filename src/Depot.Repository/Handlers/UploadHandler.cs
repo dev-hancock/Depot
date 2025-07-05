@@ -33,6 +33,18 @@ public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Arti
 
     private async Task<ErrorOr<Artifact>> Handle(Request message, CancellationToken token)
     {
+        await using var context = await _factory.CreateDbContextAsync(token);
+
+        var repo = await context.Repositories
+            .Where(x => x.TenantId == message.TenantId)
+            .Where(x => x.Name == message.Repository)
+            .SingleOrDefaultAsync(token);
+
+        if (repo is null)
+        {
+            return Error.NotFound();
+        }
+
         var hash = await _hasher.Hash(message.Content, token);
 
         var result = Artifact.FromStream(
@@ -57,8 +69,6 @@ public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Arti
 
         try
         {
-            await using var context = await _factory.CreateDbContextAsync(token);
-
             context.Artifacts.Add(artifact);
 
             await context.SaveChangesAsync(token);
@@ -73,6 +83,14 @@ public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Arti
         return artifact;
     }
 
-    public sealed record Request(string FileName, string Repository, Stream Content, string ContentType, string User)
+    public sealed record Request(
+        Guid TenantId,
+        Guid UserId,
+        string FileName,
+        string Path,
+        string Repository,
+        Stream Content,
+        string ContentType,
+        string User)
         : IRequest<ErrorOr<Artifact>>;
 }

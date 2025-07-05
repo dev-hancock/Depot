@@ -11,6 +11,8 @@ public class RepoDbContext : DbContext
 
     public DbSet<Artifact> Artifacts => Set<Artifact>();
 
+    public DbSet<Repository> Repositories => Set<Repository>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<Artifact>(b =>
