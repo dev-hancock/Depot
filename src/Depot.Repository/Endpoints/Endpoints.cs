@@ -9,13 +9,15 @@ public static class Endpoints
             .WithTags("artifacts")
             .RequireAuthorization();
 
-        api.MapPost("/", UploadEndpoint.Handle);
+        api.MapPost("{repository}", UploadEndpoint.Handle)
+            .Accepts<IFormFileCollection>("multipart/form-data")
+            .WithName("upload");
 
         api.MapGet("/{id}", DownloadEndpoint.Handle);
 
         api.MapGet("/{id}/meta", MetaDataEndpoint.Handle);
 
-        api.MapGet("/", QueryEndpoint.Handle);
+        api.MapGet("", QueryEndpoint.Handle);
 
         api.MapDelete("/{id}", DeleteEndpoint.Handle);
 

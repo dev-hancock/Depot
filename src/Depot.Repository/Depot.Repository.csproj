@@ -34,14 +34,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Domain\"/>
-        <Folder Include="Persistence\"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <Content Include="..\..\.dockerignore">
             <Link>.dockerignore</Link>
         </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Depot.Storage\Depot.Storage.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -3,9 +3,12 @@
 using Endpoints;
 using Extensions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Middleware;
+using Persistence;
 using Scalar.AspNetCore;
 using Serilog;
+using Storage;
 
 public class Program
 {
@@ -43,6 +46,10 @@ public class Program
         services.AddOpenApi();
 
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
+
+        services.AddDbContextFactory<RepoDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+        services.AddStorage(builder.Configuration);
 
         services.AddSingleton(TimeProvider.System);
 

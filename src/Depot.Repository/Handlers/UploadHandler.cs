@@ -1,20 +1,78 @@
 namespace Depot.Repository.Handlers;
 
-using System.Reactive;
 using System.Reactive.Linq;
+using Domain;
+using ErrorOr;
 using Mestra.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
+using Storage;
 
-public class UploadHandler : IMessageHandler<UploadHandler.Request>
+public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Artifact>>
 {
-    public IObservable<Unit> Handle(Request message)
+    private readonly IDbContextFactory<RepoDbContext> _factory;
+
+    private readonly IStorageHasher _hasher;
+
+    private readonly IStorage _storage;
+
+    private readonly TimeProvider _time;
+
+    public UploadHandler(IDbContextFactory<RepoDbContext> factory, IStorage storage, IStorageHasher hasher, TimeProvider time)
+    {
+        _factory = factory;
+        _storage = storage;
+        _hasher = hasher;
+        _time = time;
+    }
+
+    public IObservable<ErrorOr<Artifact>> Handle(Request message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private Task<Unit> Handle(Request message, CancellationToken token)
+    private async Task<ErrorOr<Artifact>> Handle(Request message, CancellationToken token)
     {
-        throw new NotImplementedException();
+        var hash = await _hasher.Hash(message.Content, token);
+
+        var result = Artifact.FromStream(
+            message.FileName,
+            message.Repository,
+            message.Content.Length,
+            message.ContentType,
+            hash,
+            message.User,
+            _time);
+
+        if (result.IsError)
+        {
+            return ErrorOr<Artifact>.From(result.Errors);
+        }
+
+        var artifact = result.Value;
+
+        var location = await _storage.SaveAsync(artifact.Id, artifact.Repository, artifact.Extension, message.Content, token);
+
+        artifact.Move(location);
+
+        try
+        {
+            await using var context = await _factory.CreateDbContextAsync(token);
+
+            context.Artifacts.Add(artifact);
+
+            await context.SaveChangesAsync(token);
+        }
+        catch (Exception)
+        {
+            await _storage.DeleteAsync(location, CancellationToken.None);
+
+            throw;
+        }
+
+        return artifact;
     }
 
-    public sealed record Request : IRequest;
+    public sealed record Request(string FileName, string Repository, Stream Content, string ContentType, string User)
+        : IRequest<ErrorOr<Artifact>>;
 }

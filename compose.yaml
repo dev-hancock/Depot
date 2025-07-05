@@ -70,6 +70,7 @@
       Jwt__KeyPath: /app/keys/jwt_public.pem
     volumes:
       - ./keys:/app/keys:ro
+      - ./packages:/data/packages
     depends_on:
       - depot.repo.db
     ports:
