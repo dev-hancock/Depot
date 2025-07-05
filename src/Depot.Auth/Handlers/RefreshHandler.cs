@@ -6,6 +6,7 @@ using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Options;
 using Persistence;
 using Services;
 

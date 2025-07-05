@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 using Moq;
+using Options;
 using Persistence;
-using Services;
 
 public sealed class TokenServiceTests
 {

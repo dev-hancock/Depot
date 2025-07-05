@@ -5,6 +5,7 @@ using System.Security.Claims;
 using Domain;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Options;
 
 public class TokenGenerator : ITokenGenerator
 {
@@ -14,10 +15,10 @@ public class TokenGenerator : ITokenGenerator
 
     private readonly SigningCredentials _signing;
 
-    public TokenGenerator(IOptions<JwtOptions> options, ECDsaSecurityKey key)
+    public TokenGenerator(IOptions<JwtOptions> options, ISecurityKeyProvider key)
     {
         _options = options.Value;
-        _signing = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
+        _signing = new SigningCredentials(key.GetSecurityKey(_options.KeyPath), SecurityAlgorithms.EcdsaSha256);
     }
 
     public AccessToken CreateAccessToken(User user, DateTime now)

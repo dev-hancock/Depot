@@ -5,7 +5,6 @@ using Endpoints;
 using Extensions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Middleware;
 using Persistence;
 using Scalar.AspNetCore;
@@ -46,12 +45,6 @@ public class Program
         var services = builder.Services;
 
         services.AddOpenApi();
-
-        services.AddSingleton<IValidateOptions<JwtOptions>, JwtOptionsValidator>();
-        services
-            .AddOptions<JwtOptions>()
-            .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
-            .ValidateOnStart();
 
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
 
