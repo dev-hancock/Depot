@@ -1,8 +1,8 @@
-namespace Depot.Auth.Endpoints;
+namespace Depot.Auth.Endpoints.Auth;
 
 using System.Reactive.Threading.Tasks;
 using System.Text.Json.Serialization;
-using Common;
+using Common.Models;
 using Extensions;
 using Handlers;
 using Mestra.Abstractions;

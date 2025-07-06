@@ -1,4 +1,4 @@
-namespace Depot.Auth.Endpoints.Common;
+namespace Depot.Common.Models;
 
 using System.Text.Json.Serialization;
 

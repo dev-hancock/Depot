@@ -1,6 +1,7 @@
 namespace Depot.Repository.Endpoints;
 
 using System.Reactive.Linq;
+using Extensions;
 using Handlers;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,9 @@ public static class UploadEndpoint
     public async static Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, IMediator mediator,
         HttpContext context)
     {
-        var user = context.User?.Identity?.Name;
+        var id = context.GetUserId();
 
-        if (user == null)
+        if (id == null)
         {
             return Results.Unauthorized();
         }
@@ -27,11 +28,14 @@ public static class UploadEndpoint
         var errors = await form.Files
             .Select(x => mediator
                 .Send(new UploadHandler.Request(
+                    context.GetTenantId()!.Value,
+                    context.GetUserId()!.Value,
                     x.FileName,
+                    path,
                     repository,
                     x.OpenReadStream(),
                     x.ContentType,
-                    user)))
+                    context.GetUser()!)))
             .ToObservable()
             .Merge();
 

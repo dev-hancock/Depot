@@ -21,6 +21,8 @@ public class StorageOptions
     public string Root { get; set; }
 }
 
+public class
+
 public class FileSystemStorage : IStorage
 {
     private readonly StorageOptions _options;

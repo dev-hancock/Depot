@@ -1,4 +1,4 @@
-namespace Depot.Auth.Endpoints;
+namespace Depot.Auth.Endpoints.Auth;
 
 using System.Reactive.Threading.Tasks;
 using System.Security.Claims;

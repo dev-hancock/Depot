@@ -1,0 +1,102 @@
+namespace Depot.Auth.Endpoints;
+
+using Auth;
+using Organisations;
+using Tenants.Roles;
+using Users;
+using Users.Organisations;
+using Users.Tenants;
+
+public static class EndpointExtensions
+{
+    public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder routes)
+    {
+        routes.MapPost("/login", LoginEndpoint.Handle)
+            .WithDescription("")
+            .AllowAnonymous();
+
+        routes.MapDelete("/session", LogoutEndpoint.Handle)
+            .WithDescription("");
+
+        routes.MapPost("/session/refresh", RefreshTokenEndpoint.Handle)
+            .WithDescription("");
+
+        routes.MapPost("/register", RegisterEndpoint.Handle)
+            .WithDescription("")
+            .AllowAnonymous();
+
+        return routes;
+    }
+
+    public static IEndpointRouteBuilder MapOrganisationsEndpoints(this IEndpointRouteBuilder routes)
+    {
+        var api = routes.MapGroup("/organisations").WithTags("organisations");
+
+        api.MapPost("/", CreateOrganisationEndpoint.Handle)
+            .WithDescription("Create organisations");
+
+        api.MapPost("/{organisation_id}/tenants", CreateTenantEndpoint.Handle)
+            .WithDescription("Create tenant in organisations");
+
+        api.MapPost("/{organisation_id}/invitations", InviteMemberEndpoint.Handle)
+            .WithDescription("Invite a user to organisations");
+
+        api.MapDelete("/{organisation_id}/members/{user_id}", RemoveMemberEndpoint.Handle)
+            .WithDescription("Remove user from organisations");
+
+        return api;
+    }
+
+    public static IEndpointRouteBuilder MapTenantsEndpoints(this IEndpointRouteBuilder routes)
+    {
+        var api = routes.MapGroup("/tenants").WithTags("tenants");
+
+        api.MapPost("/{tenant_id}/roles", CreateRoleEndpoint.Handle)
+            .WithDescription("Create role in tenant");
+
+        api.MapPost("/{tenant_id}/roles/{role_id}/permissions", AddPermissionEndpoint.Handle)
+            .WithDescription("Add permission to role");
+
+        api.MapPost("/{tenant_id}/members/{user_id}/roles/{role_id}", AssignRoleEndpoint.Handle)
+            .WithDescription("Assign role to user in tenant");
+
+        return api;
+    }
+
+    public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder routes)
+    {
+        var api = routes.MapGroup("/user").WithTags("user");
+
+        api.MapGet("/me", MeEndpoint.Handle)
+            .WithDescription("");
+
+        api.MapPatch("/password", ChangePasswordEndpoint.Handle)
+            .WithDescription("");
+
+        api.MapGet("/tenants", QueryTenantsEndpoint.Handle)
+            .WithDescription("");
+
+        api.MapPatch("/tenants/active", SetActiveTenantEndpoint.Handle)
+            .WithDescription("");
+
+        api.MapGet("/organisations", QueryOrganisationsEndpoint.Handle)
+            .WithDescription("Get organisations user belongs to");
+
+        return api;
+    }
+
+    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
+    {
+        var api = routes.MapGroup("api").RequireAuthorization();
+
+        api.MapAuthEndpoints();
+
+        api.MapOrganisationsEndpoints();
+
+        api.MapTenantsEndpoints();
+
+        api.MapUserEndpoints();
+
+        return api;
+    }
+}

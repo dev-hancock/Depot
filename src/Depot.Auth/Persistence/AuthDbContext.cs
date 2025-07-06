@@ -1,7 +1,9 @@
 namespace Depot.Auth.Persistence;
 
 using Domain;
+using Domain.Models;
 using Microsoft.EntityFrameworkCore;
+using User = Domain.Models.User;
 
 public class AuthDbContext : DbContext
 {
@@ -11,9 +13,17 @@ public class AuthDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<Organisation> Organisations => Set<Organisation>();
+
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+
     public DbSet<Role> Roles => Set<Role>();
 
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Permission> Permissions => Set<Permission>();
+
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<Membership> Memberships => Set<Membership>();
 
     public DbSet<Token> Tokens => Set<Token>();
 
@@ -22,65 +32,151 @@ public class AuthDbContext : DbContext
         builder.Entity<User>(e =>
         {
             e.ToTable("users");
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Id).ValueGeneratedNever();
 
-            e.Property(x => x.Username).HasMaxLength(64);
+            e.HasKey(u => u.Id);
+            e.Property(u => u.Id).ValueGeneratedNever();
+
+            e.Property(u => u.Username).HasMaxLength(64).IsRequired();
+            e.HasIndex(u => u.Username).IsUnique();
+
+            e.Property(u => u.Email).HasMaxLength(256).IsRequired();
+            e.HasIndex(u => u.Email).IsUnique();
+
             e.Property(x => x.Password).HasConversion(
-                    x => x.Encoded,
-                    x => Password.Parse(x))
+                    x => x,
+                    x => x)
                 .HasMaxLength(200)
                 .IsRequired();
 
             e.HasIndex(x => x.Username).IsUnique();
         });
 
+        builder.Entity<Organisation>(e =>
+        {
+            e.ToTable("organisations");
+
+            e.HasKey(o => o.Id);
+            e.Property(o => o.Id).ValueGeneratedNever();
+
+            e.Property(o => o.Name).HasMaxLength(128).IsRequired();
+            e.HasIndex(o => o.Name).IsUnique();
+        });
+
+        builder.Entity<Tenant>(e =>
+        {
+            e.ToTable("tenants");
+
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Id).ValueGeneratedNever();
+
+            e.Property(t => t.Name).HasMaxLength(128).IsRequired();
+
+            e.HasIndex(t => new
+            {
+                t.OrganisationId,
+                t.Name
+            }).IsUnique();
+
+            e.HasOne(t => t.Organisation)
+                .WithMany(o => o.Tenants)
+                .HasForeignKey(t => t.OrganisationId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         builder.Entity<Role>(e =>
         {
             e.ToTable("roles");
-            e.HasKey(x => x.Id);
 
-            e.Property(x => x.Name).HasMaxLength(64);
+            e.HasKey(r => r.Id);
+            e.Property(r => r.Id).ValueGeneratedNever();
 
-            e.HasIndex(x => x.Name).IsUnique();
+            e.Property(r => r.Name).HasMaxLength(64).IsRequired();
+
+            e.HasIndex(r => new
+            {
+                r.TenantId,
+                r.Name
+            }).IsUnique();
+
+            e.HasOne(r => r.Tenant)
+                .WithMany(t => t.Roles)
+                .HasForeignKey(r => r.TenantId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<UserRole>(e =>
+        builder.Entity<Permission>(e =>
         {
-            e.ToTable("user_roles");
-            e.HasKey(x => new
+            e.ToTable("permissions");
+
+            e.HasKey(p => p.Id);
+            e.Property(p => p.Id).ValueGeneratedNever();
+
+            e.Property(p => p.Name).HasMaxLength(128).IsRequired();
+            e.HasIndex(p => p.Name).IsUnique();
+        });
+
+        builder.Entity<RolePermission>(e =>
+        {
+            e.ToTable("role_permissions");
+
+            e.HasKey(rp => new
             {
-                x.UserId,
-                x.RoleId
+                rp.RoleId,
+                rp.PermissionId
             });
 
-            e.HasOne(x => x.User)
-                .WithMany(x => x.UserRoles)
-                .HasForeignKey(x => x.UserId);
+            e.HasOne(rp => rp.Role)
+                .WithMany(r => r.Permissions)
+                .HasForeignKey(rp => rp.RoleId);
 
-            e.HasOne(x => x.Role)
-                .WithMany(x => x.UserRoles)
-                .HasForeignKey(x => x.RoleId);
+            e.HasOne(rp => rp.Permission)
+                .WithMany(p => p.RolePermissions)
+                .HasForeignKey(rp => rp.PermissionId);
+        });
+
+        builder.Entity<Membership>(e =>
+        {
+            e.ToTable("memberships");
+
+            e.HasKey(m => new
+            {
+                m.UserId,
+                m.TenantId,
+                m.RoleId
+            });
+
+            e.HasOne(m => m.User)
+                .WithMany(u => u.Memberships)
+                .HasForeignKey(m => m.UserId);
+
+            e.HasOne(m => m.Role)
+                .WithMany(r => r.Memberships)
+                .HasForeignKey(m => m.RoleId);
+
+            e.HasOne(m => m.Tenant)
+                .WithMany(t => t.Memberships)
+                .HasForeignKey(m => m.TenantId);
         });
 
         builder.Entity<Token>(e =>
         {
             e.ToTable("tokens");
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Id).ValueGeneratedNever();
 
-            e.Property(x => x.UserId).IsRequired();
-            e.Property(x => x.Type).IsRequired();
-            e.Property(x => x.CreatedAt).IsRequired();
-            e.Property(x => x.ExpiresAt).IsRequired();
-            e.Property(x => x.IsRevoked).IsRequired();
+            e.HasKey(t => t.Id);
+            e.Property(t => t.Id).ValueGeneratedNever();
 
-            e.HasOne(x => x.User)
-                .WithMany(x => x.Tokens)
-                .HasForeignKey(x => x.UserId)
+            e.Property(t => t.Type).HasMaxLength(20).IsRequired();
+            e.Property(t => t.Value).HasMaxLength(512).IsRequired();
+            e.Property(t => t.CreatedAt).IsRequired();
+            e.Property(t => t.ExpiresAt).IsRequired();
+            e.Property(t => t.IsRevoked).IsRequired();
+
+            e.HasOne(t => t.User)
+                .WithMany(u => u.Tokens)
+                .HasForeignKey(t => t.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            e.HasIndex(x => x.Value).IsUnique();
+            e.HasIndex(t => t.Value).IsUnique();
         });
     }
 }

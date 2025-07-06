@@ -67,6 +67,8 @@ public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Arti
 
         artifact.Move(location);
 
+        repo.AddArtifact(artifact);
+
         try
         {
             context.Artifacts.Add(artifact);

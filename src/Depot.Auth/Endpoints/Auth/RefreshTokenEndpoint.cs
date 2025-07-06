@@ -1,16 +1,16 @@
-namespace Depot.Auth.Endpoints;
+namespace Depot.Auth.Endpoints.Auth;
 
 using System.Reactive.Threading.Tasks;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
-using Common;
+using Common.Models;
 using Extensions;
 using Handlers;
 using Mestra.Abstractions;
 
-public static class RefreshEndpoint
+public static class RefreshTokenEndpoint
 {
-    public async static Task<IResult> Handle(RefreshRequest request, IMediator mediator, HttpContext context)
+    public async static Task<IResult> Handle(RefreshTokenRequest tokenRequest, IMediator mediator, HttpContext context)
     {
         var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -22,11 +22,11 @@ public static class RefreshEndpoint
         var result = await mediator
             .Send(new RefreshHandler.Request(
                 Guid.Parse(id),
-                request.RefreshToken))
+                tokenRequest.RefreshToken))
             .ToTask(context.RequestAborted);
 
         return result.Match(
-            ok => Results.Ok(new RefreshResponse
+            ok => Results.Ok(new RefreshTokenResponse
             {
                 Session = new Session
                 {
@@ -37,13 +37,13 @@ public static class RefreshEndpoint
             errors => errors.ToResult());
     }
 
-    public sealed class RefreshRequest
+    public sealed class RefreshTokenRequest
     {
         [JsonPropertyName("refresh_token")]
         public string RefreshToken { get; set; } = null!;
     }
 
-    public sealed class RefreshResponse
+    public sealed class RefreshTokenResponse
     {
         [JsonPropertyName("session")]
         public Session Session { get; init; } = null!;

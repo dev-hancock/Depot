@@ -18,30 +18,21 @@ public class Repository
     public DateTimeOffset CreatedAt { get; set; }
 
     public string CreatedBy { get; set; }
-}
 
-public class Policy
-{
-    public Guid Id { get; set; }
+    public List<Artifact> Artifacts { get; set; } = [];
 
-    public Guid TenantId { get; set; }
+    public void AddArtifact(Artifact artifact)
+    {
+        Artifacts.Add(artifact);
+    }
 
+    public void AddPolicy(Policy policy)
+    {
+        Policy = policy;
+    }
 
-    public string Name { get; set; }
-
-
-    // Rules
-    public bool Immutable { get; set; }
-
-    public int? RetentionDays { get; set; }
-
-    public int? RetentionVersions { get; set; }
-
-
-    public string FileTypes { get; set; }
-
-
-    public DateTimeOffset CreatedAt { get; set; }
-
-    public string CreatedBy { get; set; }
+    public void RemoveArtifact(Artifact artifact)
+    {
+        Artifacts.Remove(artifact);
+    }
 }
