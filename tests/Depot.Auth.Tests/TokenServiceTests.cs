@@ -3,7 +3,9 @@
 using System.Reactive.Linq;
 using AutoFixture;
 using AutoFixture.AutoMoq;
-using Domain;
+using Domain.Auth;
+using Domain.Interfaces;
+using Domain.Users;
 using Handlers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;

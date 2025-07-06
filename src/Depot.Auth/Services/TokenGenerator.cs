@@ -2,7 +2,8 @@ namespace Depot.Auth.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Domain;
+using Domain.Auth;
+using Domain.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Options;

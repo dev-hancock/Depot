@@ -1,9 +1,12 @@
 namespace Depot.Auth.Persistence;
 
-using Domain;
-using Domain.Models;
+using Domain.Auth;
+using Domain.Organisations;
+using Domain.Tenants;
+using Domain.Users;
 using Microsoft.EntityFrameworkCore;
-using User = Domain.Models.User;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using User = Domain.Users.User;
 
 public class AuthDbContext : DbContext
 {
@@ -85,7 +88,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Role>(e =>
         {
-            e.ToTable("roles");
+            RelationalEntityTypeBuilderExtensions.ToTable((EntityTypeBuilder)e, "roles");
 
             e.HasKey(r => r.Id);
             e.Property(r => r.Id).ValueGeneratedNever();

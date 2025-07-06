@@ -1,7 +1,7 @@
 namespace Depot.Auth.Services;
 
 using System.Security.Cryptography;
-using Domain;
+using Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 
 public class SecureRandom : ISecureRandom

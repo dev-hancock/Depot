@@ -1,6 +1,6 @@
 ﻿namespace Depot.Auth;
 
-using Domain;
+using Domain.Interfaces;
 using Endpoints;
 using Extensions;
 using Mestra.Extensions.Microsoft.DependencyInjection;

@@ -20,7 +20,7 @@ public static class RefreshTokenEndpoint
         }
 
         var result = await mediator
-            .Send(new RefreshHandler.Request(
+            .Send(new RefreshTokenHandler.Request(
                 Guid.Parse(id),
                 tokenRequest.RefreshToken))
             .ToTask(context.RequestAborted);

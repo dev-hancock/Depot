@@ -2,10 +2,8 @@ namespace Depot.Auth.Endpoints;
 
 using Auth;
 using Organisations;
-using Tenants.Roles;
+using Tenants;
 using Users;
-using Users.Organisations;
-using Users.Tenants;
 
 public static class EndpointExtensions
 {

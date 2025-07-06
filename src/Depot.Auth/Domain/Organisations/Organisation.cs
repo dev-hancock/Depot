@@ -1,0 +1,50 @@
+namespace Depot.Auth.Domain.Organisations;
+
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Events;
+using ErrorOr;
+using Tenants;
+using Users;
+
+public class Organisation : AggregateRoot
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public DateTimeOffset CreatedAt { get; set; }
+
+    public Guid CreatedBy { get; set; }
+
+
+    public List<Tenant> Tenants { get; set; } = [];
+
+
+    public static ErrorOr<Organisation> New(string name, User creator, TimeProvider time)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Error.Validation();
+        }
+
+        return new Organisation
+        {
+            Id = Guid.NewGuid(),
+            Name = name,
+            CreatedBy = creator.Id,
+            CreatedAt = time.GetUtcNow()
+        };
+    }
+
+    public void AddTenant(Tenant tenant)
+    {
+        Tenants.Add(tenant);
+
+        Events.Add(new TenantCreatedEvent(tenant));
+    }
+
+    public void Rename(string name)
+    {
+        Name = name;
+    }
+}

@@ -1,6 +1,6 @@
 namespace Depot.Auth.Services;
 
-using Domain;
+using Domain.Interfaces;
 using Isopoh.Cryptography.Argon2;
 
 public class SecretHasher : ISecretHasher
