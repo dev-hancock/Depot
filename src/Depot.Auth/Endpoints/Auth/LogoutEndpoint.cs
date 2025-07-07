@@ -4,7 +4,7 @@ using System.Reactive.Threading.Tasks;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Extensions;
-using Handlers;
+using Handlers.Auth;
 using Mestra.Abstractions;
 
 public static class LogoutEndpoint

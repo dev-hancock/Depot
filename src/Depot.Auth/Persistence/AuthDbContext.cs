@@ -88,7 +88,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Role>(e =>
         {
-            RelationalEntityTypeBuilderExtensions.ToTable((EntityTypeBuilder)e, "roles");
+            ((EntityTypeBuilder)e).ToTable("roles");
 
             e.HasKey(r => r.Id);
             e.Property(r => r.Id).ValueGeneratedNever();

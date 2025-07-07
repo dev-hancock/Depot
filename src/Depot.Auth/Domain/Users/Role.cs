@@ -8,20 +8,26 @@ public class Role
 
     public Guid TenantId { get; set; }
 
-
     public string Name { get; set; } = null!;
-
-
-    public Tenant Tenant { get; set; } = null!;
 
     public List<RolePermission> Permissions { get; set; } = [];
 
+    public Tenant Tenant { get; set; } = null!;
+
     public List<Membership> Memberships { get; set; } = [];
 
-
-    public static Role New()
+    public static Role Admin()
     {
-        return new Role();
+        return New("Admin");
+    }
+
+    public static Role New(string name)
+    {
+        return new Role
+        {
+            Id = Guid.NewGuid(),
+            Name = name
+        };
     }
 
     public void AddPermission(RolePermission permission)

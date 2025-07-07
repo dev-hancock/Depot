@@ -1,12 +1,13 @@
 namespace Depot.Auth.Domain.Users;
 
 using System.Reactive;
-using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Common;
-using Depot.Auth.Domain.Errors;
-using Depot.Auth.Domain.Events;
-using Depot.Auth.Domain.Interfaces;
+using Auth;
+using Common;
 using ErrorOr;
+using Errors;
+using Events;
+using Interfaces;
+using Tenants;
 
 public class User : AggregateRoot
 {
@@ -15,9 +16,9 @@ public class User : AggregateRoot
 
     public string Username { get; set; } = null!;
 
-    public string Password { get; set; } = null!;
+    public Password Password { get; set; } = null!;
 
-    public string Email { get; set; } = null!;
+    public Email Email { get; set; } = null!;
 
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -27,7 +28,69 @@ public class User : AggregateRoot
     public List<Token> Tokens { get; set; } = [];
 
 
-    public static ErrorOr<User> New(string username, Password password, Email email, TimeProvider time)
+    public void AddTenant(Tenant tenant, Role role)
+    {
+        var membership = new Membership();
+    }
+
+    public static ErrorOr<User> New(string username, ErrorOr<Email> email, ErrorOr<Password> password, TimeProvider time)
+    {
+        var errors = new List<Error>();
+
+        if (string.IsNullOrWhiteSpace(username))
+        {
+            errors.Add(Error.Validation());
+        }
+
+        if (email.IsError)
+        {
+            errors.AddRange(email.Errors);
+        }
+
+        if (password.IsError)
+        {
+            errors.AddRange(password.Errors);
+        }
+
+        if (errors.Any())
+        {
+            return ErrorOr<User>.From(errors);
+        }
+
+        var id = Guid.NewGuid();
+        var now = time.GetUtcNow();
+
+        var user = new User
+        {
+            Id = id,
+            Username = username,
+            Password = password.Value,
+            Email = email.Value,
+            CreatedAt = now,
+            Memberships =
+            [
+                new Membership
+                {
+                    Role = new Role
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "admin"
+                    },
+                    Tenant = new Tenant
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = "personal",
+                        CreatedBy = id,
+                        CreatedAt = now
+                    }
+                }
+            ]
+        };
+
+        return user;
+    }
+
+    public static ErrorOr<User> New(string username, Email email, Password password, TimeProvider time)
     {
         if (string.IsNullOrWhiteSpace(username))
         {
@@ -38,8 +101,8 @@ public class User : AggregateRoot
         {
             Id = Guid.NewGuid(),
             Username = username,
-            Password = password.Encoded,
-            Email = email.Value,
+            Password = password,
+            Email = email,
             CreatedAt = time.GetUtcNow()
         };
     }
@@ -48,14 +111,14 @@ public class User : AggregateRoot
     {
         // Check old password
 
-        Password = updated.Encoded;
+        Password = updated;
 
         Events.Add(new PasswordChangedEvent(this));
     }
 
     public void ChangeEmail(Email email)
     {
-        Email = email.Value;
+        Email = email;
 
         Events.Add(new EmailChangedEvent(this));
     }

@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Domain.Auth;
 using Domain.Interfaces;
+using Domain.Users;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Options;
@@ -31,13 +32,14 @@ public class TokenGenerator : ITokenGenerator
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        foreach (var ur in user.UserRoles)
-        {
-            if (ur.Role is not null)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, ur.Role.Name));
-            }
-        }
+        // TODO: 
+        // foreach (var ur in user.UserRoles)
+        // {
+        //     if (ur.Role is not null)
+        //     {
+        //         claims.Add(new Claim(ClaimTypes.Role, ur.Role.Name));
+        //     }
+        // }
 
         var access = new JwtSecurityToken(
             _options.Issuer,

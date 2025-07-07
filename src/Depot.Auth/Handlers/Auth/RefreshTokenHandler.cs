@@ -1,15 +1,15 @@
-namespace Depot.Auth.Handlers;
+namespace Depot.Auth.Handlers.Auth;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
-using Domain.Interfaces;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Errors;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Options;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Options;
-using Persistence;
 
 public class RefreshTokenHandler : IMessageHandler<RefreshTokenHandler.Request, ErrorOr<Session>>
 {

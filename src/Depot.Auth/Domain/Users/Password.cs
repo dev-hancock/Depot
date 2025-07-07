@@ -1,7 +1,7 @@
 namespace Depot.Auth.Domain.Users;
 
-using Depot.Auth.Domain.Interfaces;
 using ErrorOr;
+using Interfaces;
 
 public class Password
 {

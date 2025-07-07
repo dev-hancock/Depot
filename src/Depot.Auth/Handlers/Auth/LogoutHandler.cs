@@ -1,14 +1,14 @@
-namespace Depot.Auth.Handlers;
+namespace Depot.Auth.Handlers.Auth;
 
 using System.Reactive;
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
-using Domain.Interfaces;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Errors;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit>>
 {
@@ -44,7 +44,7 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
             return Errors.UserNotFound();
         }
 
-        if (message.Token is null)
+        if (string.IsNullOrWhiteSpace(message.Token))
         {
             _ = user.ClearSessions();
         }

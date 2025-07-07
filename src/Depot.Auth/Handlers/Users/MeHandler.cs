@@ -1,11 +1,12 @@
-namespace Depot.Auth.Handlers;
+namespace Depot.Auth.Handlers.Users;
 
 using System.Reactive.Linq;
-using Domain.Errors;
+using Depot.Auth.Domain.Errors;
+using Depot.Auth.Domain.Users;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
 
 public class MeHandler : IMessageHandler<MeHandler.Request, ErrorOr<User>>
 {
@@ -26,8 +27,6 @@ public class MeHandler : IMessageHandler<MeHandler.Request, ErrorOr<User>>
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
-            .Include(x => x.UserRoles)
-            .ThenInclude(x => x.Role)
             .Where(x => x.Id.Equals(message.UserId))
             .SingleOrDefaultAsync(token);
 

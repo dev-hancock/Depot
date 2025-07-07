@@ -6,9 +6,21 @@ using Users;
 
 public class Tenant
 {
+    private Tenant(string name, User user, DateTimeOffset createdAt)
+    {
+        Name = name;
+        CreatedAt = createdAt;
+        CreatedBy = user.Id;
+    }
+
+    public Tenant()
+    {
+        // TEMP
+    }
+
     public Guid Id { get; set; }
 
-    public Guid OrganisationId { get; set; }
+    public Guid? OrganisationId { get; set; }
 
 
     public string Name { get; set; } = null!;
@@ -24,6 +36,10 @@ public class Tenant
 
     public List<Membership> Memberships { get; set; } = [];
 
+    public static Tenant Personal(User creator, TimeProvider time)
+    {
+        return new Tenant("Personal", creator, time.GetUtcNow());
+    }
 
     public static ErrorOr<Tenant> New(string name, User creator, TimeProvider time)
     {
@@ -32,12 +48,7 @@ public class Tenant
             return Error.Validation();
         }
 
-        return new Tenant
-        {
-            Name = name,
-            CreatedBy = creator.Id,
-            CreatedAt = time.GetUtcNow()
-        };
+        return new Tenant(name, creator, time.GetUtcNow());
     }
 
     public void AddRole(Role role)

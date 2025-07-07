@@ -7,6 +7,7 @@ using Domain.Auth;
 using Domain.Interfaces;
 using Domain.Users;
 using Handlers;
+using Handlers.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;

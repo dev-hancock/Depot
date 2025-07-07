@@ -5,7 +5,7 @@ using System.Reactive.Threading.Tasks;
 using System.Text.Json.Serialization;
 using Common.Models;
 using Extensions;
-using Handlers;
+using Handlers.Auth;
 using Mestra.Abstractions;
 
 public static class LoginEndpoint

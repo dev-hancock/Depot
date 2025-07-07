@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Common.Models;
 using Extensions;
 using Handlers;
+using Handlers.Auth;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,7 @@ public static class RegisterEndpoint
         var result = await mediator
             .Send(new RegisterHandler.Request(
                 request.Username,
+                request.Email,
                 request.Password,
                 request.Roles))
             .ToTask(context.RequestAborted);
@@ -40,6 +42,9 @@ public static class RegisterEndpoint
     {
         [JsonPropertyName("username")]
         public string Username { get; init; } = null!;
+
+        [JsonPropertyName("email")]
+        public string Email { get; init; } = null!;
 
         [JsonPropertyName("password")]
         public string Password { get; init; } = null!;

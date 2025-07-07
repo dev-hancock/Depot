@@ -1,16 +1,17 @@
-namespace Depot.Auth.Handlers;
+namespace Depot.Auth.Handlers.Auth;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
-using Domain.Interfaces;
-using Domain.Users;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Errors;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Tenants;
+using Depot.Auth.Domain.Users;
+using Depot.Auth.Options;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Options;
-using Persistence;
 
 public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<RegisterHandler.Response>>
 {
@@ -53,10 +54,11 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
             return Errors.UserAlreadyExists();
         }
 
-        var result = Password
-            .New(message.Password, _hasher)
-            .Then(password => User
-                .New(message.Username, password, _time));
+        var password = Password.New(message.Password, _hasher);
+
+        var email = Email.New(message.Email);
+
+        var result = User.New(message.Username, email, password, _time);
 
         if (result.IsError)
         {
@@ -65,11 +67,9 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
 
         var user = result.Value;
 
-        var roles = await context.Roles
-            .Where(x => message.Roles.Contains(x.Name))
-            .ToListAsync(token);
+        var tenant = Tenant.Personal(user, _time);
 
-        user.AssignRoles(roles);
+        user.AddTenant(tenant, Role.Admin());
 
         var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
@@ -80,7 +80,7 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
         return new Response(user, session);
     }
 
-    public record Request(string Username, string Password, string[] Roles) : IRequest<ErrorOr<Response>>;
+    public record Request(string Username, string Email, string Password, string[] Roles) : IRequest<ErrorOr<Response>>;
 
     public record Response(User User, Session Session);
 }

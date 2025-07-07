@@ -1,15 +1,15 @@
-namespace Depot.Auth.Handlers;
+namespace Depot.Auth.Handlers.Auth;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
-using Domain.Interfaces;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Errors;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Options;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Options;
-using Persistence;
 
 public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Session>>
 {
@@ -46,8 +46,12 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
-            .Include(x => x.UserRoles)
+            .Include(x => x.Memberships)
             .ThenInclude(x => x.Role)
+            .ThenInclude(x => x.Permissions)
+            .ThenInclude(x => x.Permission)
+            .Include(x => x.Memberships)
+            .ThenInclude(x => x.Tenant)
             .Include(x => x.Tokens)
             .Where(x => x.Username == request.Username)
             .SingleOrDefaultAsync(token);
