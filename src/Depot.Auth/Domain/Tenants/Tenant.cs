@@ -6,11 +6,11 @@ using Users;
 
 public class Tenant
 {
-    private Tenant(string name, User user, DateTimeOffset createdAt)
+    private Tenant(string name, Guid creator, DateTimeOffset createdAt)
     {
         Name = name;
         CreatedAt = createdAt;
-        CreatedBy = user.Id;
+        CreatedBy = creator;
     }
 
     public Tenant()
@@ -36,12 +36,12 @@ public class Tenant
 
     public List<Membership> Memberships { get; set; } = [];
 
-    public static Tenant Personal(User creator, TimeProvider time)
+    public static Tenant Personal(Guid creator, TimeProvider time)
     {
         return new Tenant("Personal", creator, time.GetUtcNow());
     }
 
-    public static ErrorOr<Tenant> New(string name, User creator, TimeProvider time)
+    public static ErrorOr<Tenant> New(string name, Guid creator, TimeProvider time)
     {
         if (string.IsNullOrWhiteSpace(name))
         {

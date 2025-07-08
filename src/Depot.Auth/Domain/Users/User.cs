@@ -201,4 +201,9 @@ public class User : AggregateRoot
 
         return Unit.Default;
     }
+
+    public bool CanCreateOrganisation()
+    {
+        return true;
+    }
 }

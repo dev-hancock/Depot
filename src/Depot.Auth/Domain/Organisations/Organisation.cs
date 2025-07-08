@@ -1,10 +1,9 @@
 namespace Depot.Auth.Domain.Organisations;
 
-using Depot.Auth.Domain.Common;
-using Depot.Auth.Domain.Events;
+using Common;
 using ErrorOr;
+using Events;
 using Tenants;
-using Users;
 
 public class Organisation : AggregateRoot
 {
@@ -20,7 +19,7 @@ public class Organisation : AggregateRoot
     public List<Tenant> Tenants { get; set; } = [];
 
 
-    public static ErrorOr<Organisation> New(string name, User creator, TimeProvider time)
+    public static ErrorOr<Organisation> New(string name, Guid creator, TimeProvider time)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -31,7 +30,7 @@ public class Organisation : AggregateRoot
         {
             Id = Guid.NewGuid(),
             Name = name,
-            CreatedBy = creator.Id,
+            CreatedBy = creator,
             CreatedAt = time.GetUtcNow()
         };
     }
