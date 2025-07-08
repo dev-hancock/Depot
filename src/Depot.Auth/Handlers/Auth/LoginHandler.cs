@@ -43,6 +43,9 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
 
     private async Task<ErrorOr<Session>> Handle(Request request, CancellationToken token)
     {
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Username))
+        {}
+        
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
@@ -53,7 +56,9 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Tokens)
-            .Where(x => x.Username == request.Username)
+            .Where(x =>
+                !string.IsNullOrEmpty(request.Username) && x.Username == request.Username ||
+                !string.IsNullOrEmpty(request.Email) && x.Email.Value == request.Email)
             .SingleOrDefaultAsync(token);
 
         if (user is null || !user.Password.Verify(request.Password, _hasher))
@@ -68,5 +73,5 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
         return session;
     }
 
-    public record Request(string Username, string Password) : IRequest<ErrorOr<Session>>;
+    public record Request(string? Username, string? Email, string Password) : IRequest<ErrorOr<Session>>;
 }

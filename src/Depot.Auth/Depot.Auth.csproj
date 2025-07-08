@@ -42,9 +42,4 @@
     <ItemGroup>
         <ProjectReference Include="..\Depot.Common\Depot.Common.csproj"/>
     </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Handlers\Organisations\"/>
-        <Folder Include="Handlers\Tenants\"/>
-    </ItemGroup>
 </Project>
