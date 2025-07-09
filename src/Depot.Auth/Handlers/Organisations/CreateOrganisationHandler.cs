@@ -1,7 +1,8 @@
 namespace Depot.Auth.Handlers.Organisations;
 
 using System.Reactive.Linq;
-using Domain.Errors;
+using Domain.Common;
+using Domain.Interfaces;
 using Domain.Organisations;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -12,11 +13,14 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
+    private readonly ISlugProvider _slug;
+
     private readonly TimeProvider _time;
 
-    public CreateOrganisationHandler(IDbContextFactory<AuthDbContext> factory, TimeProvider time)
+    public CreateOrganisationHandler(IDbContextFactory<AuthDbContext> factory, ISlugProvider slug, TimeProvider time)
     {
         _factory = factory;
+        _slug = slug;
         _time = time;
     }
 
@@ -36,7 +40,7 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
 
         if (user is null)
         {
-            return Errors.UserNotFound();
+            return Error.NotFound();
         }
 
         if (!user.CanCreateOrganisation())
@@ -44,9 +48,12 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return Error.Unauthorized();
         }
 
+        var slug = Slug.New(message.Name);
+
         var exists = await context.Organisations
             .AsNoTracking()
-            .Where(x => x.Name == message.Name)
+            .Where(x => x.Slug == slug.Value)
+            .Where(x => x.CreatedBy == user.Id)
             .AnyAsync(token);
 
         if (exists)
@@ -54,7 +61,7 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return Error.Conflict();
         }
 
-        var result = Organisation.New(message.Name, user.Id, _time);
+        var result = Organisation.New(message.Name, user.Id, slug, _time);
 
         if (result.IsError)
         {

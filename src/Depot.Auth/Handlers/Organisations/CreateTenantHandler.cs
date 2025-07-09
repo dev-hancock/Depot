@@ -1,6 +1,7 @@
 namespace Depot.Auth.Handlers.Organisations;
 
 using System.Reactive.Linq;
+using Domain.Common;
 using Domain.Tenants;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -39,8 +40,9 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
         }
 
         var organisation = await context.Organisations
-            .AsNoTracking()
-            .Where(x => x.Id == message.OrganisationId)
+            .Include(x => x.Tenants)
+            .Where(x => x.Slug == message.Organisation)
+            .Where(x => x.CreatedBy == user.Id)
             .FirstOrDefaultAsync(token);
 
         if (organisation is null)
@@ -48,19 +50,16 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
             return Error.NotFound();
         }
 
-        if (organisation.CreatedBy != message.UserId)
-        {
-            return Error.Unauthorized();
-        }
+        var slug = Slug.New(message.Name);
 
-        var result = Tenant.New(message.Name, user.Id, _time);
+        var result = Tenant.New(message.Name, slug, user.Id, _time);
 
         if (result.IsError)
         {
             return result;
         }
-
-        context.Tenants.Add(result.Value);
+        
+        organisation.AddTenant(result.Value);
 
         await context.SaveChangesAsync(token);
 
@@ -69,7 +68,7 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
 
     public sealed record Request(
         Guid UserId,
-        Guid OrganisationId,
+        string Organisation,
         string Name
     ) : IRequest<ErrorOr<Tenant>>;
 }
