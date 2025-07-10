@@ -77,7 +77,7 @@ public static class EndpointExtensions
         api.MapPatch("/tenants/active", SetActiveTenantEndpoint.Handle)
             .WithDescription("");
 
-        api.MapGet("/organisations", QueryOrganisationsEndpoint.Handle)
+        api.MapGet("/organisations", GetOrganisationEndpoint.Handle)
             .WithDescription("Get organisations user belongs to");
 
         return api;

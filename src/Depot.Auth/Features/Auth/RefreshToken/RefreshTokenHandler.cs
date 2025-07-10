@@ -1,17 +1,18 @@
-namespace Depot.Auth.Handlers.Auth;
+namespace Depot.Auth.Features.Auth.RefreshToken;
 
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Errors;
-using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Options;
-using Depot.Auth.Persistence;
+using Domain.Auth;
+using Domain.Errors;
+using Domain.Interfaces;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Middleware;
+using Options;
+using Persistence;
 
-public class RefreshTokenHandler : IMessageHandler<RefreshTokenHandler.Request, ErrorOr<Session>>
+public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<RefreshTokenResponse>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -25,10 +26,13 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenHandler.Request, 
 
     private readonly ITokenGenerator _tokens;
 
-    public RefreshTokenHandler(IDbContextFactory<AuthDbContext> factory, IOptions<JwtOptions> options, ISecureRandom random,
-        ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens)
+    private readonly IUserContext _user;
+
+    public RefreshTokenHandler(IDbContextFactory<AuthDbContext> factory, IOptions<JwtOptions> options, IUserContext user,
+        ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens)
     {
         _factory = factory;
+        _user = user;
         _random = random;
         _hasher = hasher;
         _time = time;
@@ -36,18 +40,18 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenHandler.Request, 
         _options = options.Value;
     }
 
-    public IObservable<ErrorOr<Session>> Handle(Request message)
+    public IObservable<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<Session>> Handle(Request message, CancellationToken token)
+    private async Task<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message, CancellationToken token)
     {
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
             .Include(x => x.Tokens)
-            .Where(x => x.Id == message.UserId)
+            .Where(x => x.Id == _user.UserId)
             .SingleOrDefaultAsync(token);
 
         if (user is null)
@@ -56,19 +60,24 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenHandler.Request, 
         }
 
         var result = RefreshToken
-            .Parse(message.Token)
+            .Parse(message.RefreshToken)
             .Then(refresh => user
                 .RefreshSession(refresh, _random, _hasher, _time, _tokens, _options.RefreshTokenLifetime));
 
         if (result.IsError)
         {
-            return ErrorOr<Session>.From(result.Errors);
+            return ErrorOr<RefreshTokenResponse>.From(result.Errors);
         }
+
+        var session = result.Value;
 
         await context.SaveChangesAsync(token);
 
-        return result.Value;
+        return new RefreshTokenResponse
+        {
+            AccessToken = session.AccessToken.Value,
+            RefreshToken = session.RefreshToken.Combined,
+            ExpiresAt = session.ExpiresAt
+        };
     }
-
-    public sealed record Request(Guid UserId, string Token) : IRequest<ErrorOr<Session>>;
 }

@@ -1,7 +1,6 @@
-namespace Depot.Auth.Handlers.Organisations;
+namespace Depot.Auth.Features.Organisations;
 
 using System.Reactive.Linq;
-using Domain.Common;
 using Domain.Interfaces;
 using Domain.Organisations;
 using ErrorOr;
@@ -48,11 +47,9 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return Error.Unauthorized();
         }
 
-        var slug = Slug.New(message.Name);
-
         var exists = await context.Organisations
             .AsNoTracking()
-            .Where(x => x.Slug == slug.Value)
+            .Where(x => x.Slug == message.Name)
             .Where(x => x.CreatedBy == user.Id)
             .AnyAsync(token);
 
@@ -61,11 +58,11 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return Error.Conflict();
         }
 
-        var result = Organisation.New(message.Name, user.Id, slug, _time);
+        var result = Organisation.New(message.Name, user.Id, _time);
 
         if (result.IsError)
         {
-            return ErrorOr<Organisation>.From(result.Errors);
+            return result;
         }
 
         context.Organisations.Add(result.Value);

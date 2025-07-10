@@ -1,7 +1,6 @@
-namespace Depot.Auth.Handlers.Organisations;
+namespace Depot.Auth.Features.Organisations;
 
 using System.Reactive.Linq;
-using Domain.Common;
 using Domain.Tenants;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -50,16 +49,12 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
             return Error.NotFound();
         }
 
-        var slug = Slug.New(message.Name);
-
-        var result = Tenant.New(message.Name, slug, user.Id, _time);
+        var result = organisation.AddTenant(message.Name, user.Id, _time);
 
         if (result.IsError)
         {
             return result;
         }
-        
-        organisation.AddTenant(result.Value);
 
         await context.SaveChangesAsync(token);
 

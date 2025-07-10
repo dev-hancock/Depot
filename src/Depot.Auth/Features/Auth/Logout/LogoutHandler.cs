@@ -1,16 +1,16 @@
-namespace Depot.Auth.Handlers.Auth;
+namespace Depot.Auth.Features.Auth.Logout;
 
-using System.Reactive;
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Errors;
-using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Persistence;
+using Domain.Auth;
+using Domain.Errors;
+using Domain.Interfaces;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
+using Middleware;
+using Persistence;
 
-public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit>>
+public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -18,25 +18,28 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
 
     private readonly TimeProvider _time;
 
-    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, ISecretHasher hasher, TimeProvider time)
+    private readonly IUserContext _user;
+
+    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, IUserContext user, ISecretHasher hasher, TimeProvider time)
     {
         _factory = factory;
+        _user = user;
         _hasher = hasher;
         _time = time;
     }
 
-    public IObservable<ErrorOr<Unit>> Handle(Request message)
+    public IObservable<ErrorOr<Success>> Handle(LogoutCommand message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<Unit>> Handle(Request message, CancellationToken token)
+    private async Task<ErrorOr<Success>> Handle(LogoutCommand message, CancellationToken token)
     {
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
             .Include(x => x.Tokens)
-            .Where(x => x.Id == message.UserId)
+            .Where(x => x.Id == _user.UserId)
             .SingleOrDefaultAsync(token);
 
         if (user is null)
@@ -57,14 +60,12 @@ public class LogoutHandler : IMessageHandler<LogoutHandler.Request, ErrorOr<Unit
 
             if (result.IsError)
             {
-                return result;
+                return ErrorOr<Success>.From(result.Errors);
             }
         }
 
         await context.SaveChangesAsync(token);
 
-        return Unit.Default;
+        return Result.Success;
     }
-
-    public sealed record Request(Guid UserId, string? Token = null) : IRequest<ErrorOr<Unit>>;
 }

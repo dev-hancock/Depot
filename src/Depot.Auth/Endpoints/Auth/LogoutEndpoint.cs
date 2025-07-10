@@ -1,37 +1,14 @@
 namespace Depot.Auth.Endpoints.Auth;
 
 using System.Reactive.Threading.Tasks;
-using System.Security.Claims;
-using System.Text.Json.Serialization;
 using Extensions;
-using Handlers.Auth;
+using Features.Auth.Logout;
 using Mestra.Abstractions;
 
 public static class LogoutEndpoint
 {
-    public async static Task<IResult> Handle(LogoutRequest request, IMediator mediator, HttpContext context)
+    public static Task<IResult> Handle(LogoutCommand request, IMediator mediator, HttpContext context)
     {
-        var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (id is null)
-        {
-            return Results.Unauthorized();
-        }
-
-        var result = await mediator
-            .Send(new LogoutHandler.Request(
-                Guid.Parse(id),
-                request.RefreshToken))
-            .ToTask(context.RequestAborted);
-
-        return result.Match(
-            _ => Results.NoContent(),
-            errors => errors.ToResult());
-    }
-
-    public sealed class LogoutRequest
-    {
-        [JsonPropertyName("refresh_token")]
-        public string? RefreshToken { get; set; }
+        return mediator.Send(request).ToTask(context.RequestAborted).ToOkAsync();
     }
 }

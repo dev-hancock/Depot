@@ -55,6 +55,9 @@ public class Program
 
         services.AddSingleton<ITokenGenerator, TokenGenerator>();
 
+        services.AddScoped<IUserContext, UserContext>();
+        services.AddScoped<ITenantContext, TenantContext>();
+
         services.AddSingleton(TimeProvider.System);
 
         services.AddAuthorization();
@@ -77,6 +80,8 @@ public class Program
         app.UseHttpsRedirection();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseMiddleware<UserMiddleware>();
+        app.UseMiddleware<TenantMiddleware>();
 
         app.MapEndpoints();
         app.MapGet("/ping", () => "pong");

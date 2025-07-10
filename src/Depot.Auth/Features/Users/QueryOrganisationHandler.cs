@@ -1,6 +1,5 @@
-namespace Depot.Auth.Handlers.Users;
+namespace Depot.Auth.Features.Users;
 
 public class QueryOrganisationHandler
 {
-    
 }

@@ -45,3 +45,11 @@ public class Role
         Permissions = permissions;
     }
 }
+
+public static class Roles
+{
+    public static Role Admin()
+    {
+        return Role.New("Admin");
+    }
+}

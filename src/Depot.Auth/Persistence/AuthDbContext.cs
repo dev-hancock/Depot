@@ -62,7 +62,9 @@ public class AuthDbContext : DbContext
             e.Property(o => o.Id).ValueGeneratedNever();
 
             e.Property(o => o.Name).HasMaxLength(128).IsRequired();
-            e.HasIndex(o => o.Name).IsUnique();
+            e.Property(o => o.Slug).HasMaxLength(128).IsRequired();
+
+            e.HasIndex(o => o.Slug).IsUnique();
         });
 
         builder.Entity<Tenant>(e =>
@@ -77,7 +79,7 @@ public class AuthDbContext : DbContext
             e.HasIndex(t => new
             {
                 t.OrganisationId,
-                t.Name
+                t.Slug
             }).IsUnique();
 
             e.HasOne(t => t.Organisation)

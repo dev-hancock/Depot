@@ -1,19 +1,18 @@
-namespace Depot.Auth.Handlers.Auth;
+namespace Depot.Auth.Features.Auth.Register;
 
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Errors;
-using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Domain.Tenants;
-using Depot.Auth.Domain.Users;
-using Depot.Auth.Options;
-using Depot.Auth.Persistence;
+using Domain.Errors;
+using Domain.Interfaces;
+using Domain.Tenants;
+using Domain.Users;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Options;
+using Persistence;
 
-public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<RegisterHandler.Response>>
+public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<RegisterResponse>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -38,12 +37,12 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
         _tokens = tokens;
     }
 
-    public IObservable<ErrorOr<Response>> Handle(Request message)
+    public IObservable<ErrorOr<RegisterResponse>> Handle(RegisterCommand message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<Response>> Handle(Request message, CancellationToken token)
+    private async Task<ErrorOr<RegisterResponse>> Handle(RegisterCommand message, CancellationToken token)
     {
         await using var context = await _factory.CreateDbContextAsync(token);
 
@@ -62,14 +61,14 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
 
         if (result.IsError)
         {
-            return ErrorOr<Response>.From(result.Errors);
+            return ErrorOr<RegisterResponse>.From(result.Errors);
         }
 
         var user = result.Value;
 
-        var tenant = Tenant.Personal(user, _time);
+        var tenant = Tenants.Personal(user.Id, _time);
 
-        user.AddTenant(tenant, Role.Admin());
+        user.AddTenant(tenant, Roles.Admin());
 
         var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
 
@@ -77,10 +76,11 @@ public class RegisterHandler : IMessageHandler<RegisterHandler.Request, ErrorOr<
 
         await context.SaveChangesAsync(token);
 
-        return new Response(user, session);
+        return new RegisterResponse
+        {
+            AccessToken = session.AccessToken.Value,
+            RefreshToken = session.RefreshToken.Combined,
+            ExpiresAt = session.ExpiresAt
+        };
     }
-
-    public record Request(string Username, string Email, string Password, string[] Roles) : IRequest<ErrorOr<Response>>;
-
-    public record Response(User User, Session Session);
 }

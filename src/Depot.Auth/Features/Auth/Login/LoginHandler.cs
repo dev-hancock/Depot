@@ -1,17 +1,16 @@
-namespace Depot.Auth.Handlers.Auth;
+namespace Depot.Auth.Features.Auth.Login;
 
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Errors;
-using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Options;
-using Depot.Auth.Persistence;
+using Domain.Errors;
+using Domain.Interfaces;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Options;
+using Persistence;
 
-public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Session>>
+public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -36,16 +35,17 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
         _tokens = tokens;
     }
 
-    public IObservable<ErrorOr<Session>> Handle(Request message)
+    public IObservable<ErrorOr<LoginResponse>> Handle(LoginCommand message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<Session>> Handle(Request request, CancellationToken token)
+    private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Username))
-        {}
-        
+        if (string.IsNullOrEmpty(message.Email) || string.IsNullOrEmpty(message.Username))
+        {
+        }
+
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
@@ -57,11 +57,11 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Tokens)
             .Where(x =>
-                !string.IsNullOrEmpty(request.Username) && x.Username == request.Username ||
-                !string.IsNullOrEmpty(request.Email) && x.Email.Value == request.Email)
+                !string.IsNullOrEmpty(message.Username) && x.Username == message.Username ||
+                !string.IsNullOrEmpty(message.Email) && x.Email.Value == message.Email)
             .SingleOrDefaultAsync(token);
 
-        if (user is null || !user.Password.Verify(request.Password, _hasher))
+        if (user is null || !user.Password.Verify(message.Password, _hasher))
         {
             return Errors.UserNotFound();
         }
@@ -70,8 +70,11 @@ public class LoginHandler : IMessageHandler<LoginHandler.Request, ErrorOr<Sessio
 
         await context.SaveChangesAsync(token);
 
-        return session;
+        return new LoginResponse
+        {
+            AccessToken = session.AccessToken.Value,
+            RefreshToken = session.RefreshToken.Combined,
+            ExpiresAt = session.ExpiresAt
+        };
     }
-
-    public record Request(string? Username, string? Email, string Password) : IRequest<ErrorOr<Session>>;
 }

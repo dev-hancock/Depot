@@ -4,6 +4,11 @@ using ErrorOr;
 
 public static class ResultsExtensions
 {
+    public static IResult ToProblem(this List<Error> errors)
+    {
+        return errors.ToResult();
+    }
+
     public static IResult ToResult(this List<Error> errors)
     {
         if (errors.Count == 0)
