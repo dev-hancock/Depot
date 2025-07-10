@@ -42,8 +42,9 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken token)
     {
-        if (string.IsNullOrEmpty(message.Email) || string.IsNullOrEmpty(message.Username))
+        if (string.IsNullOrEmpty(message.Email) && string.IsNullOrEmpty(message.Username))
         {
+            return Error.Validation();
         }
 
         await using var context = await _factory.CreateDbContextAsync(token);
@@ -56,9 +57,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Tokens)
-            .Where(x =>
-                !string.IsNullOrEmpty(message.Username) && x.Username == message.Username ||
-                !string.IsNullOrEmpty(message.Email) && x.Email.Value == message.Email)
+            .Where(x => x.Username == message.Username || x.Email == message.Email)
             .SingleOrDefaultAsync(token);
 
         if (user is null || !user.Password.Verify(message.Password, _hasher))

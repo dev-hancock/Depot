@@ -1,12 +1,14 @@
 namespace Depot.Auth.Persistence;
 
+using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using Domain.Auth;
+using Domain.Common;
 using Domain.Organisations;
 using Domain.Tenants;
 using Domain.Users;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using User = Domain.Users.User;
+using Services;
 
 public class AuthDbContext : DbContext
 {
@@ -30,8 +32,39 @@ public class AuthDbContext : DbContext
 
     public DbSet<Token> Tokens => Set<Token>();
 
+    public override async Task<int> SaveChangesAsync(CancellationToken token = default)
+    {
+        var entities = ChangeTracker
+            .Entries<AggregateRoot>()
+            .Select(x => x.Entity)
+            .ToList();
+
+        var result = await base.SaveChangesAsync(token);
+
+        foreach (var entity in entities)
+        {
+            await entity.Events
+                .Select(x => Mediator.Instance.Publish(x))
+                .ToObservable()
+                .Merge()
+                .ToTask(token);
+
+            entity.Events.Clear();
+        }
+
+        return result;
+    }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        foreach (var type in builder.Model.GetEntityTypes())
+        {
+            if (typeof(AggregateRoot).IsAssignableFrom(type.ClrType))
+            {
+                builder.Entity(type.ClrType).Ignore(nameof(AggregateRoot.Events));
+            }
+        }
+
         builder.Entity<User>(e =>
         {
             e.ToTable("users");
@@ -40,17 +73,20 @@ public class AuthDbContext : DbContext
             e.Property(u => u.Id).ValueGeneratedNever();
 
             e.Property(u => u.Username).HasMaxLength(64).IsRequired();
-            e.HasIndex(u => u.Username).IsUnique();
-
-            e.Property(u => u.Email).HasMaxLength(256).IsRequired();
-            e.HasIndex(u => u.Email).IsUnique();
-
-            e.Property(x => x.Password).HasConversion(
-                    x => x,
-                    x => x)
+            e.Property(o => o.Email)
+                .HasConversion(
+                    x => x.Value,
+                    x => Email.Create(x))
+                .HasMaxLength(128)
+                .IsRequired();
+            e.Property(x => x.Password)
+                .HasConversion(
+                    x => x.Encoded,
+                    x => Password.Create(x))
                 .HasMaxLength(200)
                 .IsRequired();
 
+            e.HasIndex(u => u.Email).IsUnique();
             e.HasIndex(x => x.Username).IsUnique();
         });
 
@@ -63,6 +99,12 @@ public class AuthDbContext : DbContext
 
             e.Property(o => o.Name).HasMaxLength(128).IsRequired();
             e.Property(o => o.Slug).HasMaxLength(128).IsRequired();
+            e.Property(o => o.Slug)
+                .HasConversion(
+                    x => x.Value,
+                    x => Slug.Create(x))
+                .HasMaxLength(128)
+                .IsRequired();
 
             e.HasIndex(o => o.Slug).IsUnique();
         });
@@ -75,6 +117,12 @@ public class AuthDbContext : DbContext
             e.Property(t => t.Id).ValueGeneratedNever();
 
             e.Property(t => t.Name).HasMaxLength(128).IsRequired();
+            e.Property(o => o.Slug)
+                .HasConversion(
+                    x => x.Value,
+                    x => Slug.Create(x))
+                .HasMaxLength(128)
+                .IsRequired();
 
             e.HasIndex(t => new
             {
@@ -90,7 +138,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Role>(e =>
         {
-            ((EntityTypeBuilder)e).ToTable("roles");
+            e.ToTable("roles");
 
             e.HasKey(r => r.Id);
             e.Property(r => r.Id).ValueGeneratedNever();

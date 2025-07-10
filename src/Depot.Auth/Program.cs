@@ -3,6 +3,7 @@
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
+using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
@@ -32,6 +33,8 @@ public class Program
         ConfigureServices(builder);
 
         var app = builder.Build();
+
+        Mediator.Instance = app.Services.GetRequiredService<IMediator>();
 
         Configure(app);
 

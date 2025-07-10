@@ -31,4 +31,9 @@ public class Password
     {
         return hasher.Verify(Encoded, secret);
     }
+
+    public static Password Create(string value)
+    {
+        return new Password(value);
+    }
 }

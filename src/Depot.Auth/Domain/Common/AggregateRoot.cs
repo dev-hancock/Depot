@@ -1,6 +1,8 @@
 namespace Depot.Auth.Domain.Common;
 
-public interface IEvent
+using Mestra.Abstractions;
+
+public interface IEvent : INotification
 {
 }
 

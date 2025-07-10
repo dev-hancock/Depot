@@ -1,7 +1,6 @@
 namespace Depot.Auth.Features.Organisations;
 
 using System.Reactive.Linq;
-using Domain.Interfaces;
 using Domain.Organisations;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -12,14 +11,11 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
-    private readonly ISlugProvider _slug;
-
     private readonly TimeProvider _time;
 
-    public CreateOrganisationHandler(IDbContextFactory<AuthDbContext> factory, ISlugProvider slug, TimeProvider time)
+    public CreateOrganisationHandler(IDbContextFactory<AuthDbContext> factory, TimeProvider time)
     {
         _factory = factory;
-        _slug = slug;
         _time = time;
     }
 

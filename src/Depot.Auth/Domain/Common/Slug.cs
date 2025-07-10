@@ -6,7 +6,7 @@ public sealed record Slug : IComparable<Slug>
 {
     private Slug(string value)
     {
-        Value = Regex.Replace(value.ToLowerInvariant().Trim(), "[^a-z0-9]+", "-").Trim('-');
+        Value = value;
     }
 
     public string Value { get; }
@@ -26,9 +26,14 @@ public sealed record Slug : IComparable<Slug>
         return string.Compare(Value, other.Value, StringComparison.Ordinal);
     }
 
+    public static Slug Create(string value)
+    {
+        return new Slug(Regex.Replace(value.ToLowerInvariant().Trim(), "[^a-z0-9]+", "-").Trim('-'));
+    }
+
     public static implicit operator Slug(string slug)
     {
-        return new Slug(slug);
+        return Create(slug);
     }
 
     public static implicit operator string(Slug slug)

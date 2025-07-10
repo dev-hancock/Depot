@@ -1,31 +1,10 @@
 namespace Depot.Auth.Endpoints;
 
-using Auth;
 using Organisations;
 using Tenants;
-using Users;
 
 public static class EndpointExtensions
 {
-    public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder routes)
-    {
-        routes.MapPost("/login", LoginEndpoint.Handle)
-            .WithDescription("")
-            .AllowAnonymous();
-
-        routes.MapDelete("/session", LogoutEndpoint.Handle)
-            .WithDescription("");
-
-        routes.MapPost("/session/refresh", RefreshTokenEndpoint.Handle)
-            .WithDescription("");
-
-        routes.MapPost("/register", RegisterEndpoint.Handle)
-            .WithDescription("")
-            .AllowAnonymous();
-
-        return routes;
-    }
-
     public static IEndpointRouteBuilder MapOrganisationsEndpoints(this IEndpointRouteBuilder routes)
     {
         var api = routes.MapGroup("/organisations").WithTags("organisations");
@@ -61,37 +40,15 @@ public static class EndpointExtensions
         return api;
     }
 
-    public static IEndpointRouteBuilder MapUserEndpoints(this IEndpointRouteBuilder routes)
-    {
-        var api = routes.MapGroup("/user").WithTags("user");
-
-        api.MapGet("/me", MeEndpoint.Handle)
-            .WithDescription("");
-
-        api.MapPatch("/password", ChangePasswordEndpoint.Handle)
-            .WithDescription("");
-
-        api.MapGet("/tenants", QueryTenantsEndpoint.Handle)
-            .WithDescription("");
-
-        api.MapPatch("/tenants/active", SetActiveTenantEndpoint.Handle)
-            .WithDescription("");
-
-        api.MapGet("/organisations", GetOrganisationEndpoint.Handle)
-            .WithDescription("Get organisations user belongs to");
-
-        return api;
-    }
-
     public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
     {
-        var api = routes.MapGroup("api").RequireAuthorization();
+        var api = routes.MapGroup("api").WithTags("Api").RequireAuthorization();
 
         api.MapAuthEndpoints();
 
-        api.MapOrganisationsEndpoints();
-
-        api.MapTenantsEndpoints();
+        // api.MapOrganisationsEndpoints();
+        //
+        // api.MapTenantsEndpoints();
 
         api.MapUserEndpoints();
 

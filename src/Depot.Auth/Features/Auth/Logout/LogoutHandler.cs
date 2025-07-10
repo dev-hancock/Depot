@@ -55,8 +55,7 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
         {
             var result = RefreshToken
                 .Parse(message.Token)
-                .Then(x => user
-                    .RevokeSession(x, _hasher, _time));
+                .Then(x => user.RevokeSession(x, _hasher, _time));
 
             if (result.IsError)
             {
