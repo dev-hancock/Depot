@@ -6,7 +6,7 @@ public interface IEvent : INotification
 {
 }
 
-public abstract class AggregateRoot
+public abstract class Entity
 {
     // TODO: Placeholder
     public List<IEvent> Events { get; set; } = [];

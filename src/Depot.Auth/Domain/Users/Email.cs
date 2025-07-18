@@ -1,8 +1,6 @@
 namespace Depot.Auth.Domain.Users;
 
-using ErrorOr;
-
-public class Email
+public record Email
 {
     private Email(string value)
     {
@@ -10,11 +8,6 @@ public class Email
     }
 
     public string Value { get; }
-
-    public static ErrorOr<Email> New(string value)
-    {
-        return new Email(value);
-    }
 
     public static Email Create(string value)
     {
@@ -26,8 +19,8 @@ public class Email
         return email.Value;
     }
 
-    public static implicit operator Email(string value)
+    public override string ToString()
     {
-        return Create(value);
+        return Value;
     }
 }

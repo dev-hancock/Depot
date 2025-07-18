@@ -35,7 +35,7 @@ public class AuthDbContext : DbContext
     public override async Task<int> SaveChangesAsync(CancellationToken token = default)
     {
         var entities = ChangeTracker
-            .Entries<AggregateRoot>()
+            .Entries<Entity>()
             .Select(x => x.Entity)
             .ToList();
 
@@ -59,9 +59,9 @@ public class AuthDbContext : DbContext
     {
         foreach (var type in builder.Model.GetEntityTypes())
         {
-            if (typeof(AggregateRoot).IsAssignableFrom(type.ClrType))
+            if (typeof(Entity).IsAssignableFrom(type.ClrType))
             {
-                builder.Entity(type.ClrType).Ignore(nameof(AggregateRoot.Events));
+                builder.Entity(type.ClrType).Ignore(nameof(Entity.Events));
             }
         }
 

@@ -1,13 +1,12 @@
 namespace Depot.Auth.Features.Auth.Login;
 
 using System.Reactive.Linq;
+using Domain.Auth;
 using Domain.Errors;
 using Domain.Interfaces;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Options;
 using Persistence;
 
 public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>>
@@ -16,22 +15,19 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private readonly ISecretHasher _hasher;
 
-    private readonly JwtOptions _options;
-
-    private readonly ISecureRandom _random;
-
-    private readonly TimeProvider _time;
+    private readonly ITimeProvider _time;
 
     private readonly ITokenGenerator _tokens;
 
-    public LoginHandler(IOptions<JwtOptions> options, IDbContextFactory<AuthDbContext> factory, TimeProvider time,
-        ISecretHasher hasher, ISecureRandom random, ITokenGenerator tokens)
+    public LoginHandler(
+        IDbContextFactory<AuthDbContext> factory,
+        ITimeProvider time,
+        ISecretHasher hasher,
+        ITokenGenerator tokens)
     {
-        _options = options.Value;
         _factory = factory;
         _time = time;
         _hasher = hasher;
-        _random = random;
         _tokens = tokens;
     }
 
@@ -40,14 +36,9 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken token)
+    private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(message.Email) && string.IsNullOrEmpty(message.Username))
-        {
-            return Error.Validation();
-        }
-
-        await using var context = await _factory.CreateDbContextAsync(token);
+        await using var context = await _factory.CreateDbContextAsync(ct);
 
         var user = await context.Users
             .Include(x => x.Memberships)
@@ -56,24 +47,30 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .ThenInclude(x => x.Permission)
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
-            .Include(x => x.Tokens)
+            .Include(x => x.Sessions)
+            .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Username == message.Username || x.Email == message.Email)
-            .SingleOrDefaultAsync(token);
+            .SingleOrDefaultAsync(ct);
 
-        if (user is null || !user.Password.Verify(message.Password, _hasher))
+        if (user is null || !_hasher.Verify(user.Password, message.Password))
         {
             return Errors.UserNotFound();
         }
 
-        var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
+        var now = _time.UtcNow;
 
-        await context.SaveChangesAsync(token);
+        var session = Session.Create(user.Id);
+
+        session.Refresh(_tokens.GenerateRefreshToken(now));
+
+        user.AddSession(session);
+
+        await context.SaveChangesAsync(ct);
 
         return new LoginResponse
         {
-            AccessToken = session.AccessToken.Value,
-            RefreshToken = session.RefreshToken.Combined,
-            ExpiresAt = session.ExpiresAt
+            AccessToken = _tokens.GenerateAccessToken(user, now),
+            RefreshToken = session.RefreshToken
         };
     }
 }

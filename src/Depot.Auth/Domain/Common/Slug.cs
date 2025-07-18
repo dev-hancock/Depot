@@ -1,43 +1,42 @@
 namespace Depot.Auth.Domain.Common;
 
 using System.Text.RegularExpressions;
+using ErrorOr;
 
-public sealed record Slug : IComparable<Slug>
+public sealed partial record Slug
 {
     private Slug(string value)
     {
-        Value = value;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("Value cannot be null or whitespace.", nameof(value));
+        }
+
+        Value = SlugRegex().Replace(value.ToLowerInvariant().Trim(), "-").Trim('-');
     }
 
     public string Value { get; }
 
-    public int CompareTo(Slug? other)
-    {
-        if (ReferenceEquals(this, other))
-        {
-            return 0;
-        }
-
-        if (other is null)
-        {
-            return 1;
-        }
-
-        return string.Compare(Value, other.Value, StringComparison.Ordinal);
-    }
-
     public static Slug Create(string value)
     {
-        return new Slug(Regex.Replace(value.ToLowerInvariant().Trim(), "[^a-z0-9]+", "-").Trim('-'));
+        return new Slug(value);
     }
 
-    public static implicit operator Slug(string slug)
+    public static ErrorOr<Slug> TryCreate(string value)
     {
-        return Create(slug);
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Error.Validation();
+        }
+
+        return new Slug(value);
     }
 
-    public static implicit operator string(Slug slug)
+    public override string ToString()
     {
-        return slug.Value;
+        return Value;
     }
+
+    [GeneratedRegex("[^a-z0-9]+")]
+    private static partial Regex SlugRegex();
 }

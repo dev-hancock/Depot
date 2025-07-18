@@ -2,6 +2,7 @@ namespace Depot.Auth.Services;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using Domain.Auth;
 using Domain.Interfaces;
 using Domain.Users;
@@ -23,7 +24,7 @@ public class TokenGenerator : ITokenGenerator
         _signing = new SigningCredentials(key.GetSecurityKey(_options.KeyPath), SecurityAlgorithms.EcdsaSha256);
     }
 
-    public AccessToken CreateAccessToken(User user, DateTime now)
+    public AccessToken GenerateAccessToken(User user, DateTime now)
     {
         var claims = new List<Claim>
         {
@@ -41,14 +42,27 @@ public class TokenGenerator : ITokenGenerator
         //     }
         // }
 
+        var expiresAt = now + _options.AccessTokenLifetime;
+
         var access = new JwtSecurityToken(
             _options.Issuer,
             _options.Audience,
             claims,
             now,
-            now + _options.AccessTokenLifetime,
+            expiresAt,
             _signing);
 
-        return AccessToken.New(_handler.WriteToken(access));
+        var token = _handler.WriteToken(access);
+
+        return AccessToken.Create(token, expiresAt);
+    }
+
+    public RefreshToken GenerateRefreshToken(User user, DateTime now)
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+
+        var encoded = Base64UrlEncoder.Encode(bytes);
+
+        return RefreshToken.Create(encoded);
     }
 }

@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="FluentValidation" Version="12.0.0"/>
         <PackageReference Include="Mestra.Extensions.Microsoft.DependencyInjection" Version="1.1.1"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6"/>
         <PackageReference Include="ErrorOr" Version="2.0.1"/>
@@ -41,5 +42,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Depot.Common\Depot.Common.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Folder Include="Domain\Auth\Events\"/>
     </ItemGroup>
 </Project>

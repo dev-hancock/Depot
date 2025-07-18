@@ -5,7 +5,7 @@ using ErrorOr;
 using Events;
 using Tenants;
 
-public class Organisation : AggregateRoot
+public class Organisation : Entity
 {
     public Guid Id { get; set; }
 

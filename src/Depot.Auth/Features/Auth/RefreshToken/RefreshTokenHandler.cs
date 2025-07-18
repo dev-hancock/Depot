@@ -7,37 +7,29 @@ using Domain.Interfaces;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Middleware;
-using Options;
 using Persistence;
 
 public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<RefreshTokenResponse>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
-    private readonly ISecretHasher _hasher;
-
-    private readonly JwtOptions _options;
-
-    private readonly ISecureRandom _random;
-
-    private readonly TimeProvider _time;
+    private readonly ITimeProvider _time;
 
     private readonly ITokenGenerator _tokens;
 
     private readonly IUserContext _user;
 
-    public RefreshTokenHandler(IDbContextFactory<AuthDbContext> factory, IOptions<JwtOptions> options, IUserContext user,
-        ISecureRandom random, ISecretHasher hasher, TimeProvider time, ITokenGenerator tokens)
+    public RefreshTokenHandler(
+        IDbContextFactory<AuthDbContext> factory,
+        IUserContext user,
+        ITimeProvider time,
+        ITokenGenerator tokens)
     {
         _factory = factory;
         _user = user;
-        _random = random;
-        _hasher = hasher;
         _time = time;
         _tokens = tokens;
-        _options = options.Value;
     }
 
     public IObservable<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message)
@@ -50,7 +42,8 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
-            .Include(x => x.Tokens)
+            .Include(x => x.Sessions)
+            .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Id == _user.UserId)
             .SingleOrDefaultAsync(token);
 
@@ -59,25 +52,23 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
             return Errors.UserNotFound();
         }
 
-        var result = RefreshToken
-            .Parse(message.RefreshToken)
-            .Then(refresh => user
-                .RefreshSession(refresh, _random, _hasher, _time, _tokens, _options.RefreshTokenLifetime));
+        var session = user.FindSession(message.RefreshToken);
 
-        if (result.IsError)
+        if (session is null)
         {
-            return ErrorOr<RefreshTokenResponse>.From(result.Errors);
+            return Error.Unauthorized();
         }
 
-        var session = result.Value;
+        var now = _time.UtcNow;
+
+        session.Refresh(_tokens.GenerateRefreshToken(now));
 
         await context.SaveChangesAsync(token);
 
         return new RefreshTokenResponse
         {
-            AccessToken = session.AccessToken.Value,
-            RefreshToken = session.RefreshToken.Combined,
-            ExpiresAt = session.ExpiresAt
+            AccessToken = _tokens.GenerateAccessToken(user, now),
+            RefreshToken = session.RefreshToken
         };
     }
 }

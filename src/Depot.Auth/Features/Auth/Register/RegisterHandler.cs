@@ -1,15 +1,13 @@
 namespace Depot.Auth.Features.Auth.Register;
 
 using System.Reactive.Linq;
+using Domain.Auth;
 using Domain.Errors;
 using Domain.Interfaces;
-using Domain.Tenants;
 using Domain.Users;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Options;
 using Persistence;
 
 public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<RegisterResponse>>
@@ -18,22 +16,19 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
     private readonly ISecretHasher _hasher;
 
-    private readonly JwtOptions _options;
-
-    private readonly ISecureRandom _random;
-
-    private readonly TimeProvider _time;
+    private readonly ITimeProvider _time;
 
     private readonly ITokenGenerator _tokens;
 
-    public RegisterHandler(IOptions<JwtOptions> options, IDbContextFactory<AuthDbContext> factory, TimeProvider time,
-        ISecretHasher hasher, ISecureRandom random, ITokenGenerator tokens)
+    public RegisterHandler(
+        IDbContextFactory<AuthDbContext> factory,
+        ITimeProvider time,
+        ISecretHasher hasher,
+        ITokenGenerator tokens)
     {
-        _options = options.Value;
         _factory = factory;
         _time = time;
         _hasher = hasher;
-        _random = random;
         _tokens = tokens;
     }
 
@@ -44,33 +39,31 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
     private async Task<ErrorOr<RegisterResponse>> Handle(RegisterCommand message, CancellationToken token)
     {
+        // TODO: Validate requests
+
         await using var context = await _factory.CreateDbContextAsync(token);
 
-        var exists = await context.Users.AnyAsync(x => x.Username == message.Username, token);
+        var exists = await context.Users
+            .AsNoTracking()
+            .Where(x => x.Email == message.Email || x.Username == message.Username)
+            .AnyAsync(token);
 
         if (exists)
         {
             return Errors.UserAlreadyExists();
         }
 
-        var password = Password.New(message.Password, _hasher);
+        var now = _time.UtcNow;
 
-        var email = Email.New(message.Email);
+        var user = User.Create(
+            message.Username,
+            Email.Create(message.Email),
+            Password.Create(_hasher.Hash(message.Password)),
+            now);
 
-        var result = User.New(message.Username, email, password, _time);
+        var session = Session.Create(user.Id);
 
-        if (result.IsError)
-        {
-            return ErrorOr<RegisterResponse>.From(result.Errors);
-        }
-
-        var user = result.Value;
-
-        var tenant = Tenants.Personal(user.Id, _time);
-
-        user.AddTenant(tenant, Roles.Admin());
-
-        var session = user.IssueSession(_random, _hasher, _time, _tokens, _options.RefreshTokenLifetime);
+        session.Refresh(_tokens.GenerateRefreshToken(now));
 
         context.Users.Add(user);
 
@@ -78,9 +71,8 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
         return new RegisterResponse
         {
-            AccessToken = session.AccessToken.Value,
-            RefreshToken = session.RefreshToken.Combined,
-            ExpiresAt = session.ExpiresAt
+            AccessToken = _tokens.GenerateAccessToken(user, now),
+            RefreshToken = session.RefreshToken
         };
     }
 }

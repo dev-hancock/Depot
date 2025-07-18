@@ -1,7 +1,6 @@
 namespace Depot.Auth.Features.Auth.Logout;
 
 using System.Reactive.Linq;
-using Domain.Auth;
 using Domain.Errors;
 using Domain.Interfaces;
 using ErrorOr;
@@ -38,7 +37,8 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
-            .Include(x => x.Tokens)
+            .Include(x => x.Sessions)
+            .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Id == _user.UserId)
             .SingleOrDefaultAsync(token);
 
@@ -47,20 +47,11 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
             return Errors.UserNotFound();
         }
 
-        if (string.IsNullOrWhiteSpace(message.Token))
-        {
-            _ = user.ClearSessions();
-        }
-        else
-        {
-            var result = RefreshToken
-                .Parse(message.Token)
-                .Then(x => user.RevokeSession(x, _hasher, _time));
+        var result = user.Logout(message.Token);
 
-            if (result.IsError)
-            {
-                return ErrorOr<Success>.From(result.Errors);
-            }
+        if (result.IsError)
+        {
+            return result;
         }
 
         await context.SaveChangesAsync(token);
