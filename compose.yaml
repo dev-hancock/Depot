@@ -27,7 +27,24 @@
       context: .
       dockerfile: src/Depot.Auth.Migrations/Dockerfile
     environment:
-      ConnectionStrings__Default: Host=depot.db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Auth: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=auth;
+    depends_on:
+      depot.db:
+        condition: service_healthy
+  
+  depot.cache.db:
+    container_name: depot.cache.db
+    build:
+      context: .
+      dockerfile: src/Depot.Cache.Migrations/Dockerfile
+    environment:
+      ConnectionStrings__Cache: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
     depends_on:
       depot.db:
         condition: service_healthy
@@ -38,7 +55,10 @@
       context: .
       dockerfile: src/Depot.Repository.Migrations/Dockerfile
     environment:
-      ConnectionStrings__Default: Host=depot.db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Repo: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=repo;
     depends_on:
       depot.db:
         condition: service_healthy
@@ -50,7 +70,14 @@
       dockerfile: src/Depot.Auth/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Default: Host=depot.db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Auth: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=auth;
+      ConnectionStrings__Cache: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
       Jwt__KeyPath: /app/keys/jwt_private.pem
     volumes:
       - ./keys:/app/keys:ro
@@ -66,7 +93,14 @@
       dockerfile: src/Depot.Repository/Dockerfile
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ConnectionStrings__Default: Host=depot.db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Repo: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=repo;
+      ConnectionStrings__Cache: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
       Jwt__KeyPath: /app/keys/jwt_public.pem
     volumes:
       - ./keys:/app/keys:ro

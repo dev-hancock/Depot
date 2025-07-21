@@ -39,11 +39,9 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
     private async Task<ErrorOr<RegisterResponse>> Handle(RegisterCommand message, CancellationToken token)
     {
-        // TODO: Validate requests
+        await using var db = await _factory.CreateDbContextAsync(token);
 
-        await using var context = await _factory.CreateDbContextAsync(token);
-
-        var exists = await context.Users
+        var exists = await db.Users
             .AsNoTracking()
             .Where(x => x.Email == message.Email || x.Username == message.Username)
             .AnyAsync(token);
@@ -61,13 +59,16 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             Password.Create(_hasher.Hash(message.Password)),
             now);
 
-        var session = Session.Create(user.Id);
+        var result = user.CreateSession(_tokens.GenerateRefreshToken(now));
 
-        session.Refresh(_tokens.GenerateRefreshToken(now));
+        if (result.Value is not { } session)
+        {
+            return ErrorOr<RegisterResponse>.From(result.Errors);
+        }
 
-        context.Users.Add(user);
+        db.Users.Add(user);
 
-        await context.SaveChangesAsync(token);
+        await db.SaveChangesAsync(token);
 
         return new RegisterResponse
         {

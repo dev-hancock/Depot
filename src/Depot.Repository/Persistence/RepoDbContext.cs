@@ -15,6 +15,8 @@ public class RepoDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
+        builder.HasDefaultSchema("repo");
+
         builder.Entity<Artifact>(b =>
         {
             b.ToTable("artifacts");

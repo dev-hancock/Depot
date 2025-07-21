@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Depot.Auth.Migrator.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20250710105227_Initial")]
+    [Migration("20250720104344_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -20,45 +20,28 @@ namespace Depot.Auth.Migrator.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("auth")
                 .HasAnnotation("ProductVersion", "9.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Depot.Auth.Domain.Auth.Token", b =>
+            modelBuilder.Entity("Depot.Auth.Domain.Auth.Session", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<bool>("IsRevoked")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("Type")
-                        .HasMaxLength(20)
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("character varying(512)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("Value")
-                        .IsUnique();
-
-                    b.ToTable("tokens", (string)null);
+                    b.ToTable("sessions", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Organisations.Organisation", b =>
@@ -87,7 +70,7 @@ namespace Depot.Auth.Migrator.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("organisations", (string)null);
+                    b.ToTable("organisations", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Tenants.Tenant", b =>
@@ -119,7 +102,7 @@ namespace Depot.Auth.Migrator.Migrations
                     b.HasIndex("OrganisationId", "Slug")
                         .IsUnique();
 
-                    b.ToTable("tenants", (string)null);
+                    b.ToTable("tenants", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Users.Membership", b =>
@@ -139,7 +122,7 @@ namespace Depot.Auth.Migrator.Migrations
 
                     b.HasIndex("TenantId");
 
-                    b.ToTable("memberships", (string)null);
+                    b.ToTable("memberships", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Users.Permission", b =>
@@ -157,7 +140,7 @@ namespace Depot.Auth.Migrator.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("permissions", (string)null);
+                    b.ToTable("permissions", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Users.Role", b =>
@@ -178,7 +161,7 @@ namespace Depot.Auth.Migrator.Migrations
                     b.HasIndex("TenantId", "Name")
                         .IsUnique();
 
-                    b.ToTable("roles", (string)null);
+                    b.ToTable("roles", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Users.RolePermission", b =>
@@ -193,7 +176,7 @@ namespace Depot.Auth.Migrator.Migrations
 
                     b.HasIndex("PermissionId");
 
-                    b.ToTable("role_permissions", (string)null);
+                    b.ToTable("role_permissions", "auth");
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Users.User", b =>
@@ -227,15 +210,42 @@ namespace Depot.Auth.Migrator.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("users", (string)null);
+                    b.ToTable("users", "auth");
                 });
 
-            modelBuilder.Entity("Depot.Auth.Domain.Auth.Token", b =>
+            modelBuilder.Entity("Depot.Auth.Domain.Auth.Session", b =>
                 {
                     b.HasOne("Depot.Auth.Domain.Users.User", "User")
-                        .WithMany("Tokens")
+                        .WithMany("Sessions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Depot.Auth.Domain.Auth.RefreshToken", "RefreshToken", b1 =>
+                        {
+                            b1.Property<Guid>("SessionId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<DateTime>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasMaxLength(512)
+                                .HasColumnType("character varying(512)");
+
+                            b1.HasKey("SessionId");
+
+                            b1.HasIndex("Value")
+                                .IsUnique();
+
+                            b1.ToTable("sessions", "auth");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SessionId");
+                        });
+
+                    b.Navigation("RefreshToken")
                         .IsRequired();
 
                     b.Navigation("User");
@@ -336,7 +346,7 @@ namespace Depot.Auth.Migrator.Migrations
                 {
                     b.Navigation("Memberships");
 
-                    b.Navigation("Tokens");
+                    b.Navigation("Sessions");
                 });
 #pragma warning restore 612, 618
         }

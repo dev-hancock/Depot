@@ -8,38 +8,104 @@ public interface IUserContext
 
     bool IsAuthenticated { get; }
 
-    void Set(Guid id);
+    bool HasTenant => TenantId != Guid.Empty;
+
+    Guid TenantId { get; }
+
+    bool HasSession => SessionId != Guid.Empty;
+
+    Guid SessionId { get; }
+
+    void SetUser(Guid id);
+
+    void SetTenant(Guid id);
+
+    void SetSession(Guid id);
+
+    void Clear();
 }
 
 public class UserContext : IUserContext
 {
     public Guid UserId { get; private set; }
 
+    public Guid TenantId { get; private set; }
+
+    public Guid SessionId { get; private set; }
+
     public bool IsAuthenticated { get; private set; }
 
-    public void Set(Guid id)
+    public void SetUser(Guid userId)
     {
-        UserId = id;
+        UserId = userId;
         IsAuthenticated = true;
+    }
+
+    public void SetTenant(Guid id)
+    {
+        TenantId = id;
+    }
+
+    public void SetSession(Guid id)
+    {
+        SessionId = id;
+    }
+
+    public void Clear()
+    {
+        UserId = Guid.Empty;
+        SessionId = Guid.Empty;
+        TenantId = Guid.Empty;
+        IsAuthenticated = false;
     }
 }
 
-public class UserMiddleware
+public class UserContextMiddleware
 {
     private readonly RequestDelegate _next;
 
-    public UserMiddleware(RequestDelegate next)
+    public UserContextMiddleware(RequestDelegate next)
     {
         _next = next;
     }
 
+    private string? GetUser(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(ClaimTypes.Name);
+    }
+
+    private string? GetTenant(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue("tenant_id");
+    }
+
+    private string? GetSession(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue("session_id");
+    }
+
     public async Task Invoke(HttpContext context, IUserContext user)
     {
-        var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        user.Clear();
 
-        if (!string.IsNullOrWhiteSpace(id))
+        var principal = context.User;
+
+        if (principal.Identity?.IsAuthenticated == true)
         {
-            user.Set(Guid.Parse(id));
+            if (Guid.TryParse(GetUser(principal), out var uid))
+            {
+                user.SetUser(uid);
+            }
+
+            if (Guid.TryParse(GetTenant(principal), out var tid))
+            {
+                user.SetTenant(tid);
+            }
+
+            if (Guid.TryParse(GetSession(principal), out var sid))
+            {
+                user.SetSession(sid);
+            }
         }
 
         await _next(context);

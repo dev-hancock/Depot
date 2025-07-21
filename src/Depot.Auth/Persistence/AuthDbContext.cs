@@ -30,12 +30,10 @@ public class AuthDbContext : DbContext
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
-    public DbSet<Token> Tokens => Set<Token>();
-
     public override async Task<int> SaveChangesAsync(CancellationToken token = default)
     {
         var entities = ChangeTracker
-            .Entries<Entity>()
+            .Entries<Root>()
             .Select(x => x.Entity)
             .ToList();
 
@@ -49,7 +47,7 @@ public class AuthDbContext : DbContext
                 .Merge()
                 .ToTask(token);
 
-            entity.Events.Clear();
+            entity.Clear();
         }
 
         return result;
@@ -57,20 +55,18 @@ public class AuthDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        foreach (var type in builder.Model.GetEntityTypes())
-        {
-            if (typeof(Entity).IsAssignableFrom(type.ClrType))
-            {
-                builder.Entity(type.ClrType).Ignore(nameof(Entity.Events));
-            }
-        }
+        builder.HasDefaultSchema("auth");
 
         builder.Entity<User>(e =>
         {
-            e.ToTable("users");
+            e.ToTable("users", "auth");
 
             e.HasKey(u => u.Id);
-            e.Property(u => u.Id).ValueGeneratedNever();
+            e.Property(u => u.Id)
+                .HasConversion(
+                    x => x.Value,
+                    x => UserId.Create(x))
+                .ValueGeneratedNever();
 
             e.Property(u => u.Username).HasMaxLength(64).IsRequired();
             e.Property(o => o.Email)
@@ -92,7 +88,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Organisation>(e =>
         {
-            e.ToTable("organisations");
+            e.ToTable("organisations", "auth");
 
             e.HasKey(o => o.Id);
             e.Property(o => o.Id).ValueGeneratedNever();
@@ -111,7 +107,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Tenant>(e =>
         {
-            e.ToTable("tenants");
+            e.ToTable("tenants", "auth");
 
             e.HasKey(t => t.Id);
             e.Property(t => t.Id).ValueGeneratedNever();
@@ -138,7 +134,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Role>(e =>
         {
-            e.ToTable("roles");
+            e.ToTable("roles", "auth");
 
             e.HasKey(r => r.Id);
             e.Property(r => r.Id).ValueGeneratedNever();
@@ -159,7 +155,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Permission>(e =>
         {
-            e.ToTable("permissions");
+            e.ToTable("permissions", "auth");
 
             e.HasKey(p => p.Id);
             e.Property(p => p.Id).ValueGeneratedNever();
@@ -170,7 +166,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<RolePermission>(e =>
         {
-            e.ToTable("role_permissions");
+            e.ToTable("role_permissions", "auth");
 
             e.HasKey(rp => new
             {
@@ -189,7 +185,12 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Membership>(e =>
         {
-            e.ToTable("memberships");
+            e.ToTable("memberships", "auth");
+
+            e.Property(x => x.UserId)
+                .HasConversion(
+                    x => x.Value,
+                    x => UserId.Create(x));
 
             e.HasKey(m => new
             {
@@ -211,25 +212,39 @@ public class AuthDbContext : DbContext
                 .HasForeignKey(m => m.TenantId);
         });
 
-        builder.Entity<Token>(e =>
+        builder.Entity<Session>(e =>
         {
-            e.ToTable("tokens");
+            e.ToTable("sessions", "auth");
 
-            e.HasKey(t => t.Id);
-            e.Property(t => t.Id).ValueGeneratedNever();
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id)
+                .HasConversion(
+                    x => x.Value,
+                    x => SessionId.Create(x))
+                .ValueGeneratedNever();
 
-            e.Property(t => t.Type).HasMaxLength(20).IsRequired();
-            e.Property(t => t.Value).HasMaxLength(512).IsRequired();
-            e.Property(t => t.CreatedAt).IsRequired();
-            e.Property(t => t.ExpiresAt).IsRequired();
-            e.Property(t => t.IsRevoked).IsRequired();
+            e.Property(x => x.UserId)
+                .HasConversion(
+                    x => x.Value,
+                    x => UserId.Create(x))
+                .IsRequired();
 
-            e.HasOne(t => t.User)
-                .WithMany(u => u.Tokens)
-                .HasForeignKey(t => t.UserId)
+            e.OwnsOne(
+                x => x.RefreshToken,
+                t =>
+                {
+                    t.Property(p => p.Value).HasMaxLength(512).IsRequired();
+                    t.Property(p => p.ExpiresAt).IsRequired();
+
+                    t.HasIndex(p => p.Value).IsUnique();
+                });
+
+            e.Property(x => x.IsRevoked).IsRequired();
+
+            e.HasOne(x => x.User)
+                .WithMany(u => u.Sessions)
+                .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            e.HasIndex(t => t.Value).IsUnique();
         });
     }
 }

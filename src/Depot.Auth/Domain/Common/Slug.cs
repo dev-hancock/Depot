@@ -32,6 +32,11 @@ public sealed partial record Slug
         return new Slug(value);
     }
 
+    public static implicit operator string(Slug slug)
+    {
+        return slug.Value;
+    }
+
     public override string ToString()
     {
         return Value;

@@ -1,30 +1,38 @@
 namespace Depot.Auth.Domain.Auth;
 
 using Common;
+using Users;
 
 public record SessionId : Identity<SessionId>;
 
 public record UserId : Identity<UserId>;
 
-public class Session
+public class Session : Entity
 {
-    private Session(UserId userId)
+    private Session()
     {
-        Id = SessionId.Next();
-        UserId = userId;
     }
 
-    public SessionId Id { get; }
+    public SessionId Id { get; private init; } = null!;
 
-    public UserId UserId { get; }
+    public UserId UserId { get; private init; } = null!;
 
-    public RefreshToken RefreshToken { get; private set; }
+    public RefreshToken RefreshToken { get; private init; } = null!;
 
-    public DateTime ExpiresAt { get; private set; }
+    public DateTime ExpiresAt => RefreshToken.ExpiresAt;
 
-    public static Session Create(UserId userId)
+    public bool IsRevoked { get; private init; }
+
+    public User User { get; private init; } = null!;
+
+    public static Session Create(UserId userId, RefreshToken token)
     {
-        return new Session(userId);
+        return new Session
+        {
+            Id = SessionId.Next(),
+            UserId = userId,
+            RefreshToken = token
+        };
     }
 
     public bool IsExpired(DateTime now)
@@ -32,14 +40,29 @@ public class Session
         return ExpiresAt < now;
     }
 
-    public bool IsValid()
+    public bool IsValid(DateTime now)
     {
-        return true;
+        return !IsExpired(now) && !IsRevoked;
     }
 
-    public void Refresh(RefreshToken token)
+    public Session Revoke()
     {
-        RefreshToken = token;
-        ExpiresAt = token.ExpiresAt;
+        return new Session
+        {
+            Id = Id,
+            UserId = UserId,
+            RefreshToken = RefreshToken,
+            IsRevoked = true
+        };
+    }
+
+    public Session Refresh(RefreshToken token)
+    {
+        return new Session
+        {
+            Id = Id,
+            UserId = UserId,
+            RefreshToken = token
+        };
     }
 }

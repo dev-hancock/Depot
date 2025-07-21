@@ -11,18 +11,18 @@ using Persistence;
 
 public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 {
+    private readonly IUserContext _context;
+
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
     private readonly ISecretHasher _hasher;
 
     private readonly TimeProvider _time;
 
-    private readonly IUserContext _user;
-
-    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, IUserContext user, ISecretHasher hasher, TimeProvider time)
+    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, IUserContext context, ISecretHasher hasher, TimeProvider time)
     {
         _factory = factory;
-        _user = user;
+        _context = context;
         _hasher = hasher;
         _time = time;
     }
@@ -34,12 +34,12 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 
     private async Task<ErrorOr<Success>> Handle(LogoutCommand message, CancellationToken token)
     {
-        await using var context = await _factory.CreateDbContextAsync(token);
+        await using var db = await _factory.CreateDbContextAsync(token);
 
-        var user = await context.Users
+        var user = await db.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
-            .Where(x => x.Id == _user.UserId)
+            .Where(x => x.Id == _context.UserId)
             .SingleOrDefaultAsync(token);
 
         if (user is null)
@@ -47,14 +47,14 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
             return Errors.UserNotFound();
         }
 
-        var result = user.Logout(message.Token);
+        var result = user.RevokeSession(message.RefreshToken);
 
         if (result.IsError)
         {
             return result;
         }
 
-        await context.SaveChangesAsync(token);
+        await db.SaveChangesAsync(token);
 
         return Result.Success;
     }

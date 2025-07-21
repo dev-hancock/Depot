@@ -38,9 +38,9 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken ct)
     {
-        await using var context = await _factory.CreateDbContextAsync(ct);
+        await using var db = await _factory.CreateDbContextAsync(ct);
 
-        var user = await context.Users
+        var user = await db.Users
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Role)
             .ThenInclude(x => x.Permissions)
@@ -48,7 +48,6 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Sessions)
-            .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Username == message.Username || x.Email == message.Email)
             .SingleOrDefaultAsync(ct);
 
@@ -59,13 +58,14 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         var now = _time.UtcNow;
 
-        var session = Session.Create(user.Id);
+        var result = user.CreateSession(_tokens.GenerateRefreshToken(now));
 
-        session.Refresh(_tokens.GenerateRefreshToken(now));
+        if (result.Value is not { } session)
+        {
+            return ErrorOr<LoginResponse>.From(result.Errors);
+        }
 
-        user.AddSession(session);
-
-        await context.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
         return new LoginResponse
         {

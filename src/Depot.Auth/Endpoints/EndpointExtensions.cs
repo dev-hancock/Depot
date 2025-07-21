@@ -1,7 +1,6 @@
 namespace Depot.Auth.Endpoints;
 
 using Organisations;
-using Tenants;
 
 public static class EndpointExtensions
 {
@@ -28,14 +27,14 @@ public static class EndpointExtensions
     {
         var api = routes.MapGroup("/tenants").WithTags("tenants");
 
-        api.MapPost("/{tenant_id}/roles", CreateRoleEndpoint.Handle)
-            .WithDescription("Create role in tenant");
-
-        api.MapPost("/{tenant_id}/roles/{role_id}/permissions", AddPermissionEndpoint.Handle)
-            .WithDescription("Add permission to role");
-
-        api.MapPost("/{tenant_id}/members/{user_id}/roles/{role_id}", AssignRoleEndpoint.Handle)
-            .WithDescription("Assign role to user in tenant");
+        // api.MapPost("/{tenant_id}/roles", CreateRoleEndpoint.Handle)
+        //     .WithDescription("Create role in tenant");
+        //
+        // api.MapPost("/{tenant_id}/roles/{role_id}/permissions", AddPermissionEndpoint.Handle)
+        //     .WithDescription("Add permission to role");
+        //
+        // api.MapPost("/{tenant_id}/members/{user_id}/roles/{role_id}", AssignRoleEndpoint.Handle)
+        //     .WithDescription("Assign role to user in tenant");
 
         return api;
     }
@@ -47,8 +46,8 @@ public static class EndpointExtensions
         api.MapAuthEndpoints();
 
         // api.MapOrganisationsEndpoints();
-        //
-        // api.MapTenantsEndpoints();
+
+        api.MapTenantsEndpoints();
 
         api.MapUserEndpoints();
 

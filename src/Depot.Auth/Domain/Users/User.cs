@@ -6,25 +6,21 @@ using ErrorOr;
 using Events;
 using Tenants;
 
-public class User : Entity
+public class User : Root
 {
-    private User(string username, Email email, Password password, DateTime now)
+    private User()
     {
-        Username = username;
-        Email = email;
-        Password = password;
-        CreatedAt = now;
     }
 
     public UserId Id { get; set; }
 
-    public string Username { get; }
+    public string Username { get; private init; }
 
     public Password Password { get; private set; }
 
     public Email Email { get; private set; }
 
-    public DateTimeOffset CreatedAt { get; }
+    public DateTimeOffset CreatedAt { get; private init; }
 
     public List<Membership> Memberships { get; set; } = [];
 
@@ -32,7 +28,13 @@ public class User : Entity
 
     public static User Create(string username, Email email, Password password, DateTime now)
     {
-        return new User(username, email, password, now);
+        return new User
+        {
+            Username = username,
+            Email = email,
+            Password = password,
+            CreatedAt = now
+        };
     }
 
     public void AddTenant(Tenant tenant, Role role)
@@ -40,23 +42,80 @@ public class User : Entity
         var membership = new Membership();
     }
 
-    public void AddSession(Session session)
+    public ErrorOr<Session> CreateSession(RefreshToken token)
     {
+        if (FindSession(token) is not null)
+        {
+            return Error.Conflict();
+        }
+
+        var session = Session.Create(Id, token);
+
         Sessions.Add(session);
+
+        Raise(new SessionCreatedEvent(session.Id, session.ExpiresAt));
+
+        return session;
     }
 
-    public void ChangePassword(string current, Password updated)
+    public ErrorOr<Success> RefreshSession(RefreshToken token, DateTime now)
+    {
+        if (FindSession(token) is not { } session)
+        {
+            return Error.NotFound();
+        }
+
+        if (!session.IsValid(now))
+        {
+            return Error.Unauthorized();
+        }
+
+        var index = Sessions.IndexOf(session);
+
+        Sessions[index] = session.Refresh(token);
+
+        Raise(new SessionRefreshedEvent(session.Id, session.ExpiresAt));
+
+        return Result.Success;
+    }
+
+    public ErrorOr<Success> RevokeSession(string? token = null)
+    {
+        var sessions = string.IsNullOrWhiteSpace(token)
+            ? Sessions.Where(x => !x.IsRevoked).ToList()
+            : Sessions.Where(x => !x.IsRevoked && x.RefreshToken == token).ToList();
+
+        if (sessions.Count == 0)
+        {
+            return Error.NotFound();
+        }
+
+        foreach (var session in sessions)
+        {
+            var index = Sessions.IndexOf(session);
+
+            Sessions[index] = session.Revoke();
+
+            Raise(new SessionRevokedEvent(session.Id));
+        }
+
+        return Result.Success;
+    }
+
+    public ErrorOr<Success> ChangePassword(Password updated)
     {
         Password = updated;
 
-        Events.Add(new PasswordChangedEvent(this));
+        Raise(new PasswordChangedEvent(this));
+
+        return Result.Success;
     }
 
     public void ChangeEmail(Email email)
     {
         Email = email;
 
-        Events.Add(new EmailChangedEvent(this));
+        Raise(new EmailChangedEvent(this));
     }
 
     public Session? FindSession(string token)
@@ -64,35 +123,13 @@ public class User : Entity
         return Sessions.SingleOrDefault(t => t.RefreshToken == token);
     }
 
-    public ErrorOr<Success> Logout(string? token)
+    public Session? FindSession(SessionId? id = null)
     {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            Sessions.Clear();
-        }
-        else
-        {
-            var session = FindSession(token);
-
-            if (session == null)
-            {
-                return Error.NotFound();
-            }
-
-            Sessions.Remove(session);
-        }
-
-        return Result.Success;
+        return Sessions.SingleOrDefault(t => t.Id == id);
     }
-
 
     public bool CanCreateOrganisation()
     {
         return true;
-    }
-
-    public bool IsAuthenticated(Session session)
-    {
-        return session.UserId == Id && session.IsValid();
     }
 }

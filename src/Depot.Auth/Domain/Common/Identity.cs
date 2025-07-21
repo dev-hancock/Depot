@@ -46,6 +46,11 @@ public abstract record Identity<T> where T : Identity<T>, new()
         return identity.Value;
     }
 
+    public static implicit operator string(Identity<T> identity)
+    {
+        return identity.Value.ToString();
+    }
+
     public static T Next()
     {
         return new T

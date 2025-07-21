@@ -1,10 +1,11 @@
 namespace Depot.Auth.Domain.Users;
 
+using Auth;
 using Tenants;
 
 public class Membership
 {
-    public Guid UserId { get; set; }
+    public UserId UserId { get; set; }
 
     public Guid RoleId { get; set; }
 

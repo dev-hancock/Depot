@@ -2,12 +2,23 @@ namespace Depot.Auth.Domain.Common;
 
 using Mestra.Abstractions;
 
-public interface IEvent : INotification
+public abstract class Entity
 {
 }
 
-public abstract class Entity
+public abstract class Root
 {
-    // TODO: Placeholder
-    public List<IEvent> Events { get; set; } = [];
+    private readonly List<INotification> _events = [];
+
+    public IEnumerable<INotification> Events => _events;
+
+    protected void Raise(INotification @event)
+    {
+        _events.Add(@event);
+    }
+
+    public void Clear()
+    {
+        _events.Clear();
+    }
 }

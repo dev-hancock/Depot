@@ -26,6 +26,7 @@
         <PackageReference Include="Serilog.AspNetCore" Version="9.0.0"/>
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0"/>
+        <PackageReference Include="Sloop" Version="1.0.3"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -42,9 +43,5 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Depot.Common\Depot.Common.csproj"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Folder Include="Domain\Auth\Events\"/>
     </ItemGroup>
 </Project>

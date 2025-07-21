@@ -13,8 +13,11 @@ public class Program
 
         builder.Services.AddDbContextFactory<AuthDbContext>(opt =>
         {
-            opt.UseNpgsql(configuration.GetConnectionString("Default"),
-                x => x.MigrationsAssembly("Depot.Auth.Migrations"));
+            opt.UseNpgsql(
+                configuration.GetConnectionString("Auth"),
+                x => x
+                    .MigrationsAssembly("Depot.Auth.Migrations")
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "auth"));
         });
 
         var app = builder.Build();

@@ -13,8 +13,11 @@ public class Program
 
         builder.Services.AddDbContextFactory<RepoDbContext>(opt =>
         {
-            opt.UseNpgsql(configuration.GetConnectionString("Default"),
-                x => x.MigrationsAssembly("Depot.Repository.Migrations"));
+            opt.UseNpgsql(
+                configuration.GetConnectionString("Default"),
+                x => x
+                    .MigrationsAssembly("Depot.Repository.Migrations")
+                    .MigrationsHistoryTable("__EFMigrationsHistory", "repo"));
         });
 
         var app = builder.Build();

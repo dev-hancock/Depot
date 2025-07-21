@@ -5,7 +5,7 @@ using ErrorOr;
 using Events;
 using Tenants;
 
-public class Organisation : Entity
+public class Organisation : Root
 {
     public Guid Id { get; set; }
 
@@ -32,7 +32,7 @@ public class Organisation : Entity
         {
             Id = Guid.NewGuid(),
             Name = name,
-            Slug = name,
+            Slug = Slug.Create(name),
             CreatedBy = creator,
             CreatedAt = time.GetUtcNow()
         };
@@ -40,7 +40,7 @@ public class Organisation : Entity
 
     public ErrorOr<Tenant> AddTenant(string name, Guid creator, TimeProvider time)
     {
-        var exists = Tenants.Any(x => x.Slug == name);
+        var exists = Tenants.Any(x => x.Slug.Value == name);
 
         if (exists)
         {
@@ -66,7 +66,7 @@ public class Organisation : Entity
 
         Tenants.Add(tenant);
 
-        Events.Add(new TenantCreatedEvent(tenant));
+        Raise(new TenantCreatedEvent(tenant));
 
         return tenant;
     }

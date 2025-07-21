@@ -4,12 +4,9 @@ public sealed record RefreshToken
 {
     private RefreshToken(string value, DateTime expiresAt)
     {
-        Id = Guid.NewGuid();
         Value = value;
         ExpiresAt = expiresAt;
     }
-
-    public Guid Id { get; private init; }
 
     public DateTime ExpiresAt { get; private init; }
 

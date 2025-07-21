@@ -7,5 +7,5 @@ using Mestra.Abstractions;
 public sealed class LogoutCommand : IRequest<ErrorOr<Success>>
 {
     [JsonPropertyName("refresh_token")]
-    public string? Token { get; set; }
+    public string? RefreshToken { get; set; }
 }

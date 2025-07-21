@@ -42,27 +42,29 @@ public class TokenGenerator : ITokenGenerator
         //     }
         // }
 
-        var expiresAt = now + _options.AccessTokenLifetime;
+        var expires = now + _options.AccessTokenLifetime;
 
         var access = new JwtSecurityToken(
             _options.Issuer,
             _options.Audience,
             claims,
             now,
-            expiresAt,
+            expires,
             _signing);
 
         var token = _handler.WriteToken(access);
 
-        return AccessToken.Create(token, expiresAt);
+        return AccessToken.Create(token, expires);
     }
 
-    public RefreshToken GenerateRefreshToken(User user, DateTime now)
+    public RefreshToken GenerateRefreshToken(DateTime now)
     {
+        var expires = now + _options.RefreshTokenLifetime;
+
         var bytes = RandomNumberGenerator.GetBytes(32);
 
         var encoded = Base64UrlEncoder.Encode(bytes);
 
-        return RefreshToken.Create(encoded);
+        return RefreshToken.Create(encoded, expires);
     }
 }

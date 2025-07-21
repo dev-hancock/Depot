@@ -1,5 +1,6 @@
 ﻿namespace Depot.Auth;
 
+using Domain.Auth;
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
@@ -11,6 +12,7 @@ using Persistence;
 using Scalar.AspNetCore;
 using Serilog;
 using Services;
+using Sloop;
 
 public class Program
 {
@@ -46,12 +48,14 @@ public class Program
         builder.AddJwtAuthentication();
 
         var services = builder.Services;
+        var configuration = builder.Configuration;
 
         services.AddOpenApi();
 
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
+        services.AddCache(opt => opt.ConnectionString = configuration.GetConnectionString("Cache")!);
 
-        services.AddDbContextFactory<AuthDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+        services.AddDbContextFactory<AuthDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Auth")));
 
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();
@@ -61,7 +65,7 @@ public class Program
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<ITenantContext, TenantContext>();
 
-        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<ITimeProvider, TimeProvider>();
 
         services.AddAuthorization();
         services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -81,10 +85,10 @@ public class Program
 
         app.UseRouting();
         app.UseHttpsRedirection();
+
         app.UseAuthentication();
+        app.UseMiddleware<UserContextMiddleware>();
         app.UseAuthorization();
-        app.UseMiddleware<UserMiddleware>();
-        app.UseMiddleware<TenantMiddleware>();
 
         app.MapEndpoints();
         app.MapGet("/ping", () => "pong");

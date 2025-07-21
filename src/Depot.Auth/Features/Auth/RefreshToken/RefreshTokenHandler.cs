@@ -39,9 +39,9 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
 
     private async Task<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message, CancellationToken token)
     {
-        await using var context = await _factory.CreateDbContextAsync(token);
+        await using var db = await _factory.CreateDbContextAsync(token);
 
-        var user = await context.Users
+        var user = await db.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Id == _user.UserId)
@@ -63,7 +63,7 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
 
         session.Refresh(_tokens.GenerateRefreshToken(now));
 
-        await context.SaveChangesAsync(token);
+        await db.SaveChangesAsync(token);
 
         return new RefreshTokenResponse
         {

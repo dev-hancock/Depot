@@ -10,7 +10,7 @@ public class Tenant
     private Tenant(string name, Guid creator, DateTimeOffset createdAt)
     {
         Name = name;
-        Slug = name;
+        Slug = Slug.Create(name);
         CreatedAt = createdAt;
         CreatedBy = creator;
     }
