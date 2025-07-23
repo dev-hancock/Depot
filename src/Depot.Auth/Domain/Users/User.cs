@@ -30,6 +30,7 @@ public class User : Root
     {
         return new User
         {
+            Id = UserId.Next(),
             Username = username,
             Email = email,
             Password = password,

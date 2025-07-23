@@ -20,8 +20,8 @@ public class SessionHandler :
 
     public IObservable<Unit> Handle(SessionCreatedEvent message)
     {
-        return _cache
-            .SetAsync(message.SessionId,
+        return _cache.SetAsync(
+                message.SessionId,
                 null!,
                 new DistributedCacheEntryOptions
                 {

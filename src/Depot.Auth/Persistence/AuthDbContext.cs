@@ -1,6 +1,5 @@
 namespace Depot.Auth.Persistence;
 
-using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using Domain.Auth;
 using Domain.Common;
@@ -41,11 +40,16 @@ public class AuthDbContext : DbContext
 
         foreach (var entity in entities)
         {
-            await entity.Events
-                .Select(x => Mediator.Instance.Publish(x))
-                .ToObservable()
-                .Merge()
-                .ToTask(token);
+            try
+            {
+                foreach (var notification in entity.Events)
+                {
+                    await Mediator.Instance.Publish(notification).ToTask(token);
+                }
+            }
+            catch (Exception ex)
+            {
+            }
 
             entity.Clear();
         }

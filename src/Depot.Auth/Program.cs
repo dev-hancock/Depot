@@ -10,27 +10,25 @@ using Microsoft.EntityFrameworkCore;
 using Middleware;
 using Persistence;
 using Scalar.AspNetCore;
-using Serilog;
 using Services;
-using Sloop;
+using Sloop.Extensions;
 
 public class Program
 {
     public static void Main(string[] args)
     {
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .Enrich.FromLogContext()
-            .WriteTo.Console()
-            .WriteTo.File(
-                "/var/log/depot/auth-.log",
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 14)
-            .CreateLogger();
-
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Host.UseSerilog();
+        // Log.Logger = new LoggerConfiguration()
+        //     .ReadFrom.Configuration(builder.Configuration)
+        //     .MinimumLevel.Information()
+        //     .Enrich.FromLogContext()
+        //     .WriteTo.Console()
+        //     .WriteTo.File(
+        //         "/var/log/depot/auth-.log",
+        //         rollingInterval: RollingInterval.Day,
+        //         retainedFileCountLimit: 14)
+        //     .CreateLogger();
 
         ConfigureServices(builder);
 
@@ -50,12 +48,17 @@ public class Program
         var services = builder.Services;
         var configuration = builder.Configuration;
 
+        // services.AddSerilog(Log.Logger);
         services.AddOpenApi();
 
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
-        services.AddCache(opt => opt.ConnectionString = configuration.GetConnectionString("Cache")!);
+        services.AddCache(opt =>
+        {
+            opt.UseConnectionString(configuration.GetConnectionString("Cache")!);
+            opt.CreateInfrastructure = false;
+        });
 
-        services.AddDbContextFactory<AuthDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Auth")));
+        services.AddDbContextFactory<AuthDbContext>(opt => { opt.UseNpgsql(configuration.GetConnectionString("Auth")); });
 
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();
