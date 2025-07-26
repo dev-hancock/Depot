@@ -71,7 +71,7 @@ public class UserContextMiddleware
 
     private string? GetUser(ClaimsPrincipal principal)
     {
-        return principal.FindFirstValue(ClaimTypes.Name);
+        return principal.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 
     private string? GetTenant(ClaimsPrincipal principal)

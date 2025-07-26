@@ -3,9 +3,9 @@ namespace Depot.Auth.Domain.Auth;
 using Common;
 using Users;
 
-public record SessionId : Identity<SessionId>;
+public readonly record struct SessionId(Guid Value);
 
-public record UserId : Identity<UserId>;
+public readonly record struct UserId(Guid Value);
 
 public class Session : Entity
 {
@@ -13,9 +13,9 @@ public class Session : Entity
     {
     }
 
-    public SessionId Id { get; private init; } = null!;
+    public SessionId Id { get; private init; }
 
-    public UserId UserId { get; private init; } = null!;
+    public UserId UserId { get; private init; }
 
     public RefreshToken RefreshToken { get; private init; } = null!;
 
@@ -29,7 +29,7 @@ public class Session : Entity
     {
         return new Session
         {
-            Id = SessionId.Next(),
+            Id = new SessionId(Guid.NewGuid()),
             UserId = userId,
             RefreshToken = token
         };

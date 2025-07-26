@@ -1,6 +1,7 @@
 namespace Depot.Auth.Features.Organisations;
 
 using System.Reactive.Linq;
+using Domain.Auth;
 using Domain.Organisations;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -30,7 +31,7 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
 
         var user = await context.Users
             .AsNoTracking()
-            .Where(x => x.Id == message.UserId)
+            .Where(x => x.Id == new UserId(message.UserId))
             .FirstOrDefaultAsync(token);
 
         if (user is null)

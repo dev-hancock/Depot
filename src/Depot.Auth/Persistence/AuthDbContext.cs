@@ -6,8 +6,9 @@ using Domain.Common;
 using Domain.Organisations;
 using Domain.Tenants;
 using Domain.Users;
+using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Services;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 public class AuthDbContext : DbContext
 {
@@ -38,13 +39,15 @@ public class AuthDbContext : DbContext
 
         var result = await base.SaveChangesAsync(token);
 
+        var mediator = this.GetService<IMediator>();
+
         foreach (var entity in entities)
         {
             try
             {
                 foreach (var notification in entity.Events)
                 {
-                    await Mediator.Instance.Publish(notification).ToTask(token);
+                    await mediator.Publish(notification).ToTask(token);
                 }
             }
             catch (Exception ex)
@@ -61,6 +64,10 @@ public class AuthDbContext : DbContext
     {
         builder.HasDefaultSchema("auth");
 
+        // builder.Ignore<UserId>();
+        // builder.Ignore<Email>();
+        // builder.Ignore<Slug>();
+
         builder.Entity<User>(e =>
         {
             e.ToTable("users", "auth");
@@ -69,7 +76,7 @@ public class AuthDbContext : DbContext
             e.Property(u => u.Id)
                 .HasConversion(
                     x => x.Value,
-                    x => UserId.Create(x))
+                    x => new UserId(x))
                 .ValueGeneratedNever();
 
             e.Property(u => u.Username).HasMaxLength(64).IsRequired();
@@ -106,6 +113,12 @@ public class AuthDbContext : DbContext
                 .HasMaxLength(128)
                 .IsRequired();
 
+            e.Property(o => o.CreatedBy)
+                .HasConversion(
+                    x => x.Value,
+                    x => new UserId(x))
+                .IsRequired();
+
             e.HasIndex(o => o.Slug).IsUnique();
         });
 
@@ -122,6 +135,12 @@ public class AuthDbContext : DbContext
                     x => x.Value,
                     x => Slug.Create(x))
                 .HasMaxLength(128)
+                .IsRequired();
+
+            e.Property(o => o.CreatedBy)
+                .HasConversion(
+                    x => x.Value,
+                    x => new UserId(x))
                 .IsRequired();
 
             e.HasIndex(t => new
@@ -194,7 +213,7 @@ public class AuthDbContext : DbContext
             e.Property(x => x.UserId)
                 .HasConversion(
                     x => x.Value,
-                    x => UserId.Create(x));
+                    x => new UserId(x));
 
             e.HasKey(m => new
             {
@@ -224,13 +243,13 @@ public class AuthDbContext : DbContext
             e.Property(x => x.Id)
                 .HasConversion(
                     x => x.Value,
-                    x => SessionId.Create(x))
+                    x => new SessionId(x))
                 .ValueGeneratedNever();
 
             e.Property(x => x.UserId)
                 .HasConversion(
                     x => x.Value,
-                    x => UserId.Create(x))
+                    x => new UserId(x))
                 .IsRequired();
 
             e.OwnsOne(

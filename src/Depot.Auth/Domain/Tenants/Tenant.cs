@@ -1,5 +1,6 @@
 namespace Depot.Auth.Domain.Tenants;
 
+using Auth;
 using Common;
 using ErrorOr;
 using Organisations;
@@ -7,7 +8,7 @@ using Users;
 
 public class Tenant
 {
-    private Tenant(string name, Guid creator, DateTimeOffset createdAt)
+    private Tenant(string name, UserId creator, DateTimeOffset createdAt)
     {
         Name = name;
         Slug = Slug.Create(name);
@@ -31,7 +32,7 @@ public class Tenant
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public Guid CreatedBy { get; set; }
+    public UserId CreatedBy { get; set; }
 
 
     public Organisation? Organisation { get; set; }
@@ -40,7 +41,7 @@ public class Tenant
 
     public List<Membership> Memberships { get; set; } = [];
 
-    public static ErrorOr<Tenant> New(string name, Guid creator, TimeProvider time)
+    public static ErrorOr<Tenant> New(string name, UserId creator, TimeProvider time)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -66,7 +67,7 @@ public class Tenant
 
 public static class Tenants
 {
-    public static Tenant Personal(Guid creator, TimeProvider time)
+    public static Tenant Personal(UserId creator, TimeProvider time)
     {
         return Tenant.New("Personal", creator, time).Value;
     }

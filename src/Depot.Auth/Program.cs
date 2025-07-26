@@ -4,7 +4,6 @@ using Domain.Auth;
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
-using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
@@ -34,8 +33,6 @@ public class Program
 
         var app = builder.Build();
 
-        Mediator.Instance = app.Services.GetRequiredService<IMediator>();
-
         Configure(app);
 
         app.Run();
@@ -51,14 +48,23 @@ public class Program
         // services.AddSerilog(Log.Logger);
         services.AddOpenApi();
 
-        services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
+        services.AddMestra(opt =>
+        {
+            opt.Lifetime = ServiceLifetime.Scoped;
+            opt.AddHandlersFromAssembly(typeof(Program).Assembly);
+        });
         services.AddCache(opt =>
         {
             opt.UseConnectionString(configuration.GetConnectionString("Cache")!);
             opt.CreateInfrastructure = false;
         });
 
-        services.AddDbContextFactory<AuthDbContext>(opt => { opt.UseNpgsql(configuration.GetConnectionString("Auth")); });
+        services.AddEntityFrameworkNpgsql();
+        services.AddDbContextFactory<AuthDbContext>((sp, opt) =>
+        {
+            opt.UseInternalServiceProvider(sp);
+            opt.UseNpgsql(configuration.GetConnectionString("Auth"));
+        });
 
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();

@@ -1,6 +1,7 @@
 namespace Depot.Auth.Features.Auth.Logout;
 
 using System.Reactive.Linq;
+using Domain.Auth;
 using Domain.Errors;
 using Domain.Interfaces;
 using ErrorOr;
@@ -39,7 +40,7 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
         var user = await db.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
-            .Where(x => x.Id == _context.UserId)
+            .Where(x => x.Id == new UserId(_context.UserId))
             .SingleOrDefaultAsync(token);
 
         if (user is null)

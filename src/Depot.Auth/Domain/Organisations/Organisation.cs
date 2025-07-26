@@ -1,5 +1,6 @@
 namespace Depot.Auth.Domain.Organisations;
 
+using Auth;
 using Common;
 using ErrorOr;
 using Events;
@@ -15,13 +16,13 @@ public class Organisation : Root
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public Guid CreatedBy { get; set; }
+    public UserId CreatedBy { get; set; }
 
 
     public List<Tenant> Tenants { get; set; } = [];
 
 
-    public static ErrorOr<Organisation> New(string name, Guid creator, TimeProvider time)
+    public static ErrorOr<Organisation> New(string name, UserId creator, TimeProvider time)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -38,7 +39,7 @@ public class Organisation : Root
         };
     }
 
-    public ErrorOr<Tenant> AddTenant(string name, Guid creator, TimeProvider time)
+    public ErrorOr<Tenant> AddTenant(string name, UserId creator, TimeProvider time)
     {
         var exists = Tenants.Any(x => x.Slug.Value == name);
 

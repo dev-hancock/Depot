@@ -30,7 +30,7 @@ public class User : Root
     {
         return new User
         {
-            Id = UserId.Next(),
+            Id = new UserId(Guid.NewGuid()),
             Username = username,
             Email = email,
             Password = password,

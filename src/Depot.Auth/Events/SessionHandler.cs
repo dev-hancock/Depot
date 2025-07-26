@@ -21,7 +21,7 @@ public class SessionHandler :
     public IObservable<Unit> Handle(SessionCreatedEvent message)
     {
         return _cache.SetAsync(
-                message.SessionId,
+                message.SessionId.Value.ToString(),
                 null!,
                 new DistributedCacheEntryOptions
                 {
@@ -33,7 +33,8 @@ public class SessionHandler :
     public IObservable<Unit> Handle(SessionRefreshedEvent message)
     {
         return _cache
-            .SetAsync(message.SessionId,
+            .SetAsync(
+                message.SessionId.Value.ToString(),
                 null!,
                 new DistributedCacheEntryOptions
                 {
@@ -44,6 +45,9 @@ public class SessionHandler :
 
     public IObservable<Unit> Handle(SessionRevokedEvent message)
     {
-        return _cache.RemoveAsync(message.SessionId).ToObservable();
+        return _cache
+            .RemoveAsync(
+                message.SessionId.Value.ToString())
+            .ToObservable();
     }
 }

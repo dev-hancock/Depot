@@ -44,7 +44,7 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
         var user = await db.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
-            .Where(x => x.Id == _user.UserId)
+            .Where(x => x.Id == new UserId(_user.UserId))
             .SingleOrDefaultAsync(token);
 
         if (user is null)

@@ -1,6 +1,7 @@
 namespace Depot.Auth.Features.Users.Me;
 
 using System.Reactive.Linq;
+using Domain.Auth;
 using Domain.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
@@ -30,7 +31,7 @@ public class MeHandler : IMessageHandler<MeQuery, ErrorOr<MeResponse>>
         await using var context = await _factory.CreateDbContextAsync(token);
 
         var user = await context.Users
-            .Where(x => x.Id.Equals(_user.UserId))
+            .Where(x => x.Id == new UserId(_user.UserId))
             .SingleOrDefaultAsync(token);
 
         if (user is null)
