@@ -1,5 +1,5 @@
 namespace Depot.Auth.Features.Users;
 
-public class QueryTenantsHandler
+public class GetTenantsHandler
 {
 }
