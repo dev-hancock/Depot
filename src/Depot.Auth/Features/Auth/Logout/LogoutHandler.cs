@@ -2,8 +2,8 @@ namespace Depot.Auth.Features.Auth.Logout;
 
 using System.Reactive.Linq;
 using Domain.Auth;
-using Domain.Errors;
 using Domain.Interfaces;
+using Domain.Users.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;

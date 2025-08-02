@@ -4,7 +4,7 @@ using System.Reactive.Threading.Tasks;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using Extensions;
-using Features.Organisations;
+using Features.Organisations.CreateOrganisation;
 using Mestra.Abstractions;
 
 public class CreateOrganisationEndpoint

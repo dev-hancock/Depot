@@ -1,4 +1,4 @@
-namespace Depot.Auth.Domain.Auth;
+namespace Depot.Auth.Domain.Interfaces;
 
 public interface ITimeProvider
 {

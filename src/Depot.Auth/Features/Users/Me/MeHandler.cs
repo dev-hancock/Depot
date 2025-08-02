@@ -2,7 +2,7 @@ namespace Depot.Auth.Features.Users.Me;
 
 using System.Reactive.Linq;
 using Domain.Auth;
-using Domain.Errors;
+using Domain.Users.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;

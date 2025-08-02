@@ -1,10 +1,9 @@
-namespace Depot.Auth.Features.Users;
+namespace Depot.Auth.Features.Users.ChangePassword;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
 using Domain.Interfaces;
 using Domain.Users;
+using Domain.Users.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +74,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         await db.SaveChangesAsync(ct);
 
-        var token = _tokens.GenerateAccessToken(user, now);
+        var token = _tokens.GenerateAccessToken(user, session.Id, now);
 
         return new ChangePasswordResponse
         {

@@ -1,9 +1,8 @@
 namespace Depot.Auth.Features.Auth.Login;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
 using Domain.Interfaces;
+using Domain.Users;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -48,12 +47,13 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Sessions)
-            .Where(x => x.Username == message.Username || x.Email == message.Email)
+            .Where(x => x.Username == Username.TryCreate(message.Username).Value ||
+                        x.Email == Email.TryCreate(message.Email).Value)
             .SingleOrDefaultAsync(ct);
 
         if (user is null || !_hasher.Verify(user.Password, message.Password))
         {
-            return Errors.UserNotFound();
+            return Error.Unauthorized();
         }
 
         var now = _time.UtcNow;
@@ -69,7 +69,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         return new LoginResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, now),
+            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
             RefreshToken = session.RefreshToken
         };
     }

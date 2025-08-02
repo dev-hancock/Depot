@@ -1,4 +1,4 @@
-namespace Depot.Auth.Features.Users;
+namespace Depot.Auth.Features.Users.GetOrganisations;
 
 public class GetOrganisationsHandler
 {

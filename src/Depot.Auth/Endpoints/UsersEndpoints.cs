@@ -2,7 +2,7 @@ namespace Depot.Auth.Endpoints;
 
 using System.Reactive.Threading.Tasks;
 using Extensions;
-using Features.Users;
+using Features.Users.ChangePassword;
 using Features.Users.Me;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;

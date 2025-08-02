@@ -17,11 +17,11 @@ public class Session : Entity
 
     public UserId UserId { get; private init; }
 
-    public RefreshToken RefreshToken { get; private init; } = null!;
+    public RefreshToken RefreshToken { get; private set; } = null!;
 
     public DateTime ExpiresAt => RefreshToken.ExpiresAt;
 
-    public bool IsRevoked { get; private init; }
+    public bool IsRevoked { get; private set; }
 
     public User User { get; private init; } = null!;
 
@@ -45,24 +45,13 @@ public class Session : Entity
         return !IsExpired(now) && !IsRevoked;
     }
 
-    public Session Revoke()
+    public void Revoke()
     {
-        return new Session
-        {
-            Id = Id,
-            UserId = UserId,
-            RefreshToken = RefreshToken,
-            IsRevoked = true
-        };
+        IsRevoked = true;
     }
 
-    public Session Refresh(RefreshToken token)
+    public void Refresh(RefreshToken token)
     {
-        return new Session
-        {
-            Id = Id,
-            UserId = UserId,
-            RefreshToken = token
-        };
+        RefreshToken = token;
     }
 }

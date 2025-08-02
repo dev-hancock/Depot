@@ -1,5 +1,7 @@
 namespace Depot.Auth.Domain.Users;
 
+using ErrorOr;
+
 public record Username
 {
     internal Username(string value)
@@ -11,7 +13,17 @@ public record Username
 
     public static Username Create(string value)
     {
-        return new Username(value.Trim());
+        return new Username(value.ToLowerInvariant().Trim());
+    }
+
+    public static ErrorOr<Username> TryCreate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Error.Validation();
+        }
+
+        return Create(value);
     }
 
     public static implicit operator string(Username email)

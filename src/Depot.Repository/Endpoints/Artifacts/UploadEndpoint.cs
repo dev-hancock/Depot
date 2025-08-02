@@ -1,4 +1,4 @@
-namespace Depot.Repository.Endpoints;
+namespace Depot.Repository.Endpoints.Artifacts;
 
 using System.Reactive.Linq;
 using Extensions;

@@ -1,4 +1,4 @@
-namespace Depot.Auth.Features.Users;
+namespace Depot.Auth.Features.Users.GetTenants;
 
 public class GetTenantsHandler
 {

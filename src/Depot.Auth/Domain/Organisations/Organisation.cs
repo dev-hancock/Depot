@@ -3,8 +3,8 @@ namespace Depot.Auth.Domain.Organisations;
 using Auth;
 using Common;
 using ErrorOr;
-using Events;
 using Tenants;
+using Users.Events;
 
 public class Organisation : Root
 {

@@ -24,13 +24,24 @@ public class TokenGenerator : ITokenGenerator
         _signing = new SigningCredentials(key.GetSecurityKey(_options.KeyPath), SecurityAlgorithms.EcdsaSha256);
     }
 
-    public AccessToken GenerateAccessToken(User user, DateTime now)
+    public RefreshToken GenerateRefreshToken(DateTime now)
+    {
+        var expires = now + _options.RefreshTokenLifetime;
+
+        var bytes = RandomNumberGenerator.GetBytes(32);
+
+        var encoded = Base64UrlEncoder.Encode(bytes);
+
+        return RefreshToken.Create(encoded, expires);
+    }
+
+    public AccessToken GenerateAccessToken(User user, SessionId session, DateTime now)
     {
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.Value.ToString()),
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, session.Value.ToString())
         };
 
         // TODO: 
@@ -55,16 +66,5 @@ public class TokenGenerator : ITokenGenerator
         var token = _handler.WriteToken(access);
 
         return AccessToken.Create(token, expires);
-    }
-
-    public RefreshToken GenerateRefreshToken(DateTime now)
-    {
-        var expires = now + _options.RefreshTokenLifetime;
-
-        var bytes = RandomNumberGenerator.GetBytes(32);
-
-        var encoded = Base64UrlEncoder.Encode(bytes);
-
-        return RefreshToken.Create(encoded, expires);
     }
 }

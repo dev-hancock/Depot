@@ -5,12 +5,13 @@
         <OutputType>Exe</OutputType>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <DebugType>portable</DebugType>
+        <DebugSymbols>true</DebugSymbols>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
     <ItemGroup>
         <PackageReference Include="FluentValidation" Version="12.0.0"/>
-        <PackageReference Include="Mestra.Extensions.Microsoft.DependencyInjection" Version="1.1.2" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6"/>
         <PackageReference Include="ErrorOr" Version="2.0.1"/>
         <PackageReference Include="Isopoh.Cryptography.Argon2" Version="2.0.0"/>
@@ -44,5 +45,17 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Depot.Common\Depot.Common.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Mestra">
+            <HintPath>..\..\..\Mestra\src\Mestra.Extensions.Microsoft.DependencyInjection\bin\Debug\net9.0\Mestra.dll</HintPath>
+        </Reference>
+        <Reference Include="Mestra.Abstractions">
+            <HintPath>..\..\..\Mestra\src\Mestra.Extensions.Microsoft.DependencyInjection\bin\Debug\net9.0\Mestra.Abstractions.dll</HintPath>
+        </Reference>
+        <Reference Include="Mestra.Extensions.Microsoft.DependencyInjection">
+            <HintPath>..\..\..\Mestra\src\Mestra.Extensions.Microsoft.DependencyInjection\bin\Debug\net9.0\Mestra.Extensions.Microsoft.DependencyInjection.dll</HintPath>
+        </Reference>
     </ItemGroup>
 </Project>

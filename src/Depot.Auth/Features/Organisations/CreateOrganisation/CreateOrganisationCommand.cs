@@ -1,6 +1,5 @@
-namespace Depot.Auth.Features.Organisations;
+namespace Depot.Auth.Features.Organisations.CreateOrganisation;
 
 public class CreateOrganisationCommand
 {
-    
 }

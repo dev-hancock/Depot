@@ -1,6 +1,5 @@
-namespace Depot.Auth.Features.Tenants;
+namespace Depot.Auth.Features.Tenants.CreateRole;
 
 public class CreateRoleValidator
 {
-    
 }

@@ -1,6 +1,5 @@
 ﻿namespace Depot.Auth;
 
-using Domain.Auth;
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
@@ -56,7 +55,7 @@ public class Program
         services.AddCache(opt =>
         {
             opt.UseConnectionString(configuration.GetConnectionString("Cache")!);
-            opt.CreateInfrastructure = false;
+            opt.CreateInfrastructure = true;
         });
 
         services.AddEntityFrameworkNpgsql();
@@ -74,7 +73,7 @@ public class Program
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<ITenantContext, TenantContext>();
 
-        services.AddSingleton<ITimeProvider, TimeProvider>();
+        services.AddSingleton<ITimeProvider, SystemTimeProvider>();
 
         services.AddAuthorization();
         services.AddExceptionHandler<GlobalExceptionHandler>();

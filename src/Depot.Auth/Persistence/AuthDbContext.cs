@@ -12,9 +12,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 public class AuthDbContext : DbContext
 {
-    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
-    {
-    }
+    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
 
@@ -43,15 +41,9 @@ public class AuthDbContext : DbContext
 
         foreach (var entity in entities)
         {
-            try
+            foreach (var notification in entity.Events)
             {
-                foreach (var notification in entity.Events)
-                {
-                    await mediator.Publish(notification).ToTask(token);
-                }
-            }
-            catch (Exception ex)
-            {
+                await mediator.Publish(notification).ToTask(token);
             }
 
             entity.Clear();
@@ -64,10 +56,6 @@ public class AuthDbContext : DbContext
     {
         builder.HasDefaultSchema("auth");
 
-        // builder.Ignore<UserId>();
-        // builder.Ignore<Email>();
-        // builder.Ignore<Slug>();
-
         builder.Entity<User>(e =>
         {
             e.ToTable("users", "auth");
@@ -79,10 +67,15 @@ public class AuthDbContext : DbContext
                     x => new UserId(x))
                 .ValueGeneratedNever();
 
-            e.Property(u => u.Username).HasMaxLength(64).IsRequired();
+            e.Property(u => u.Username)
+                .HasConversion(
+                    x => x.Value.ToLowerInvariant(),
+                    x => Username.Create(x))
+                .HasMaxLength(64)
+                .IsRequired();
             e.Property(o => o.Email)
                 .HasConversion(
-                    x => x.Value,
+                    x => x.Value.ToLowerInvariant(),
                     x => Email.Create(x))
                 .HasMaxLength(128)
                 .IsRequired();

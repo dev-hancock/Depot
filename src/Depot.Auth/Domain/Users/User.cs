@@ -8,13 +8,18 @@ using Tenants;
 
 public class User : Root
 {
-    private User()
+    internal User(UserId id, Username username, Email email, Password password, DateTimeOffset createdAt)
     {
+        Id = id;
+        Username = username;
+        Email = email;
+        Password = password;
+        CreatedAt = createdAt;
     }
 
     public UserId Id { get; set; }
 
-    public string Username { get; private init; }
+    public Username Username { get; private init; }
 
     public Password Password { get; private set; }
 
@@ -26,16 +31,15 @@ public class User : Root
 
     public List<Session> Sessions { get; set; } = [];
 
-    public static User Create(string username, Email email, Password password, DateTime now)
+    public static User Create(Username username, Email email, Password password, DateTime now)
     {
-        return new User
-        {
-            Id = new UserId(Guid.NewGuid()),
-            Username = username,
-            Email = email,
-            Password = password,
-            CreatedAt = now
-        };
+        return new User(
+            new UserId(Guid.NewGuid()),
+            username,
+            email,
+            password,
+            now
+        );
     }
 
     public void AddTenant(Tenant tenant, Role role)
@@ -71,9 +75,7 @@ public class User : Root
             return Error.Unauthorized();
         }
 
-        var index = Sessions.IndexOf(session);
-
-        Sessions[index] = session.Refresh(token);
+        session.Refresh(token);
 
         Raise(new SessionRefreshedEvent(session.Id, session.ExpiresAt));
 
@@ -93,9 +95,7 @@ public class User : Root
 
         foreach (var session in sessions)
         {
-            var index = Sessions.IndexOf(session);
-
-            Sessions[index] = session.Revoke();
+            session.Revoke();
 
             Raise(new SessionRevokedEvent(session.Id));
         }

@@ -2,8 +2,8 @@ namespace Depot.Auth.Features.Auth.RefreshToken;
 
 using System.Reactive.Linq;
 using Domain.Auth;
-using Domain.Errors;
 using Domain.Interfaces;
+using Domain.Users.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +67,7 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
 
         return new RefreshTokenResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, now),
+            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
             RefreshToken = session.RefreshToken
         };
     }

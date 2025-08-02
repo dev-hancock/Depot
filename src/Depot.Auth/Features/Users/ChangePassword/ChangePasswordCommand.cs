@@ -1,4 +1,4 @@
-namespace Depot.Auth.Features.Users;
+namespace Depot.Auth.Features.Users.ChangePassword;
 
 using System.Text.Json.Serialization;
 using ErrorOr;

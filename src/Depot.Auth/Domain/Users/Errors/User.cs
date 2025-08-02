@@ -1,8 +1,8 @@
-namespace Depot.Auth.Domain.Errors;
+namespace Depot.Auth.Domain.Users.Errors;
 
 using ErrorOr;
 
-public static partial class Errors
+public static class Errors
 {
     public static Error UserNotFound()
     {

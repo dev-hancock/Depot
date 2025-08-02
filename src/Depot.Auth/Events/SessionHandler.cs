@@ -2,7 +2,7 @@ namespace Depot.Auth.Events;
 
 using System.Reactive;
 using System.Reactive.Threading.Tasks;
-using Domain.Events;
+using Domain.Users.Events;
 using Mestra.Abstractions;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -22,7 +22,7 @@ public class SessionHandler :
     {
         return _cache.SetAsync(
                 message.SessionId.Value.ToString(),
-                null!,
+                [0x1],
                 new DistributedCacheEntryOptions
                 {
                     AbsoluteExpiration = message.ExpiresAt
@@ -35,7 +35,7 @@ public class SessionHandler :
         return _cache
             .SetAsync(
                 message.SessionId.Value.ToString(),
-                null!,
+                [0x1],
                 new DistributedCacheEntryOptions
                 {
                     AbsoluteExpiration = message.ExpiresAt

@@ -1,10 +1,9 @@
 namespace Depot.Auth.Features.Auth.Register;
 
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Errors;
 using Domain.Interfaces;
 using Domain.Users;
+using Domain.Users.Errors;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +53,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
         var now = _time.UtcNow;
 
         var user = User.Create(
-            message.Username,
+            Username.Create(message.Username),
             Email.Create(message.Email),
             Password.Create(_hasher.Hash(message.Password)),
             now);
@@ -72,7 +71,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
         return new RegisterResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, now),
+            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
             RefreshToken = session.RefreshToken
         };
     }

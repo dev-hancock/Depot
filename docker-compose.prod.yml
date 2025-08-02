@@ -35,20 +35,6 @@
       depot.db:
         condition: service_healthy
   
-  depot.cache.db:
-    container_name: depot.cache.db
-    build:
-      context: .
-      dockerfile: src/Depot.Cache.Migrations/Dockerfile
-    environment:
-      ConnectionStrings__Cache: >-
-        Host=depot.db;Port=5432;
-        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
-        Database=${POSTGRES_DB};Search Path=cache;
-    depends_on:
-      depot.db:
-        condition: service_healthy
-  
   depot.repo.db:
     container_name: depot.repo.db
     build:

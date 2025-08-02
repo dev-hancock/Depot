@@ -1,5 +1,7 @@
 namespace Depot.Repository.Endpoints.Artifacts;
 
+using Meta;
+
 public static class Endpoints
 {
     public static IEndpointRouteBuilder MapArtifactsEndpoints(this IEndpointRouteBuilder routes)

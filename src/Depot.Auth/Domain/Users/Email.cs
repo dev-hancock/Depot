@@ -1,8 +1,10 @@
 namespace Depot.Auth.Domain.Users;
 
+using ErrorOr;
+
 public record Email
 {
-    private Email(string value)
+    internal Email(string value)
     {
         Value = value;
     }
@@ -11,7 +13,17 @@ public record Email
 
     public static Email Create(string value)
     {
-        return new Email(value);
+        return new Email(value.ToLowerInvariant().Trim());
+    }
+
+    public static ErrorOr<Email> TryCreate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Error.Validation();
+        }
+
+        return Create(value);
     }
 
     public static implicit operator string(Email email)

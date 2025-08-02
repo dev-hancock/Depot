@@ -2,7 +2,7 @@ namespace Depot.Auth.Domain.Users;
 
 public class Password
 {
-    private Password(string encoded)
+    internal Password(string encoded)
     {
         Encoded = encoded;
     }

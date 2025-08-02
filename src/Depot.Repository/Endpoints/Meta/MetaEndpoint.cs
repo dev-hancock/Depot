@@ -1,4 +1,4 @@
-namespace Depot.Repository.Endpoints;
+namespace Depot.Repository.Endpoints.Meta;
 
 using Microsoft.AspNetCore.Mvc;
 

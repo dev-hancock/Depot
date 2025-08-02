@@ -1,4 +1,4 @@
-namespace Depot.Auth.Features.Organisations;
+namespace Depot.Auth.Features.Organisations.CreateOrganisation;
 
 using System.Reactive.Linq;
 using Domain.Auth;
