@@ -1,0 +1,114 @@
+﻿services:
+  
+  depot.db:
+    image: postgres:latest
+    container_name: depot.db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -h localhost"
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  depot.auth.db:
+    container_name: depot.auth.db
+    build:
+      context: .
+      dockerfile: src/Depot.Auth.Migrations/Dockerfile
+    environment:
+      ConnectionStrings__Auth: >-
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=auth;
+    depends_on:
+      depot.db:
+        condition: service_healthy
+  
+  depot.cache.db:
+    container_name: depot.cache.db
+    build:
+      context: .
+      dockerfile: src/Depot.Cache.Migrations/Dockerfile
+    environment:
+      ConnectionStrings__Cache: >-
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
+    depends_on:
+      depot.db:
+        condition: service_healthy
+  
+  depot.repo.db:
+    container_name: depot.repo.db
+    build:
+      context: .
+      dockerfile: src/Depot.Repository.Migrations/Dockerfile
+    environment:
+      ConnectionStrings__Repo: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=repo;
+    depends_on:
+      depot.db:
+        condition: service_healthy
+  
+  depot.auth:
+    container_name: depot.auth
+    build:
+      context: .
+      dockerfile: src/Depot.Auth/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Auth: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=auth;
+      ConnectionStrings__Cache: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
+      Jwt__KeyPath: /app/keys/jwt_private.pem
+    volumes:
+      - ./keys:/app/keys:ro
+    depends_on:
+      - depot.auth.db
+    ports:
+      - "5000:8080"
+
+  depot.repo:
+    container_name: depot.repo
+    build:
+      context: .
+      dockerfile: src/Depot.Repository/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Repo: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=repo;
+      ConnectionStrings__Cache: >
+        Host=depot.db;Port=5432;
+        Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};
+        Database=${POSTGRES_DB};Search Path=cache;
+      Jwt__KeyPath: /app/keys/jwt_public.pem
+    volumes:
+      - ./keys:/app/keys:ro
+      - ./packages:/data/packages
+    depends_on:
+      - depot.repo.db
+    ports:
+      - "5001:8080"
+
+volumes:
+  data:
