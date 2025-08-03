@@ -39,6 +39,14 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
     {
         await using var db = await _factory.CreateDbContextAsync(ct);
 
+        var username = Username
+            .TryCreate(message.Username)
+            .Match(u => u.Normalized, _ => null!);
+
+        var email = Email
+            .TryCreate(message.Email)
+            .Match(e => e.Normalized, _ => null!);
+
         var user = await db.Users
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Role)
@@ -47,8 +55,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .Include(x => x.Memberships)
             .ThenInclude(x => x.Tenant)
             .Include(x => x.Sessions)
-            .Where(x => x.Username == Username.TryCreate(message.Username).Value ||
-                        x.Email == Email.TryCreate(message.Email).Value)
+            .Where(x => x.Username.Normalized == username || x.Email.Normalized == email)
             .SingleOrDefaultAsync(ct);
 
         if (user is null || !_hasher.Verify(user.Password, message.Password))

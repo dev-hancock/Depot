@@ -4,7 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
-using Domain.Auth;
+using Data;
 using Domain.Interfaces;
 using Domain.Users;
 using Features.Auth.Register;
@@ -31,13 +31,14 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
     {
         _fixture = fixture;
     }
+    //
+    // private static string Username { get; } = Faker.Internet.UserName();
+    //
+    // private static string Password { get; } = Faker.Internet.Password();
+    //
+    // private static string Email { get; } = Faker.Internet.Email();
 
-    private static string Username { get; } = Faker.Internet.UserName();
-
-    private static string Password { get; } = Faker.Internet.Password();
-
-    private static string Email { get; } = Faker.Internet.Email();
-
+    private User User { get; set; } = null!;
 
     public async Task InitializeAsync()
     {
@@ -60,11 +61,10 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         _cache = services.GetRequiredService<IDistributedCache>();
 
-        var user = new User(
-            new UserId(Faker.Random.Guid()),
-            new Username(Username),
-            new Email(Email),
-            new Password(hasher.Hash(Password)),
+        User = User.Create(
+            Username.Create(Faker.Internet.UserName()),
+            Email.Create(Faker.Internet.Email()),
+            Password.Create(hasher.Hash(Faker.Internet.Password())),
             DateTime.UtcNow);
 
         await using var context = services.GetRequiredService<AuthDbContext>();
@@ -73,7 +73,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         await context.Database.EnsureCreatedAsync();
 
-        context.Users.Add(user);
+        context.Users.Add(User);
 
         await context.SaveChangesAsync();
     }
@@ -83,24 +83,8 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         return Task.CompletedTask;
     }
 
-    public static IEnumerable<object[]> ExistingUsernames()
-    {
-        yield return [Username];
-        yield return [$" {Username} "];
-        yield return [Username.ToUpperInvariant()];
-        yield return [Username.ToLowerInvariant()];
-    }
-
-    public static IEnumerable<object[]> ExistingEmails()
-    {
-        yield return [Email];
-        yield return [$" {Email} "];
-        yield return [Email.ToUpperInvariant()];
-        yield return [Email.ToLowerInvariant()];
-    }
-
     [Theory]
-    [MemberData(nameof(ExistingUsernames))]
+    [MemberData(nameof(TestData.Usernames), MemberType = typeof(TestData))]
     public async Task Register_WithExistingUsername_ShouldReturnConflict(string username)
     {
         // Arrange
@@ -119,7 +103,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
     }
 
     [Theory]
-    [MemberData(nameof(ExistingEmails))]
+    [MemberData(nameof(TestData.Emails), MemberType = typeof(TestData))]
     public async Task Register_WithExistingEmail_ShouldReturnConflict(string email)
     {
         // Arrange

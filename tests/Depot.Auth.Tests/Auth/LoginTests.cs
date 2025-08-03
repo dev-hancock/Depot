@@ -4,16 +4,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
-using Domain.Auth;
-using Domain.Interfaces;
-using Domain.Users;
+using Data;
+using Factories;
 using Features.Auth.Login;
 using Fixtures;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
-using Persistence;
 
 public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
 {
@@ -32,70 +28,20 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         _fixture = fixture;
     }
 
-    private static string Username { get; } = Faker.Internet.UserName();
-
-    private static string Password { get; } = Faker.Internet.Password();
-
-    private static string Email { get; } = Faker.Internet.Email();
-
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(host =>
-            {
-                host.UseEnvironment("Test");
-
-                host.UseSetting("ConnectionStrings:Auth", _fixture.Auth);
-                host.UseSetting("ConnectionStrings:Cache", _fixture.Cache);
-            });
+        var factory = new AuthAppFactory(_fixture);
 
         _client = factory.CreateClient();
 
-        using var scope = factory.Services.CreateScope();
+        _cache = factory.Services.GetRequiredService<IDistributedCache>();
 
-        var services = scope.ServiceProvider;
-
-        var hasher = services.GetRequiredService<ISecretHasher>();
-
-        _cache = services.GetRequiredService<IDistributedCache>();
-
-        var user = new User(
-            new UserId(Faker.Random.Guid()),
-            new Username(Username.ToLowerInvariant()),
-            new Email(Email.ToLowerInvariant()),
-            new Password(hasher.Hash(Password)),
-            DateTime.UtcNow);
-
-        await using var context = services.GetRequiredService<AuthDbContext>();
-
-        await context.Database.EnsureDeletedAsync();
-
-        await context.Database.EnsureCreatedAsync();
-
-        context.Users.Add(user);
-
-        await context.SaveChangesAsync();
+        return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
     {
         return Task.CompletedTask;
-    }
-
-    public static IEnumerable<object[]> ExistingUsernames()
-    {
-        yield return [Username];
-        yield return [$" {Username} "];
-        yield return [Username.ToUpperInvariant()];
-        yield return [Username.ToLowerInvariant()];
-    }
-
-    public static IEnumerable<object[]> ExistingEmails()
-    {
-        yield return [Email];
-        yield return [$" {Email} "];
-        yield return [Email.ToUpperInvariant()];
-        yield return [Email.ToLowerInvariant()];
     }
 
     [Fact]
@@ -120,7 +66,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         var payload = new LoginCommand
         {
             Username = username,
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -140,7 +86,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         var payload = new LoginCommand
         {
             Email = email,
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -158,8 +104,8 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Username = Username,
-            Email = Email,
+            Username = TestData.Username,
+            Email = TestData.Email,
             Password = password!
         };
 
@@ -192,7 +138,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Username = Username
+            Username = TestData.Username
         };
 
         // Act
@@ -208,7 +154,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Email = Email
+            Email = TestData.Email
         };
 
         // Act
@@ -224,7 +170,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Username = Username,
+            Username = TestData.Username,
             Password = Faker.Internet.Password()
         };
 
@@ -242,7 +188,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         var payload = new LoginCommand
         {
             Username = Faker.Internet.UserName(),
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -253,14 +199,14 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
     }
 
     [Theory]
-    [MemberData(nameof(ExistingUsernames))]
+    [MemberData(nameof(TestData.Usernames), MemberType = typeof(TestData))]
     public async Task Login_WithValidUsername_ShouldReturnSession(string username)
     {
         // Arrange
         var payload = new LoginCommand
         {
             Username = username,
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -279,7 +225,7 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         var payload = new LoginCommand
         {
             Email = Faker.Internet.Email(),
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -290,14 +236,14 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
     }
 
     [Theory]
-    [MemberData(nameof(ExistingEmails))]
+    [MemberData(nameof(TestData.Emails), MemberType = typeof(TestData))]
     public async Task Login_WithValidEmail_ShouldReturnSession(string email)
     {
         // Arrange
         var payload = new LoginCommand
         {
             Email = email,
-            Password = Password
+            Password = TestData.Password
         };
 
         // Act
@@ -315,9 +261,9 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Email = Email,
-            Username = Username,
-            Password = Password
+            Email = TestData.Email,
+            Username = TestData.Username,
+            Password = TestData.Password
         };
 
         // Act
@@ -335,8 +281,8 @@ public class LoginTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new LoginCommand
         {
-            Email = Email,
-            Password = $" {Password} "
+            Email = TestData.Email,
+            Password = $" {TestData.Password} "
         };
 
         // Act

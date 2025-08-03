@@ -7,13 +7,16 @@ public record Email
     internal Email(string value)
     {
         Value = value;
+        Normalized = value.ToLowerInvariant().Trim();
     }
 
     public string Value { get; }
 
+    public string Normalized { get; }
+
     public static Email Create(string value)
     {
-        return new Email(value.ToLowerInvariant().Trim());
+        return new Email(value);
     }
 
     public static ErrorOr<Email> TryCreate(string? value)

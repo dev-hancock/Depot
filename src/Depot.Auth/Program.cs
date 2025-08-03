@@ -3,6 +3,8 @@
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
+using FluentValidation;
+using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
@@ -10,6 +12,7 @@ using Persistence;
 using Scalar.AspNetCore;
 using Services;
 using Sloop.Extensions;
+using Validation;
 
 public class Program
 {
@@ -52,6 +55,9 @@ public class Program
             opt.Lifetime = ServiceLifetime.Scoped;
             opt.AddHandlersFromAssembly(typeof(Program).Assembly);
         });
+        services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
         services.AddCache(opt =>
         {
             opt.UseConnectionString(configuration.GetConnectionString("Cache")!);

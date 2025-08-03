@@ -1,19 +1,47 @@
 namespace Depot.Auth.Domain.Users;
 
+using System.Text;
+using Auth;
 using ErrorOr;
 
 public record Username
 {
-    internal Username(string value)
+    private Username() { }
+
+    public UserId? UserId { get; set; }
+
+    public string Value { get; private set; } = null!;
+
+    public string Normalized { get; private set; } = null!;
+
+    public virtual bool Equals(Username? other)
     {
-        Value = value;
+        if (ReferenceEquals(null, other))
+        {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other))
+        {
+            return true;
+        }
+
+        return string.Equals(Normalized, other.Normalized, StringComparison.Ordinal);
     }
 
-    public string Value { get; }
-
-    public static Username Create(string value)
+    public static Username Create(string username)
     {
-        return new Username(value.ToLowerInvariant().Trim());
+        var value = username.Trim();
+
+        var normalized = value
+            .Normalize(NormalizationForm.FormKC)
+            .ToLowerInvariant();
+
+        return new Username
+        {
+            Value = value,
+            Normalized = normalized
+        };
     }
 
     public static ErrorOr<Username> TryCreate(string? value)
@@ -34,5 +62,10 @@ public record Username
     public override string ToString()
     {
         return Value;
+    }
+
+    public override int GetHashCode()
+    {
+        return StringComparer.Ordinal.GetHashCode(Normalized);
     }
 }

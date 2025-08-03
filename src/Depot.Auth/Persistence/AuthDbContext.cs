@@ -12,6 +12,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 public class AuthDbContext : DbContext
 {
+    private const string Schema = "auth";
+
     public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options) { }
 
     public DbSet<User> Users => Set<User>();
@@ -54,11 +56,11 @@ public class AuthDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-        builder.HasDefaultSchema("auth");
+        builder.HasDefaultSchema(Schema);
 
         builder.Entity<User>(e =>
         {
-            e.ToTable("users", "auth");
+            e.ToTable("users", Schema);
 
             e.HasKey(u => u.Id);
             e.Property(u => u.Id)
@@ -67,32 +69,52 @@ public class AuthDbContext : DbContext
                     x => new UserId(x))
                 .ValueGeneratedNever();
 
-            e.Property(u => u.Username)
-                .HasConversion(
-                    x => x.Value.ToLowerInvariant(),
-                    x => Username.Create(x))
-                .HasMaxLength(64)
-                .IsRequired();
-            e.Property(o => o.Email)
-                .HasConversion(
-                    x => x.Value.ToLowerInvariant(),
-                    x => Email.Create(x))
-                .HasMaxLength(128)
-                .IsRequired();
+            e.OwnsOne(
+                u => u.Username,
+                x =>
+                {
+                    x.WithOwner()
+                        .HasForeignKey(p => p.UserId);
+
+                    x.Property(p => p.Value)
+                        .HasMaxLength(64)
+                        .IsRequired();
+
+                    x.Property(p => p.Normalized)
+                        .HasMaxLength(64)
+                        .IsRequired();
+
+                    x.HasIndex(p => p.Normalized)
+                        .IsUnique();
+                });
+
+            e.OwnsOne(
+                u => u.Email,
+                x =>
+                {
+                    x.Property(p => p.Value)
+                        .HasMaxLength(128)
+                        .IsRequired();
+
+                    x.Property(p => p.Normalized)
+                        .HasMaxLength(128)
+                        .IsRequired();
+
+                    x.HasIndex(p => p.Normalized)
+                        .IsUnique();
+                });
+
             e.Property(x => x.Password)
                 .HasConversion(
                     x => x.Encoded,
                     x => Password.Create(x))
                 .HasMaxLength(200)
                 .IsRequired();
-
-            e.HasIndex(u => u.Email).IsUnique();
-            e.HasIndex(x => x.Username).IsUnique();
         });
 
         builder.Entity<Organisation>(e =>
         {
-            e.ToTable("organisations", "auth");
+            e.ToTable("organisations", Schema);
 
             e.HasKey(o => o.Id);
             e.Property(o => o.Id).ValueGeneratedNever();
@@ -117,7 +139,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Tenant>(e =>
         {
-            e.ToTable("tenants", "auth");
+            e.ToTable("tenants", Schema);
 
             e.HasKey(t => t.Id);
             e.Property(t => t.Id).ValueGeneratedNever();
@@ -150,7 +172,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Role>(e =>
         {
-            e.ToTable("roles", "auth");
+            e.ToTable("roles", Schema);
 
             e.HasKey(r => r.Id);
             e.Property(r => r.Id).ValueGeneratedNever();
@@ -171,7 +193,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Permission>(e =>
         {
-            e.ToTable("permissions", "auth");
+            e.ToTable("permissions", Schema);
 
             e.HasKey(p => p.Id);
             e.Property(p => p.Id).ValueGeneratedNever();
@@ -182,7 +204,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<RolePermission>(e =>
         {
-            e.ToTable("role_permissions", "auth");
+            e.ToTable("role_permissions", Schema);
 
             e.HasKey(rp => new
             {
@@ -201,7 +223,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Membership>(e =>
         {
-            e.ToTable("memberships", "auth");
+            e.ToTable("memberships", Schema);
 
             e.Property(x => x.UserId)
                 .HasConversion(
@@ -230,7 +252,7 @@ public class AuthDbContext : DbContext
 
         builder.Entity<Session>(e =>
         {
-            e.ToTable("sessions", "auth");
+            e.ToTable("sessions", Schema);
 
             e.HasKey(x => x.Id);
             e.Property(x => x.Id)

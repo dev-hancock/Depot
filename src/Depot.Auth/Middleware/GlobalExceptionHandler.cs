@@ -1,5 +1,6 @@
 namespace Depot.Auth.Middleware;
 
+using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         return exception switch
         {
-            KeyNotFoundException => StatusCodes.Status404NotFound,
+            ValidationException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
     }

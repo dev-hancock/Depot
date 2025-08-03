@@ -8,6 +8,9 @@ using Tenants;
 
 public class User : Root
 {
+    // EF Core
+    private User() { }
+
     internal User(UserId id, Username username, Email email, Password password, DateTimeOffset createdAt)
     {
         Id = id;
@@ -17,13 +20,14 @@ public class User : Root
         CreatedAt = createdAt;
     }
 
-    public UserId Id { get; set; }
+    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
+    public UserId Id { get; private init; }
 
-    public Username Username { get; private init; }
+    public Username Username { get; private set; } = null!;
 
-    public Password Password { get; private set; }
+    public Password Password { get; private set; } = null!;
 
-    public Email Email { get; private set; }
+    public Email Email { get; private set; } = null!;
 
     public DateTimeOffset CreatedAt { get; private init; }
 
