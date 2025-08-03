@@ -30,6 +30,8 @@ public class AuthDbContext : DbContext
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
+    public DbSet<Session> Sessions => Set<Session>();
+
     public override async Task<int> SaveChangesAsync(CancellationToken token = default)
     {
         var entities = ChangeTracker

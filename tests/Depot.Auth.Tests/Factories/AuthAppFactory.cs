@@ -13,7 +13,6 @@ public class AuthAppFactory : WebApplicationFactory<Program>
 {
     private readonly InfraFixture _fixture;
 
-
     public AuthAppFactory(InfraFixture fixture)
     {
         _fixture = fixture;
@@ -22,6 +21,7 @@ public class AuthAppFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Test");
+
         builder.UseSetting("ConnectionStrings:Auth", _fixture.Auth);
         builder.UseSetting("ConnectionStrings:Cache", _fixture.Cache);
 
@@ -43,11 +43,13 @@ public class AuthAppFactory : WebApplicationFactory<Program>
 
         var hasher = scope.ServiceProvider.GetRequiredService<ISecretHasher>();
 
+        var now = DateTime.UtcNow;
+
         var user = User.Create(
             Username.Create(TestData.Username),
             Email.Create(TestData.Email),
             Password.Create(hasher.Hash(TestData.Password)),
-            DateTime.UtcNow);
+            now);
 
         context.Users.Add(user);
 

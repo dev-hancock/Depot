@@ -19,7 +19,7 @@ public static class AuthEndpoints
             .WithDescription("")
             .AllowAnonymous();
 
-        api.MapDelete("/session", LogoutAsync)
+        api.MapPost("/logout", LogoutAsync)
             .WithDescription("");
 
         api.MapPost("/session/refresh", RefreshTokenAsync)

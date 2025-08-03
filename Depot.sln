@@ -43,6 +43,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{FA8F
 		scripts\gen-keys.sh = scripts\gen-keys.sh
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Depot.Repository.Tests", "tests\Depot.Repository.Tests\Depot.Repository.Tests.csproj", "{717A3584-2973-442F-BB37-CFD49B561DB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,10 @@ Global
 		{26571F4F-77F2-4B5D-831F-C7C112EF8750}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26571F4F-77F2-4B5D-831F-C7C112EF8750}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26571F4F-77F2-4B5D-831F-C7C112EF8750}.Release|Any CPU.Build.0 = Release|Any CPU
+		{717A3584-2973-442F-BB37-CFD49B561DB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{717A3584-2973-442F-BB37-CFD49B561DB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{717A3584-2973-442F-BB37-CFD49B561DB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{717A3584-2973-442F-BB37-CFD49B561DB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{92F52A49-AF77-40DB-8998-31D4EF041FB1} = {5A1A737C-3190-43A4-8EAC-A1F6181ABB98}
@@ -96,5 +102,6 @@ Global
 		{32B2D393-69C4-499D-879C-733AC373AE90} = {3BE40410-6D2C-49C8-959E-001C3741056D}
 		{5B560705-328C-4276-92A7-DE7782EBAADE} = {5A1A737C-3190-43A4-8EAC-A1F6181ABB98}
 		{26571F4F-77F2-4B5D-831F-C7C112EF8750} = {5A1A737C-3190-43A4-8EAC-A1F6181ABB98}
+		{717A3584-2973-442F-BB37-CFD49B561DB1} = {3BE40410-6D2C-49C8-959E-001C3741056D}
 	EndGlobalSection
 EndGlobal
