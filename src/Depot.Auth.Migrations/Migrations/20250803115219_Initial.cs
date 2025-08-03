@@ -49,9 +49,11 @@ namespace Depot.Auth.Migrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Username = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Username_Value = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Username_Normalized = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
                     Password = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Email = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Email_Value = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
+                    Email_Normalized = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
@@ -249,17 +251,17 @@ namespace Depot.Auth.Migrator.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_Email",
+                name: "IX_users_Email_Normalized",
                 schema: "auth",
                 table: "users",
-                column: "Email",
+                column: "Email_Normalized",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_users_Username",
+                name: "IX_users_Username_Normalized",
                 schema: "auth",
                 table: "users",
-                column: "Username",
+                column: "Username_Normalized",
                 unique: true);
         }
 
