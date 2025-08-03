@@ -13,6 +13,7 @@ public class AuthAppFactory : WebApplicationFactory<Program>
 {
     private readonly InfraFixture _fixture;
 
+
     public AuthAppFactory(InfraFixture fixture)
     {
         _fixture = fixture;

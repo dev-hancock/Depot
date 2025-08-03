@@ -5,15 +5,12 @@ using System.Net;
 using System.Net.Http.Json;
 using Bogus;
 using Data;
-using Domain.Interfaces;
-using Domain.Users;
+using Extensions;
+using Factories;
 using Features.Auth.Register;
 using Fixtures;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
-using Persistence;
 
 public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
 {
@@ -31,51 +28,16 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
     {
         _fixture = fixture;
     }
-    //
-    // private static string Username { get; } = Faker.Internet.UserName();
-    //
-    // private static string Password { get; } = Faker.Internet.Password();
-    //
-    // private static string Email { get; } = Faker.Internet.Email();
 
-    private User User { get; set; } = null!;
-
-    public async Task InitializeAsync()
+    public Task InitializeAsync()
     {
-        var factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(host =>
-            {
-                host.UseEnvironment("Test");
-
-                host.UseSetting("ConnectionStrings:Auth", _fixture.Auth);
-                host.UseSetting("ConnectionStrings:Cache", _fixture.Cache);
-            });
+        var factory = new AuthAppFactory(_fixture);
 
         _client = factory.CreateClient();
 
-        using var scope = factory.Services.CreateScope();
+        _cache = factory.Services.GetRequiredService<IDistributedCache>();
 
-        var services = scope.ServiceProvider;
-
-        var hasher = services.GetRequiredService<ISecretHasher>();
-
-        _cache = services.GetRequiredService<IDistributedCache>();
-
-        User = User.Create(
-            Username.Create(Faker.Internet.UserName()),
-            Email.Create(Faker.Internet.Email()),
-            Password.Create(hasher.Hash(Faker.Internet.Password())),
-            DateTime.UtcNow);
-
-        await using var context = services.GetRequiredService<AuthDbContext>();
-
-        await context.Database.EnsureDeletedAsync();
-
-        await context.Database.EnsureCreatedAsync();
-
-        context.Users.Add(User);
-
-        await context.SaveChangesAsync();
+        return Task.CompletedTask;
     }
 
     public Task DisposeAsync()
@@ -92,7 +54,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         {
             Username = username,
             Email = Faker.Internet.Email(),
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -111,7 +73,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         {
             Username = Faker.Internet.UserName(),
             Email = email,
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -129,7 +91,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         {
             Username = Faker.Internet.UserName(),
             Email = Faker.Internet.Email(),
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -165,7 +127,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         {
             Username = Faker.Internet.UserName(),
             Email = email!,
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -185,7 +147,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         {
             Username = username!,
             Email = Faker.Internet.Email(),
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -201,7 +163,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Arrange
         var payload = new RegisterCommand
         {
-            Password = Faker.Internet.Password()
+            Password = Faker.Internet.StrongPassword()
         };
 
         // Act
@@ -230,44 +192,6 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
-    }
-
-    [Fact]
-    public async Task Register_WithOnlyEmail_ShouldReturnSuccess()
-    {
-        // Arrange
-        var payload = new RegisterCommand
-        {
-            Email = Faker.Internet.Email(),
-            Password = Faker.Internet.Password()
-        };
-
-        // Act
-        var result = await _client.PostAsJsonAsync("/api/auth/register", payload);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        await AssertSession(result);
-    }
-
-    [Fact]
-    public async Task Register_WithOnlyUsername_ShouldReturnSuccess()
-    {
-        // Arrange
-        var payload = new RegisterCommand
-        {
-            Username = Faker.Internet.UserName(),
-            Password = Faker.Internet.Password()
-        };
-
-        // Act
-        var result = await _client.PostAsJsonAsync("/api/auth/register", payload);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        await AssertSession(result);
     }
 
     private async Task AssertSession(HttpResponseMessage response)

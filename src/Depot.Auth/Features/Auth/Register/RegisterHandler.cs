@@ -40,9 +40,17 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
     {
         await using var db = await _factory.CreateDbContextAsync(token);
 
+        var username = Username
+            .TryCreate(message.Username)
+            .Match(u => u.Normalized, _ => null!);
+
+        var email = Email
+            .TryCreate(message.Email)
+            .Match(e => e.Normalized, _ => null!);
+
         var exists = await db.Users
             .AsNoTracking()
-            .Where(x => x.Email == message.Email || x.Username == message.Username)
+            .Where(x => x.Email.Normalized == email || x.Username.Normalized == username)
             .AnyAsync(token);
 
         if (exists)

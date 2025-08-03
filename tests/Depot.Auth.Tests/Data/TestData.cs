@@ -1,6 +1,7 @@
 namespace Depot.Auth.Tests.Data;
 
 using Bogus;
+using Extensions;
 
 public static class TestData
 {
@@ -8,7 +9,7 @@ public static class TestData
 
     public static string Username { get; } = Faker.Internet.UserName();
 
-    public static string Password { get; } = Faker.Internet.Password();
+    public static string Password { get; } = Faker.Internet.StrongPassword();
 
     public static string Email { get; } = Faker.Internet.Email();
 
