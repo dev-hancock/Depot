@@ -1,5 +1,6 @@
 ﻿namespace Depot.Auth;
 
+using Asp.Versioning;
 using Domain.Interfaces;
 using Endpoints;
 using Extensions;
@@ -47,8 +48,20 @@ public class Program
         var services = builder.Services;
         var configuration = builder.Configuration;
 
+        builder.Services
+            .AddOpenApi()
+            .AddApiVersioning(opt =>
+            {
+                opt.ReportApiVersions = true;
+                opt.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(opt =>
+            {
+                opt.GroupNameFormat = "'v'V";
+                opt.SubstituteApiVersionInUrl = true;
+            });
+
         // services.AddSerilog(Log.Logger);
-        services.AddOpenApi();
 
         services.AddMestra(opt =>
         {

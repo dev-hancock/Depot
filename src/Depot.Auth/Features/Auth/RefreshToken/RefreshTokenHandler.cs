@@ -52,16 +52,14 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
             return Errors.UserNotFound();
         }
 
-        var session = user.FindSession(message.RefreshToken);
-
-        if (session is null)
-        {
-            return Error.Unauthorized();
-        }
-
         var now = _time.UtcNow;
 
-        session.Refresh(_tokens.GenerateRefreshToken(now));
+        var result = user.RefreshSession(message.RefreshToken, _tokens.GenerateRefreshToken(now), now);
+
+        if (result.Value is not { } session)
+        {
+            return ErrorOr<RefreshTokenResponse>.From(result.Errors);
+        }
 
         await db.SaveChangesAsync(token);
 

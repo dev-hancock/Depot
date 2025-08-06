@@ -7,5 +7,5 @@ using Mestra.Abstractions;
 public sealed class RefreshTokenCommand : IRequest<ErrorOr<RefreshTokenResponse>>
 {
     [JsonPropertyName("refresh_token")]
-    public string RefreshToken { get; } = null!;
+    public string RefreshToken { get; init; } = null!;
 }

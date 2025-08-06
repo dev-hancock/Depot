@@ -53,7 +53,7 @@ public class User : Root
 
     public ErrorOr<Session> CreateSession(RefreshToken token)
     {
-        if (FindSession(token) is not null)
+        if (FindSession(token).Value is { } _)
         {
             return Error.Conflict();
         }
@@ -67,9 +67,9 @@ public class User : Root
         return session;
     }
 
-    public ErrorOr<Success> RefreshSession(RefreshToken token, DateTime now)
+    public ErrorOr<Session> RefreshSession(string current, RefreshToken updated, DateTime now)
     {
-        if (FindSession(token) is not { } session)
+        if (FindSession(current).Value is not { } session)
         {
             return Error.NotFound();
         }
@@ -79,11 +79,11 @@ public class User : Root
             return Error.Unauthorized();
         }
 
-        session.Refresh(token);
+        session.Refresh(updated);
 
         Raise(new SessionRefreshedEvent(session.Id, session.ExpiresAt));
 
-        return Result.Success;
+        return session;
     }
 
     public ErrorOr<Success> RevokeSession(string? token = null)
@@ -123,9 +123,16 @@ public class User : Root
         Raise(new EmailChangedEvent(this));
     }
 
-    public Session? FindSession(string token)
+    public ErrorOr<Session> FindSession(string token)
     {
-        return Sessions.SingleOrDefault(t => t.RefreshToken == token);
+        var session = Sessions.SingleOrDefault(t => t.RefreshToken.Value == token);
+
+        if (session is null)
+        {
+            return Error.NotFound();
+        }
+
+        return session;
     }
 
     public Session? FindSession(SessionId? id = null)

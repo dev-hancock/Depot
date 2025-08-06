@@ -22,7 +22,7 @@ public static class AuthEndpoints
         api.MapPost("/logout", LogoutAsync)
             .WithDescription("");
 
-        api.MapPost("/session/refresh", RefreshTokenAsync)
+        api.MapPost("/refresh", RefreshTokenAsync)
             .WithDescription("");
 
         api.MapPost("/register", RegisterAsync)

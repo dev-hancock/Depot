@@ -1,13 +1,8 @@
 namespace Depot.Auth.Tests.Factories;
 
-using Data;
-using Domain.Interfaces;
-using Domain.Users;
 using Fixtures;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Persistence;
 
 public class AuthAppFactory : WebApplicationFactory<Program>
 {
@@ -27,32 +22,7 @@ public class AuthAppFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            SeedDatabase(services.BuildServiceProvider());
+            // TODO: Logging
         });
-    }
-
-    private static void SeedDatabase(IServiceProvider services)
-    {
-        using var scope = services.CreateScope();
-
-        using var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-
-        context.Database.EnsureDeleted();
-
-        context.Database.EnsureCreated();
-
-        var hasher = scope.ServiceProvider.GetRequiredService<ISecretHasher>();
-
-        var now = DateTime.UtcNow;
-
-        var user = User.Create(
-            Username.Create(TestData.Username),
-            Email.Create(TestData.Email),
-            Password.Create(hasher.Hash(TestData.Password)),
-            now);
-
-        context.Users.Add(user);
-
-        context.SaveChanges();
     }
 }

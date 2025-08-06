@@ -1,5 +1,6 @@
 namespace Depot.Auth.Endpoints;
 
+using Asp.Versioning;
 using Organisations;
 
 public static class EndpointExtensions
@@ -39,15 +40,20 @@ public static class EndpointExtensions
         return api;
     }
 
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder routes)
+    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
     {
-        var api = routes.MapGroup("api").WithTags("Api").RequireAuthorization();
+        var versions = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .ReportApiVersions()
+            .Build();
+
+        var api = app
+            .MapGroup("api/v{version:apiVersion}")
+            .WithApiVersionSet(versions)
+            .MapToApiVersion(new ApiVersion(1))
+            .RequireAuthorization();
 
         api.MapAuthEndpoints();
-
-        // api.MapOrganisationsEndpoints();
-
-        api.MapTenantsEndpoints();
 
         api.MapUserEndpoints();
 
