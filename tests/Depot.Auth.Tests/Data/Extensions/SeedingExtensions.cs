@@ -8,9 +8,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Models;
 using Persistence;
 
-public class UserSeeder(UserBuilder builder)
+public static class SeedingExtensions
 {
-    public async Task<TestUser> SeedAsync(IServiceProvider services)
+    public async static Task<TestUser> SeedAsync(this UserBuilder builder, IServiceProvider services)
     {
         using var scope = services.CreateScope();
 

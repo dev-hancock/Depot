@@ -38,7 +38,7 @@ public sealed class LoginPayloadTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithValidPayload_ShouldCacheSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -71,7 +71,7 @@ public sealed class LoginPayloadTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithValidPayload_ShouldPersistSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {

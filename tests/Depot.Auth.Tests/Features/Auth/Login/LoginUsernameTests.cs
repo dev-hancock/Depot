@@ -24,7 +24,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithExactUsername_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -45,7 +45,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithOnlyUsername_ShouldReturnBadRequest()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -64,7 +64,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithUpperCaseUsername_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -84,7 +84,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithLowerCaseUsername_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -104,7 +104,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithPaddedUsername_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -127,7 +127,7 @@ public sealed class LoginUsernameTests : IClassFixture<InfraFixture>
     [InlineData(null)]
     public async Task Login_WithInvalidUsername_ShouldReturnBadRequest(string? username)
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {

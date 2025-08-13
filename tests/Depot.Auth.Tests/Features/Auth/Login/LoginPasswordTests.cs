@@ -23,7 +23,7 @@ public sealed class LoginPasswordTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithExactPassword_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -44,7 +44,7 @@ public sealed class LoginPasswordTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithOnlyPassword_ShouldReturnBadRequest()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -63,7 +63,7 @@ public sealed class LoginPasswordTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithPaddedPassword_ShouldReturnBadRequest()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -87,7 +87,7 @@ public sealed class LoginPasswordTests : IClassFixture<InfraFixture>
     [InlineData(null)]
     public async Task Login_WithInvalidPassword_ShouldReturnBadRequest(string? password)
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {

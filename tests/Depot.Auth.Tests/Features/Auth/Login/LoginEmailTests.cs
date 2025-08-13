@@ -23,7 +23,7 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithExactEmail_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -43,7 +43,7 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithOnlyEmail_ShouldReturnBadRequest()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -62,7 +62,7 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithUpperCaseEmail_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
+        var user = await Arrange.User.SeedAsync(_factory.Services);
 
         var payload = new LoginCommand
         {
@@ -82,8 +82,8 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithLowerCaseEmail_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
-
+        var user = await Arrange.User.SeedAsync(_factory.Services);
+        
         var payload = new LoginCommand
         {
             Email = user.Email.ToLowerInvariant(),
@@ -102,8 +102,8 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Login_WithPaddedEmail_ShouldReturnSession()
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
-
+        var user = await Arrange.User.SeedAsync(_factory.Services);
+        
         var payload = new LoginCommand
         {
             Email = $" {user.Email} ",
@@ -125,8 +125,8 @@ public sealed class LoginEmailTests : IClassFixture<InfraFixture>
     [InlineData(null)]
     public async Task Login_WithInvalidEmail_ShouldReturnBadRequest(string? email)
     {
-        var user = await Arrange.User().SeedAsync(_factory.Services);
-
+        var user = await Arrange.User.SeedAsync(_factory.Services);
+        
         var payload = new LoginCommand
         {
             Email = email,

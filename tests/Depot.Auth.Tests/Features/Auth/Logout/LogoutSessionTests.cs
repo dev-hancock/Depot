@@ -39,10 +39,10 @@ public sealed class LogoutSessionTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Logout_WithRefreshToken_ShouldRevokeSession()
     {
-        var user = await Arrange.User(x => x
-                .WithSession()
-                .WithSession()
-                .WithSession())
+        var user = await Arrange.User
+            .WithSession()
+            .WithSession()
+            .WithSession()
             .SeedAsync(_factory.Services);
 
         var payload = new LogoutCommand
@@ -81,10 +81,10 @@ public sealed class LogoutSessionTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Logout_WithoutRefreshToken_ShouldRevokeAllSessions()
     {
-        var user = await Arrange.User(x => x
-                .WithSession()
-                .WithSession()
-                .WithSession())
+        var user = await Arrange.User
+            .WithSession()
+            .WithSession()
+            .WithSession()
             .SeedAsync(_factory.Services);
 
         var payload = new LogoutCommand();

@@ -37,7 +37,7 @@ public sealed class LogoutPayloadTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Logout_WithoutAccessToken_ShouldReturnUnauthorized()
     {
-        var user = await Arrange.User(x => x.WithSession()).SeedAsync(_factory.Services);
+        var user = await Arrange.User.WithSession().SeedAsync(_factory.Services);
 
         var payload = new LogoutCommand
         {
@@ -57,7 +57,7 @@ public sealed class LogoutPayloadTests : IClassFixture<InfraFixture>
     [Fact]
     public async Task Logout_WithRevokedRefreshToken_ShouldReturnNotFound()
     {
-        var user = await Arrange.User(x => x.WithSession()).SeedAsync(_factory.Services);
+        var user = await Arrange.User.WithSession().SeedAsync(_factory.Services);
 
         var payload = new LogoutCommand
         {
