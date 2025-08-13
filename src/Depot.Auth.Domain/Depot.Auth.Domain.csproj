@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Mestra" Version="1.1.2"/>
+        <PackageReference Include="ErrorOr" Version="2.0.1"/>
+        <PackageReference Include="System.Reactive" Version="6.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>Depot.Auth.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+</Project>

@@ -9,15 +9,19 @@ public readonly record struct UserId(Guid Value);
 
 public class Session : Entity
 {
-    private Session()
+    internal Session(SessionId id, UserId userId, RefreshToken token, bool isRevoked)
     {
+        Id = id;
+        UserId = userId;
+        RefreshToken = token;
+        IsRevoked = isRevoked;
     }
 
     public SessionId Id { get; private init; }
 
     public UserId UserId { get; private init; }
 
-    public RefreshToken RefreshToken { get; private set; } = null!;
+    public RefreshToken RefreshToken { get; private set; }
 
     public DateTime ExpiresAt => RefreshToken.ExpiresAt;
 
@@ -27,12 +31,12 @@ public class Session : Entity
 
     public static Session Create(UserId userId, RefreshToken token)
     {
-        return new Session
-        {
-            Id = new SessionId(Guid.NewGuid()),
-            UserId = userId,
-            RefreshToken = token
-        };
+        return new Session(
+            new SessionId(Guid.NewGuid()),
+            userId,
+            token,
+            false
+        );
     }
 
     public bool IsExpired(DateTime now)

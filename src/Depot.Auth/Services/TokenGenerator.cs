@@ -3,9 +3,7 @@ namespace Depot.Auth.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Domain.Auth;
 using Domain.Interfaces;
-using Domain.Users;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Options;
@@ -24,7 +22,7 @@ public class TokenGenerator : ITokenGenerator
         _signing = new SigningCredentials(key.GetSecurityKey(_options.KeyPath), SecurityAlgorithms.EcdsaSha256);
     }
 
-    public RefreshToken GenerateRefreshToken(DateTime now)
+    public Token GenerateRefreshToken(DateTime now)
     {
         var expires = now + _options.RefreshTokenLifetime;
 
@@ -32,26 +30,21 @@ public class TokenGenerator : ITokenGenerator
 
         var encoded = Base64UrlEncoder.Encode(bytes);
 
-        return RefreshToken.Create(encoded, expires);
+        return new Token(encoded, expires);
     }
 
-    public AccessToken GenerateAccessToken(User user, SessionId session, DateTime now)
+    public Token GenerateAccessToken(Guid sub, Guid jti, string[] roles, DateTime now)
     {
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id.Value.ToString()),
-            new(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new(JwtRegisteredClaimNames.Jti, session.Value.ToString())
+            new(JwtRegisteredClaimNames.Sub, sub.ToString()),
+            new(JwtRegisteredClaimNames.Jti, jti.ToString())
         };
 
-        // TODO: 
-        // foreach (var ur in user.UserRoles)
-        // {
-        //     if (ur.Role is not null)
-        //     {
-        //         claims.Add(new Claim(ClaimTypes.Role, ur.Role.Name));
-        //     }
-        // }
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         var expires = now + _options.AccessTokenLifetime;
 
@@ -65,6 +58,6 @@ public class TokenGenerator : ITokenGenerator
 
         var token = _handler.WriteToken(access);
 
-        return AccessToken.Create(token, expires);
+        return new Token(token, expires);
     }
 }

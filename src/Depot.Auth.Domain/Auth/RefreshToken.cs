@@ -2,7 +2,7 @@ namespace Depot.Auth.Domain.Auth;
 
 public sealed record RefreshToken
 {
-    private RefreshToken(string value, DateTime expiresAt)
+    internal RefreshToken(string value, DateTime expiresAt)
     {
         Value = value;
         ExpiresAt = expiresAt;

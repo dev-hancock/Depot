@@ -5,9 +5,9 @@ using System.Net;
 using System.Net.Http.Json;
 using Bogus;
 using Data;
+using Data.Models;
 using Extensions;
 using Factories;
-using Features.Auth.Register;
 using Fixtures;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,7 +33,7 @@ public class RegisterTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        var factory = new AuthAppFactory(_fixture);
+        var factory = new TestAppFactory(_fixture);
 
         _client = factory.CreateClient();
 

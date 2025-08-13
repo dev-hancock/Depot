@@ -1,16 +1,17 @@
-namespace Depot.Auth.Features.Auth.RefreshToken;
+namespace Depot.Auth.Features.Auth.Refresh;
 
 using System.Reactive.Linq;
 using Domain.Auth;
 using Domain.Interfaces;
 using Domain.Users.Errors;
 using ErrorOr;
+using Mapping;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
 using Persistence;
 
-public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<RefreshTokenResponse>>
+public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshResponse>>
 {
     private readonly IDbContextFactory<AuthDbContext> _factory;
 
@@ -20,7 +21,7 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
 
     private readonly IUserContext _user;
 
-    public RefreshTokenHandler(
+    public RefreshHandler(
         IDbContextFactory<AuthDbContext> factory,
         IUserContext user,
         ITimeProvider time,
@@ -32,12 +33,12 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
         _tokens = tokens;
     }
 
-    public IObservable<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message)
+    public IObservable<ErrorOr<RefreshResponse>> Handle(RefreshCommand message)
     {
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<RefreshTokenResponse>> Handle(RefreshTokenCommand message, CancellationToken token)
+    private async Task<ErrorOr<RefreshResponse>> Handle(RefreshCommand message, CancellationToken token)
     {
         await using var db = await _factory.CreateDbContextAsync(token);
 
@@ -54,18 +55,24 @@ public class RefreshTokenHandler : IMessageHandler<RefreshTokenCommand, ErrorOr<
 
         var now = _time.UtcNow;
 
-        var result = user.RefreshSession(message.RefreshToken, _tokens.GenerateRefreshToken(now), now);
+        var result = user.RefreshSession(message.RefreshToken, _tokens.GenerateRefreshToken(now).ToRefreshToken(), now);
 
         if (result.Value is not { } session)
         {
-            return ErrorOr<RefreshTokenResponse>.From(result.Errors);
+            return ErrorOr<RefreshResponse>.From(result.Errors);
         }
 
         await db.SaveChangesAsync(token);
 
-        return new RefreshTokenResponse
+        return new RefreshResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
+            AccessToken = _tokens
+                .GenerateAccessToken(
+                    user.Id.Value,
+                    session.Id.Value,
+                    [],
+                    now)
+                .ToAccessToken(),
             RefreshToken = session.RefreshToken
         };
     }

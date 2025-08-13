@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Domain.Users;
 using Domain.Users.Errors;
 using ErrorOr;
+using Mapping;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
@@ -65,7 +66,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now));
+        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
 
         if (result.Value is not { } session)
         {
@@ -74,13 +75,16 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         await db.SaveChangesAsync(ct);
 
-        var token = _tokens.GenerateAccessToken(user, session.Id, now);
-
         return new ChangePasswordResponse
         {
-            AccessToken = token.Value,
-            RefreshToken = session.RefreshToken,
-            ExpiresAt = token.ExpiresAt
+            AccessToken = _tokens
+                .GenerateAccessToken(
+                    user.Id.Value,
+                    session.Id.Value,
+                    [],
+                    now)
+                .ToAccessToken(),
+            RefreshToken = session.RefreshToken
         };
     }
 }

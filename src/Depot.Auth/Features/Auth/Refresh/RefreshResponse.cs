@@ -1,8 +1,8 @@
-namespace Depot.Auth.Features.Auth.RefreshToken;
+namespace Depot.Auth.Features.Auth.Refresh;
 
 using System.Text.Json.Serialization;
 
-public sealed class RefreshTokenResponse
+public sealed class RefreshResponse
 {
     [JsonPropertyName("access_token")]
     public string AccessToken { get; set; } = null!;

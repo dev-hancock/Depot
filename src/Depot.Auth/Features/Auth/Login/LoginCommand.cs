@@ -7,11 +7,11 @@ using Mestra.Abstractions;
 public class LoginCommand : IRequest<ErrorOr<LoginResponse>>
 {
     [JsonPropertyName("username")]
-    public string? Username { get; init; }
+    public string? Username { get; set; }
 
     [JsonPropertyName("email")]
-    public string? Email { get; init; }
+    public string? Email { get; set; }
 
     [JsonPropertyName("password")]
-    public string Password { get; init; } = null!;
+    public string Password { get; set; } = null!;
 }

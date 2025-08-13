@@ -1,20 +1,23 @@
 namespace Depot.Auth.Tests.Auth;
 
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Domain.Auth;
 using Domain.Interfaces;
 using Factories;
-using Features.Auth.Logout;
+using Features.Auth.RefreshToken;
 using Fixtures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence;
 
-public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
+public class RefreshTokenTests : IClassFixture<InfraFixture>, IAsyncLifetime
 {
     private readonly InfraFixture _fixture;
+
+    private readonly JwtSecurityTokenHandler _handler = new();
 
     private IDistributedCache _cache = null!;
 
@@ -26,14 +29,14 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
     private ITokenGenerator _tokens = null!;
 
-    public LogoutTests(InfraFixture fixture)
+    public RefreshTokenTests(InfraFixture fixture)
     {
         _fixture = fixture;
     }
 
     public Task InitializeAsync()
     {
-        var factory = new AuthAppFactory(_fixture);
+        var factory = new TestAppFactory(_fixture);
 
         _client = factory.CreateClient();
 
@@ -54,7 +57,7 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
     }
 
     [Fact]
-    public async Task Logout_WithValidPayload_ShouldRevokeSession()
+    public async Task RefreshToken_WithValidPayload_ShouldReturnSession()
     {
         // Arrange
         var user = await _db.Users.FirstOrDefaultAsync();
@@ -63,16 +66,16 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         var session = user.CreateSession(_tokens.GenerateRefreshToken(DateTime.UtcNow));
 
-        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
-
         await _db.SaveChangesAsync();
 
-        var payload = new LogoutCommand
+        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+
+        var payload = new RefreshTokenCommand
         {
             RefreshToken = session.Value.RefreshToken
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/refresh")
         {
             Content = JsonContent.Create(payload),
             Headers =
@@ -87,39 +90,11 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
         // Assert
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        await AssertSessionRevoked(session.Value.Id);
-    }
-
-    private async Task AssertSessionExists(SessionId id)
-    {
-        var exists = await _cache.GetAsync(id.Value.ToString());
-
-        Assert.NotNull(exists);
-
-        var session = await _db.Sessions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == id);
-
-        Assert.NotNull(session);
-        Assert.False(session.IsRevoked);
-    }
-
-    private async Task AssertSessionRevoked(SessionId id)
-    {
-        var exists = await _cache.GetAsync(id.Value.ToString());
-
-        Assert.Null(exists);
-
-        var session = await _db.Sessions
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == id);
-
-        Assert.NotNull(session);
-        Assert.True(session.IsRevoked);
+        await AssertSession(result, session.Value);
     }
 
     [Fact]
-    public async Task Logout_WithoutAccessToken_ShouldReturnUnauthorized()
+    public async Task RefreshToken_WithRevokedSession_ShouldReturnUnauthorized()
     {
         // Arrange
         var user = await _db.Users.FirstOrDefaultAsync();
@@ -130,14 +105,24 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         await _db.SaveChangesAsync();
 
-        var payload = new LogoutCommand
+        session.Value.Revoke();
+
+        await _db.SaveChangesAsync();
+
+        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+
+        var payload = new RefreshTokenCommand
         {
             RefreshToken = session.Value.RefreshToken
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/refresh")
         {
-            Content = JsonContent.Create(payload)
+            Content = JsonContent.Create(payload),
+            Headers =
+            {
+                { "Authorization", $"Bearer {token.Value}" }
+            }
         };
 
         // Act
@@ -145,12 +130,11 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
-
-        await AssertSessionExists(session.Value.Id);
     }
 
+
     [Fact]
-    public async Task Logout_WithRevokedRefreshToken_ShouldReturnNotFound()
+    public async Task RefreshToken_WithExpiredSession_ShouldReturnUnauthorized()
     {
         // Arrange
         var user = await _db.Users.FirstOrDefaultAsync();
@@ -159,18 +143,20 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         var session = user.CreateSession(_tokens.GenerateRefreshToken(DateTime.UtcNow));
 
-        session.Value.Revoke();
+        await _db.SaveChangesAsync();
 
-        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+        session.Value.Revoke();
 
         await _db.SaveChangesAsync();
 
-        var payload = new LogoutCommand
+        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+
+        var payload = new RefreshTokenCommand
         {
             RefreshToken = session.Value.RefreshToken
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/refresh")
         {
             Content = JsonContent.Create(payload),
             Headers =
@@ -183,11 +169,11 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
         var result = await _client.SendAsync(request);
 
         // Assert
-        Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
 
     [Fact]
-    public async Task Logout_WithInvalidRefreshToken_ShouldReturnNotFound()
+    public async Task RefreshToken_WithInvalidRefreshToken_ShouldReturnNotFound()
     {
         // Arrange
         var user = await _db.Users.FirstOrDefaultAsync();
@@ -200,12 +186,12 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
 
-        var payload = new LogoutCommand
+        var payload = new RefreshTokenCommand
         {
             RefreshToken = _tokens.GenerateRefreshToken(DateTime.UtcNow)
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/refresh")
         {
             Content = JsonContent.Create(payload),
             Headers =
@@ -219,58 +205,30 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
-
-        await AssertSessionExists(session.Value.Id);
     }
 
-    [Fact]
-    public async Task Logout_WithoutRefreshToken_ShouldRevokeAllSessions()
+    private async Task AssertSession(HttpResponseMessage response, Session session)
     {
-        // Arrange
-        var user = await _db.Users.FirstOrDefaultAsync();
+        var result = await response.Content.ReadFromJsonAsync<RefreshTokenResponse>();
 
-        Assert.NotNull(user);
+        Assert.NotNull(result);
+        Assert.NotNull(result.AccessToken);
+        Assert.NotNull(result.RefreshToken);
 
-        for (var i = 0; i < 10; i++)
-        {
-            _ = user.CreateSession(_tokens.GenerateRefreshToken(DateTime.UtcNow));
-        }
+        var token = _handler.ReadJwtToken(result.AccessToken);
 
-        var session = user.CreateSession(_tokens.GenerateRefreshToken(DateTime.UtcNow));
+        var sessionId = token.Claims.SingleOrDefault(x => x.Type == "jti");
+        var userId = token.Claims.SingleOrDefault(x => x.Type == "sub");
 
-        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+        Assert.NotNull(sessionId);
+        Assert.NotNull(userId);
 
-        await _db.SaveChangesAsync();
+        Assert.Equal(session.Id.Value.ToString(), sessionId.Value);
+        Assert.Equal(session.UserId.Value.ToString(), userId.Value);
 
-        var payload = new LogoutCommand();
+        var exists = await _cache.GetAsync(session.Id.Value.ToString());
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
-        {
-            Content = JsonContent.Create(payload),
-            Headers =
-            {
-                { "Authorization", $"Bearer {token.Value}" }
-            }
-        };
-
-        // Act
-        var result = await _client.SendAsync(request);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var sessions = await _db.Sessions
-            .AsNoTracking()
-            .Where(x => x.UserId == user.Id)
-            .ToListAsync();
-
-        Assert.All(sessions, x => Assert.True(x.IsRevoked));
-
-        foreach (var id in sessions.Select(x => x.Id))
-        {
-            var exists = await _cache.GetAsync(id.Value.ToString());
-
-            Assert.Null(exists);
-        }
+        Assert.NotNull(exists);
+        Assert.Equal([0x1], exists);
     }
 }

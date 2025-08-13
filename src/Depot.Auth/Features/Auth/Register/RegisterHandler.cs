@@ -5,6 +5,7 @@ using Domain.Interfaces;
 using Domain.Users;
 using Domain.Users.Errors;
 using ErrorOr;
+using Mapping;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -66,7 +67,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             Password.Create(_hasher.Hash(message.Password)),
             now);
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now));
+        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
 
         if (result.Value is not { } session)
         {
@@ -79,7 +80,13 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
         return new RegisterResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
+            AccessToken = _tokens
+                .GenerateAccessToken(
+                    user.Id.Value,
+                    session.Id.Value,
+                    [],
+                    now)
+                .ToAccessToken(),
             RefreshToken = session.RefreshToken
         };
     }

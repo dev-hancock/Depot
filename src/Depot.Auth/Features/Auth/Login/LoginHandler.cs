@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using Domain.Interfaces;
 using Domain.Users;
 using ErrorOr;
+using Mapping;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
@@ -65,7 +66,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now));
+        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
 
         if (result.Value is not { } session)
         {
@@ -76,7 +77,13 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         return new LoginResponse
         {
-            AccessToken = _tokens.GenerateAccessToken(user, session.Id, now),
+            AccessToken = _tokens
+                .GenerateAccessToken(
+                    user.Id.Value,
+                    session.Id.Value,
+                    [], // TODO: Add roles and permissions
+                    now)
+                .ToAccessToken(),
             RefreshToken = session.RefreshToken
         };
     }

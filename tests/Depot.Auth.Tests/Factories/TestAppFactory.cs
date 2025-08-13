@@ -4,11 +4,11 @@ using Fixtures;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-public class AuthAppFactory : WebApplicationFactory<Program>
+public class TestAppFactory : WebApplicationFactory<Program>
 {
     private readonly InfraFixture _fixture;
 
-    public AuthAppFactory(InfraFixture fixture)
+    public TestAppFactory(InfraFixture fixture)
     {
         _fixture = fixture;
     }

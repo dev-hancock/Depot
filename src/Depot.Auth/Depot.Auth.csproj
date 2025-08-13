@@ -49,6 +49,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Depot.Auth.Domain\Depot.Auth.Domain.csproj"/>
         <ProjectReference Include="..\Depot.Common\Depot.Common.csproj"/>
     </ItemGroup>
 </Project>

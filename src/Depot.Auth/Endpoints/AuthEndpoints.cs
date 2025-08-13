@@ -4,7 +4,7 @@ using System.Reactive.Threading.Tasks;
 using Extensions;
 using Features.Auth.Login;
 using Features.Auth.Logout;
-using Features.Auth.RefreshToken;
+using Features.Auth.Refresh;
 using Features.Auth.Register;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +42,7 @@ public static class AuthEndpoints
         return mediator.Send(request).ToTask(context.RequestAborted).ToOkAsync();
     }
 
-    private static Task<IResult> RefreshTokenAsync([FromBody] RefreshTokenCommand request, [FromServices] IMediator mediator,
+    private static Task<IResult> RefreshTokenAsync([FromBody] RefreshCommand request, [FromServices] IMediator mediator,
         HttpContext context)
     {
         return mediator.Send(request).ToTask(context.RequestAborted).ToOkAsync();

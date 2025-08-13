@@ -48,8 +48,9 @@ public class Program
         var services = builder.Services;
         var configuration = builder.Configuration;
 
+        builder.Services.AddOpenApi("v1");
+
         builder.Services
-            .AddOpenApi()
             .AddApiVersioning(opt =>
             {
                 opt.ReportApiVersions = true;
@@ -105,7 +106,7 @@ public class Program
 
         if (app.Environment.IsDevelopment())
         {
-            app.MapScalarApiReference();
+            app.MapScalarApiReference(opt => opt.AddDocuments("v1"));
         }
 
         app.UseExceptionHandler();

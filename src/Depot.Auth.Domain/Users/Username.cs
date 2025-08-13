@@ -6,13 +6,19 @@ using ErrorOr;
 
 public record Username
 {
-    private Username() { }
+    internal Username(string value)
+    {
+        Value = value.Trim();
+        Normalized = Value
+            .Normalize(NormalizationForm.FormKC)
+            .ToLowerInvariant();
+    }
 
     public UserId? UserId { get; set; }
 
-    public string Value { get; private set; } = null!;
+    public string Value { get; } = null!;
 
-    public string Normalized { get; private set; } = null!;
+    public string Normalized { get; } = null!;
 
     public virtual bool Equals(Username? other)
     {
@@ -31,17 +37,7 @@ public record Username
 
     public static Username Create(string username)
     {
-        var value = username.Trim();
-
-        var normalized = value
-            .Normalize(NormalizationForm.FormKC)
-            .ToLowerInvariant();
-
-        return new Username
-        {
-            Value = value,
-            Normalized = normalized
-        };
+        return new Username(username);
     }
 
     public static ErrorOr<Username> TryCreate(string? value)

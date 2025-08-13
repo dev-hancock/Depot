@@ -11,12 +11,13 @@ public class User : Root
     // EF Core
     private User() { }
 
-    internal User(UserId id, Username username, Email email, Password password, DateTimeOffset createdAt)
+    internal User(UserId id, Username username, Email email, Password password, Session[] sessions, DateTimeOffset createdAt)
     {
         Id = id;
         Username = username;
         Email = email;
         Password = password;
+        Sessions = sessions.ToList();
         CreatedAt = createdAt;
     }
 
@@ -42,6 +43,7 @@ public class User : Root
             username,
             email,
             password,
+            [],
             now
         );
     }
