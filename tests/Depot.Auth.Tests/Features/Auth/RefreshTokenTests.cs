@@ -6,7 +6,6 @@ using System.Net.Http.Json;
 using Domain.Auth;
 using Domain.Interfaces;
 using Factories;
-using Features.Auth.RefreshToken;
 using Fixtures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;

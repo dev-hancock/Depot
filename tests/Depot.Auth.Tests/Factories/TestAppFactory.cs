@@ -1,14 +1,14 @@
 namespace Depot.Auth.Tests.Factories;
 
-using Fixtures;
+using Features.Auth.Login;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 public class TestAppFactory : WebApplicationFactory<Program>
 {
-    private readonly InfraFixture _fixture;
+    private readonly IntegrationFixture _fixture;
 
-    public TestAppFactory(InfraFixture fixture)
+    public TestAppFactory(IntegrationFixture fixture)
     {
         _fixture = fixture;
     }

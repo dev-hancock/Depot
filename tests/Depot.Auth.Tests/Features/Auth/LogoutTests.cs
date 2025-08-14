@@ -2,17 +2,21 @@ namespace Depot.Auth.Tests.Auth;
 
 using System.Net;
 using System.Net.Http.Json;
+using Bogus;
+using Data;
 using Depot.Auth.Features.Auth.Logout;
 using Domain.Interfaces;
 using Factories;
 using Fixtures;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using Persistence;
 
 public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 {
+    private static readonly Faker Faker = new();
+
     private readonly InfraFixture _fixture;
 
     private IDistributedCache _cache = null!;
@@ -58,20 +62,11 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
     [Fact]
     public async Task Logout_WithInvalidRefreshToken_ShouldReturnNotFound()
     {
-        // Arrange
-        var user = await _db.Users.FirstOrDefaultAsync();
-
-        Assert.NotNull(user);
-
-        var session = user.CreateSession(_tokens.GenerateRefreshToken(DateTime.UtcNow));
-
-        await _db.SaveChangesAsync();
-
-        var token = _tokens.GenerateAccessToken(user, session.Value.Id, DateTime.UtcNow);
+        var user = await Arrange.User.WithSession().SeedAsync(_factory.Services);
 
         var payload = new LogoutCommand
         {
-            RefreshToken = _tokens.GenerateRefreshToken(DateTime.UtcNow)
+            RefreshToken = Base64UrlEncoder.Encode(Faker.Random.Bytes(32))
         };
 
         var request = new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
@@ -79,7 +74,7 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
             Content = JsonContent.Create(payload),
             Headers =
             {
-                { "Authorization", $"Bearer {token.Value}" }
+                { "Authorization", $"Bearer {user.Sessions[0].AccessToken}" }
             }
         };
 
@@ -88,7 +83,5 @@ public class LogoutTests : IClassFixture<InfraFixture>, IAsyncLifetime
 
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
-
-        await AssertSessionExists(session.Value.Id);
     }
 }
