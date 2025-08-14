@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
+using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 
 public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fixture)

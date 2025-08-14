@@ -4,11 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Bogus;
-using Data;
+using Data.Extensions;
 using Data.Models;
-using Extensions;
 using Factories;
-using Fixtures;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 

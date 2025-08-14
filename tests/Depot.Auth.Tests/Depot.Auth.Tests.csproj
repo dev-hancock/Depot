@@ -38,9 +38,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Features\Organisations\" />
-        <Folder Include="Features\Tenants\" />
-        <Folder Include="Features\Users\" />
+        <Folder Include="Features\Organisations\"/>
+        <Folder Include="Features\Tenants\"/>
+        <Folder Include="Features\Users\"/>
     </ItemGroup>
 
     <ItemGroup>

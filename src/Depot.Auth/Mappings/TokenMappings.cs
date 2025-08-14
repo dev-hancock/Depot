@@ -1,4 +1,4 @@
-namespace Depot.Auth.Mapping;
+namespace Depot.Auth.Mappings;
 
 using Domain.Auth;
 using Domain.Interfaces;

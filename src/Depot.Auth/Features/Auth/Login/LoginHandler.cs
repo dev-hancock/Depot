@@ -4,7 +4,7 @@ using System.Reactive.Linq;
 using Domain.Interfaces;
 using Domain.Users;
 using ErrorOr;
-using Mapping;
+using Mappings;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;

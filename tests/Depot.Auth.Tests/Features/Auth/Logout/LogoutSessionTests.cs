@@ -4,10 +4,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
+using Data.Extensions;
 using Depot.Auth.Features.Auth.Logout;
 using Domain.Auth;
 using Factories;
-using Fixtures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -66,7 +66,7 @@ public sealed class LogoutSessionTests : IClassFixture<InfraFixture>
         Assert.True(entity.IsRevoked);
     }
 
-    private HttpRequestMessage CreateRequest(LogoutCommand command, string token)
+    private static HttpRequestMessage CreateRequest(LogoutCommand command, string token)
     {
         return new HttpRequestMessage(HttpMethod.Post, "api/auth/logout")
         {

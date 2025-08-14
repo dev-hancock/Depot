@@ -5,7 +5,7 @@ using Domain.Interfaces;
 using Domain.Users;
 using Domain.Users.Errors;
 using ErrorOr;
-using Mapping;
+using Mappings;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Persistence;

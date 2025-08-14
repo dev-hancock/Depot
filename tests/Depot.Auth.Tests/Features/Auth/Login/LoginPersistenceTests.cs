@@ -3,6 +3,7 @@ namespace Depot.Auth.Tests.Features.Auth.Login;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
+using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 
 public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest(fixture)

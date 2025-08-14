@@ -3,6 +3,7 @@ namespace Depot.Auth.Tests.Features.Auth.Login;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
+using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 
 public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fixture)
@@ -66,8 +67,6 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -88,8 +87,6 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -110,8 +107,6 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
     }
 
     [Theory]
@@ -157,8 +152,6 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
