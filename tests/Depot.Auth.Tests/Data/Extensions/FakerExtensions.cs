@@ -2,7 +2,7 @@ namespace Depot.Auth.Tests.Extensions;
 
 using Bogus.DataSets;
 
-public static class InternetExtensions
+public static class FakerExtensions
 {
     public static string StrongPassword(this Internet internet)
     {
