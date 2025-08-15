@@ -16,7 +16,7 @@ public class UserBuilder(MappingDelegate<TestUser, User> mapping) : IBuilder<Tes
 
     public Guid Id { get; } = Faker.Random.Guid();
 
-    public DateTime CreatedAt { get; private set; } = Faker.Date.Past();
+    public DateTime CreatedAt { get; private set; } = Faker.Date.Past(1, DateTime.UtcNow);
 
     public string Email { get; private set; } = Faker.Internet.Email();
 

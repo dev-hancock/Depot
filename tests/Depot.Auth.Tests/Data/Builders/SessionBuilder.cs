@@ -11,7 +11,7 @@ public class SessionBuilder(UserBuilder user)
 
     public Guid Id { get; } = Faker.Random.Guid();
 
-    public DateTime Expiry { get; private set; } = Faker.Date.Future();
+    public DateTime Expiry { get; private set; } = Faker.Date.Soon(1, DateTime.UtcNow);
 
     public bool IsRevoked { get; private set; }
 
@@ -32,9 +32,9 @@ public class SessionBuilder(UserBuilder user)
         );
     }
 
-    public SessionBuilder WithRevoked(bool revoked)
+    public SessionBuilder WithRevoked()
     {
-        IsRevoked = revoked;
+        IsRevoked = true;
 
         return this;
     }

@@ -9,6 +9,9 @@ public readonly record struct UserId(Guid Value);
 
 public class Session : Entity
 {
+    // EF Core
+    private Session() { }
+
     internal Session(SessionId id, UserId userId, RefreshToken token, bool isRevoked)
     {
         Id = id;
@@ -21,7 +24,7 @@ public class Session : Entity
 
     public UserId UserId { get; private init; }
 
-    public RefreshToken RefreshToken { get; private set; }
+    public RefreshToken RefreshToken { get; private set; } = null!;
 
     public DateTime ExpiresAt => RefreshToken.ExpiresAt;
 

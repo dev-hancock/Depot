@@ -356,7 +356,8 @@ namespace Depot.Auth.Migrator.Migrations
                     b.Navigation("Email")
                         .IsRequired();
 
-                    b.Navigation("Username");
+                    b.Navigation("Username")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Organisations.Organisation", b =>

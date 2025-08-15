@@ -49,8 +49,8 @@ namespace Depot.Auth.Migrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Username_Value = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
-                    Username_Normalized = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: true),
+                    Username_Value = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
+                    Username_Normalized = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
                     Password = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Email_Value = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),
                     Email_Normalized = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: false),

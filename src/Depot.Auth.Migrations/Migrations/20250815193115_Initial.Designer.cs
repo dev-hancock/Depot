@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Depot.Auth.Migrator.Migrations
 {
     [DbContext(typeof(AuthDbContext))]
-    [Migration("20250803115219_Initial")]
+    [Migration("20250815193115_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -359,7 +359,8 @@ namespace Depot.Auth.Migrator.Migrations
                     b.Navigation("Email")
                         .IsRequired();
 
-                    b.Navigation("Username");
+                    b.Navigation("Username")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Depot.Auth.Domain.Organisations.Organisation", b =>

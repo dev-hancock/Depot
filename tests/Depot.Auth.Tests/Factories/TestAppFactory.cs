@@ -3,6 +3,9 @@ namespace Depot.Auth.Tests.Factories;
 using Features.Auth.Login;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Persistence;
 
 public class TestAppFactory : WebApplicationFactory<Program>
 {
@@ -15,7 +18,7 @@ public class TestAppFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment("Test");
+        builder.UseEnvironment("Development");
 
         builder.UseSetting("ConnectionStrings:Auth", _fixture.Auth);
         builder.UseSetting("ConnectionStrings:Cache", _fixture.Cache);
@@ -23,6 +26,7 @@ public class TestAppFactory : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             // TODO: Logging
+            services.AddDbContext<DbContext, AuthDbContext>();
         });
     }
 }

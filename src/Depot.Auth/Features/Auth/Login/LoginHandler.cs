@@ -49,12 +49,8 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .Match(e => e.Normalized, _ => null!);
 
         var user = await db.Users
-            .Include(x => x.Memberships)
-            .ThenInclude(x => x.Role)
-            .ThenInclude(x => x.Permissions)
-            .ThenInclude(x => x.Permission)
-            .Include(x => x.Memberships)
-            .ThenInclude(x => x.Tenant)
+            .Include(x => x.Memberships).ThenInclude(x => x.Role).ThenInclude(x => x.Permissions).ThenInclude(x => x.Permission)
+            .Include(x => x.Memberships).ThenInclude(x => x.Tenant)
             .Include(x => x.Sessions)
             .Where(x => x.Username.Normalized == username || x.Email.Normalized == email)
             .SingleOrDefaultAsync(ct);

@@ -7,8 +7,14 @@ public class LoginValidator : AbstractValidator<LoginCommand>
     public LoginValidator()
     {
         RuleFor(x => x)
-            .Must(cmd => !string.IsNullOrWhiteSpace(cmd.Email) || !string.IsNullOrWhiteSpace(cmd.Username))
+            .Must(x => !string.IsNullOrWhiteSpace(x.Email) || !string.IsNullOrWhiteSpace(x.Username))
             .WithMessage("Either email or username is required.");
+
+        When(x => !string.IsNullOrWhiteSpace(x.Email) && !string.IsNullOrWhiteSpace(x.Username),
+            () =>
+                RuleFor(x => x)
+                    .Must(x => string.IsNullOrWhiteSpace(x.Email) || string.IsNullOrWhiteSpace(x.Username))
+                    .WithMessage("Only one of email or username should be provided."));
 
         When(x => !string.IsNullOrWhiteSpace(x.Email),
             () =>

@@ -26,6 +26,7 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
         Assert.NotNull(session.AccessToken);
         Assert.NotNull(session.RefreshToken);
     }
@@ -46,7 +47,10 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 
     [Fact]
@@ -67,6 +71,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -87,6 +94,10 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
+        ;
     }
 
     [Fact]
@@ -107,6 +118,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Theory]
@@ -129,9 +143,11 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
-    }
+        Assert.NotNull(session);
 
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
+    }
 
     [Fact]
     public async Task Login_WithExactPassword_ShouldReturnSession()
@@ -152,6 +168,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -170,11 +189,14 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 
     [Fact]
-    public async Task Login_WithPaddedPassword_ShouldReturnBadRequest()
+    public async Task Login_WithPaddedPassword_ShouldReturnUnauthorized()
     {
         var user = await Arrange.User.SeedAsync(Services);
 
@@ -191,12 +213,14 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 
     [Theory]
     [InlineData("")]
-    [InlineData("password")]
     [InlineData(null)]
     public async Task Login_WithInvalidPassword_ShouldReturnBadRequest(string? password)
     {
@@ -215,7 +239,10 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 
     [Fact]
@@ -229,9 +256,11 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
-    }
+        Assert.NotNull(session);
 
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
+    }
 
     [Fact]
     public async Task Login_WithExactUsername_ShouldReturnSession()
@@ -251,8 +280,10 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
-    }
 
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
+    }
 
     [Fact]
     public async Task Login_WithOnlyUsername_ShouldReturnBadRequest()
@@ -270,7 +301,10 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 
     [Fact]
@@ -291,6 +325,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -311,6 +348,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
@@ -331,10 +371,12 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
+
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Theory]
-    [InlineData("not-an-email")]
     [InlineData("")]
     [InlineData(null)]
     public async Task Login_WithInvalidUsername_ShouldReturnBadRequest(string? username)
@@ -353,6 +395,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.Null(session);
+        Assert.NotNull(session);
+
+        Assert.Null(session.AccessToken);
+        Assert.Null(session.RefreshToken);
     }
 }

@@ -1,5 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
+using System.Net.Http.Json;
 using Bogus;
 using DotNet.Testcontainers.Containers;
 using Factories;
@@ -57,17 +58,21 @@ public class IntegrationFixture : IAsyncLifetime
 public class IntegrationTestCollection : ICollectionFixture<IntegrationFixture>;
 
 [Collection("Integration")]
-public abstract class IntegrationTest
+public abstract class IntegrationTest : IDisposable
 {
     protected static readonly Faker Faker = new();
+
+    private readonly IServiceScope _scope;
 
     public IntegrationTest(IntegrationFixture fixture)
     {
         var factory = new TestAppFactory(fixture);
 
-        Services = factory.Services;
-
         Client = factory.CreateClient();
+
+        _scope = factory.Services.CreateScope();
+
+        Services = _scope.ServiceProvider;
 
         Db = Services.GetRequiredService<AuthDbContext>();
 
@@ -81,4 +86,70 @@ public abstract class IntegrationTest
     protected HttpClient Client { get; }
 
     protected AuthDbContext Db { get; }
+
+    public void Dispose()
+    {
+        _scope.Dispose();
+    }
+}
+
+public static class Requests
+{
+    private static HttpRequestMessage Create(
+        HttpMethod method,
+        string uri,
+        object? payload = null,
+        string? token = null,
+        params (string Key, string Value)[] headers)
+    {
+        var request = new HttpRequestMessage(method, uri);
+
+        if (payload != null)
+        {
+            request.Content = JsonContent.Create(payload);
+        }
+
+        if (headers is { Length: > 0 })
+        {
+            foreach (var header in headers)
+            {
+                request.Headers.Add(header.Key, header.Value);
+            }
+        }
+
+        if (token != null)
+        {
+            request.Headers.Add("Authorization", $"Bearer {token}");
+        }
+
+        return request;
+    }
+
+    public static HttpRequestMessage Put<T>(
+        string uri, T payload, string? token = null,
+        params (string Key, string Value)[] headers)
+    {
+        return Create(HttpMethod.Put, uri, payload, token, headers);
+    }
+
+    public static HttpRequestMessage Post<T>(
+        string uri, T payload, string? token = null,
+        params (string Key, string Value)[] headers)
+    {
+        return Create(HttpMethod.Post, uri, payload, token, headers);
+    }
+
+    public static HttpRequestMessage Get(
+        string uri, string? token = null,
+        params (string Key, string Value)[] headers)
+    {
+        return Create(HttpMethod.Get, uri, null, token, headers);
+    }
+
+    public static HttpRequestMessage Delete(
+        string uri, string? token = null,
+        params (string Key, string Value)[] headers)
+    {
+        return Create(HttpMethod.Delete, uri, null, token, headers);
+    }
 }

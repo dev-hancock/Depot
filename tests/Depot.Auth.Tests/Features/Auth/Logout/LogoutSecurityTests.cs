@@ -14,13 +14,15 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
     public async Task Logout_WithoutRevokedRefreshToken_ShouldReturnNotFound()
     {
         var user = await Arrange.User
-            .WithSession(x =>
-                x.WithRevoked(true))
+            .WithSession(x => x.WithRevoked())
             .SeedAsync(Services);
 
-        var payload = new LogoutCommand();
+        var payload = new LogoutCommand
+        {
+            RefreshToken = user.Sessions[0].RefreshToken
+        };
 
-        var request = CreateRequest(payload, user.Sessions[0].AccessToken);
+        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
 
         var result = await Client.SendAsync(request);
 
@@ -35,9 +37,12 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
                 x.WithExpiry(DateTime.UtcNow.AddDays(-1)))
             .SeedAsync(Services);
 
-        var payload = new LogoutCommand();
+        var payload = new LogoutCommand
+        {
+            RefreshToken = user.Sessions[0].RefreshToken
+        };
 
-        var request = CreateRequest(payload, user.Sessions[0].AccessToken);
+        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
 
         var result = await Client.SendAsync(request);
 
@@ -59,7 +64,6 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
 
-
     [Fact]
     public async Task Logout_WithInvalidRefreshToken_ShouldReturnNotFound()
     {
@@ -70,22 +74,10 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = Base64UrlEncoder.Encode(Faker.Random.Bytes(32))
         };
 
-        var request = CreateRequest(payload, user.Sessions[0].AccessToken);
+        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
 
         var result = await Client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
-    }
-
-    private static HttpRequestMessage CreateRequest(LogoutCommand command, string token)
-    {
-        return new HttpRequestMessage(HttpMethod.Post, "api/v1/auth/logout")
-        {
-            Content = JsonContent.Create(command),
-            Headers =
-            {
-                { "Authorization", $"Bearer {token}" }
-            }
-        };
     }
 }

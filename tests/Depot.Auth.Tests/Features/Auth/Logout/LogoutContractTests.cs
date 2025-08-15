@@ -1,7 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 using System.Net;
-using System.Net.Http.Json;
 using Data;
 using Data.Extensions;
 using Depot.Auth.Features.Auth.Logout;
@@ -19,23 +18,11 @@ public class LogoutContractTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var request = CreateRequest(payload, user.Sessions[0].AccessToken);
+        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
 
         var result = await Client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-    }
-
-    private static HttpRequestMessage CreateRequest(LogoutCommand command, string token)
-    {
-        return new HttpRequestMessage(HttpMethod.Post, "api/v1/auth/logout")
-        {
-            Content = JsonContent.Create(command),
-            Headers =
-            {
-                { "Authorization", $"Bearer {token}" }
-            }
-        };
     }
 
     [Fact]
@@ -45,7 +32,7 @@ public class LogoutContractTests(IntegrationFixture fixture) : IntegrationTest(f
 
         var payload = new LogoutCommand();
 
-        var request = CreateRequest(payload, user.Sessions[0].AccessToken);
+        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
 
         var result = await Client.SendAsync(request);
 
