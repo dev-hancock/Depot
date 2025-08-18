@@ -5,17 +5,38 @@ using System.Net.Http.Json;
 using Data;
 using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
+using Microsoft.AspNetCore.Mvc;
 
 public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fixture)
 {
-    [Fact]
-    public async Task Login_WithExactEmail_ShouldReturnSession()
+    public static IEnumerable<object[]> EquivalentUsernames => Equivalents(Faker.Internet.UserName());
+
+    public static IEnumerable<object[]> EquivalentEmails => Equivalents(Faker.Internet.Email());
+
+    private static IEnumerable<string> Variants(string value)
     {
-        var user = await Arrange.User.SeedAsync(Services);
+        yield return value;
+        yield return value.ToUpperInvariant();
+        yield return value.ToLowerInvariant();
+        yield return $" {value} ";
+        yield return $"\t{value}\t";
+        yield return $"{value}\n";
+    }
+
+    private static IEnumerable<object[]> Equivalents(string value)
+    {
+        return Variants(value).Select(variant => new object[] { value, variant });
+    }
+
+    [Theory]
+    [MemberData(nameof(EquivalentEmails))]
+    public async Task Login_WithValidEmail_ShouldReturnSession(string value, string variant)
+    {
+        var user = await Arrange.User.WithEmail(value).SeedAsync(Services);
 
         var payload = new LoginCommand
         {
-            Email = user.Email,
+            Email = variant,
             Password = user.Password
         };
 
@@ -45,82 +66,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
-    }
-
-    [Fact]
-    public async Task Login_WithUpperCaseEmail_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Email = user.Email.ToUpperInvariant(),
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
-    }
-
-    [Fact]
-    public async Task Login_WithLowerCaseEmail_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Email = user.Email.ToLowerInvariant(),
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
-        ;
-    }
-
-    [Fact]
-    public async Task Login_WithPaddedEmail_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Email = $" {user.Email} ",
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
     [Theory]
@@ -141,16 +89,36 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
+        var problem = await result.Content.ReadFromJsonAsync<ProblemDetails>();
+
+        Assert.NotNull(problem);
+    }
+
+    [Fact]
+    public async Task Login_WithExactPassword_UsingEmail_ShouldReturnSession()
+    {
+        var user = await Arrange.User.SeedAsync(Services);
+
+        var payload = new LoginCommand
+        {
+            Email = user.Email,
+            Password = user.Password
+        };
+
+        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
+
+        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+
         var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
 
         Assert.NotNull(session);
 
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(session.AccessToken);
+        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
-    public async Task Login_WithExactPassword_ShouldReturnSession()
+    public async Task Login_WithExactPassword_UsingEmailAndUsername_ShouldReturnBadRequest()
     {
         var user = await Arrange.User.SeedAsync(Services);
 
@@ -158,6 +126,26 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         {
             Username = user.Username,
             Email = user.Email,
+            Password = user.Password
+        };
+
+        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
+
+        Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
+
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
+
+        Assert.NotNull(content);
+    }
+
+    [Fact]
+    public async Task Login_WithExactPassword_UsingUsername_ShouldReturnSession()
+    {
+        var user = await Arrange.User.SeedAsync(Services);
+
+        var payload = new LoginCommand
+        {
+            Username = user.Username,
             Password = user.Password
         };
 
@@ -187,12 +175,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
     [Fact]
@@ -211,12 +196,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
     [Theory]
@@ -237,12 +219,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
     [Fact]
@@ -254,22 +233,20 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
-    [Fact]
-    public async Task Login_WithExactUsername_ShouldReturnSession()
+    [Theory]
+    [MemberData(nameof(EquivalentUsernames))]
+    public async Task Login_WithValidUsername_ShouldReturnSession(string value, string variant)
     {
-        var user = await Arrange.User.SeedAsync(Services);
+        var user = await Arrange.User.WithUsername(value).SeedAsync(Services);
 
         var payload = new LoginCommand
         {
-            Username = user.Username,
+            Username = variant,
             Password = user.Password
         };
 
@@ -299,81 +276,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
-    }
-
-    [Fact]
-    public async Task Login_WithUpperCaseUsername_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Username = user.Username.ToUpperInvariant(),
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
-    }
-
-    [Fact]
-    public async Task Login_WithLowerCaseUsername_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Username = user.Username.ToLowerInvariant(),
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
-    }
-
-    [Fact]
-    public async Task Login_WithPaddedUsername_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Username = $" {user.Username} ",
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
+        Assert.NotNull(content);
     }
 
     [Theory]
@@ -393,11 +298,8 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.BadRequest, result.StatusCode);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(session);
-
-        Assert.Null(session.AccessToken);
-        Assert.Null(session.RefreshToken);
+        Assert.NotNull(content);
     }
 }

@@ -1,6 +1,7 @@
 namespace Depot.Auth.Extensions;
 
 using ErrorOr;
+using Microsoft.AspNetCore.WebUtilities;
 
 public static class ResultsExtensions
 {
@@ -13,7 +14,9 @@ public static class ResultsExtensions
     {
         if (errors.Count == 0)
         {
-            return Results.InternalServerError();
+            return Results.Problem(
+                title: ReasonPhrases.GetReasonPhrase(500),
+                statusCode: 500);
         }
 
         if (errors.All(x => x.Type == ErrorType.Validation))
@@ -28,19 +31,23 @@ public static class ResultsExtensions
 
         var error = errors.First();
 
-        return error.Type switch
+        var status = GetStatusCode(error.Type);
+
+        return Results.Problem(
+            title: ReasonPhrases.GetReasonPhrase(status),
+            statusCode: status,
+            detail: error.Description);
+    }
+
+    private static int GetStatusCode(ErrorType type)
+    {
+        return type switch
         {
-            ErrorType.NotFound => Results.NotFound(),
-            ErrorType.Unauthorized => Results.Unauthorized(),
-            ErrorType.Forbidden => Results.Forbid(),
-            ErrorType.Conflict => Results.Conflict(
-                new
-                {
-                    error = error.Description
-                }),
-            _ => Results.Problem(
-                title: error.Description,
-                statusCode: 500)
+            ErrorType.NotFound => StatusCodes.Status404NotFound,
+            ErrorType.Conflict => StatusCodes.Status409Conflict,
+            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+            ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+            _ => StatusCodes.Status500InternalServerError
         };
     }
 }

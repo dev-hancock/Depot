@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using Data;
 using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
+using Microsoft.AspNetCore.Mvc;
 
 public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fixture)
 {
@@ -64,13 +65,12 @@ public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fi
     }
 
     [Fact]
-    public async Task Login_WithWrongPassword_ShouldReturnUnauthorized()
+    public async Task Login_WithWrongPassword_UsingEmail_ShouldReturnUnauthorized()
     {
         var user = await Arrange.User.SeedAsync(Services);
 
         var payload = new LoginCommand
         {
-            Username = user.Username,
             Email = user.Email,
             Password = Faker.Internet.StrongPassword()
         };
@@ -79,9 +79,29 @@ public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var content = await result.Content.ReadAsStringAsync();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.Empty(content);
+        Assert.NotNull(content);
+    }
+
+    [Fact]
+    public async Task Login_WithWrongPassword_UsingUsername_ShouldReturnUnauthorized()
+    {
+        var user = await Arrange.User.SeedAsync(Services);
+
+        var payload = new LoginCommand
+        {
+            Username = user.Username,
+            Password = Faker.Internet.StrongPassword()
+        };
+
+        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
+
+        Assert.NotNull(content);
     }
 
     [Fact]
@@ -99,9 +119,9 @@ public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var content = await result.Content.ReadAsStringAsync();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.Empty(content);
+        Assert.NotNull(content);
     }
 
     [Fact]
@@ -119,8 +139,8 @@ public class LoginSecurityTests(IntegrationFixture fixture) : IntegrationTest(fi
 
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
 
-        var content = await result.Content.ReadAsStringAsync();
+        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.Empty(content);
+        Assert.NotNull(content);
     }
 }
