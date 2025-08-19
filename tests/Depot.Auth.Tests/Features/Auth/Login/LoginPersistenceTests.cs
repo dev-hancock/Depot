@@ -1,10 +1,12 @@
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
 using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
+using Domain.Auth;
 
 public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest(fixture)
 {
@@ -23,7 +25,13 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var exists = await Db.Sessions.FindAsync(user.Sessions[0].Id);
+        var content = await result.Content.ReadFromJsonAsync<LoginResponse>();
+
+        Assert.NotNull(content);
+
+        var id = content.AccessToken.GetClaimValue("jti");
+
+        var exists = await Db.Sessions.FindAsync(new SessionId(Guid.Parse(id)));
 
         Assert.NotNull(exists);
     }
@@ -43,7 +51,13 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var exists = await Db.Sessions.FindAsync(user.Sessions[0].Id);
+        var content = await result.Content.ReadFromJsonAsync<LoginResponse>();
+
+        Assert.NotNull(content);
+
+        var id = content.AccessToken.GetClaimValue("jti");
+
+        var exists = await Db.Sessions.FindAsync(new SessionId(Guid.Parse(id)));
 
         Assert.NotNull(exists);
     }
@@ -63,7 +77,13 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var exists = await Cache.GetAsync(user.Sessions[0].Id.ToString());
+        var content = await result.Content.ReadFromJsonAsync<LoginResponse>();
+
+        Assert.NotNull(content);
+
+        var id = content.AccessToken.GetClaimValue("jti");
+
+        var exists = await Cache.GetAsync(id);
 
         Assert.NotNull(exists);
     }
@@ -71,7 +91,7 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
     [Fact]
     public async Task Login_WithEmail_ShouldCacheSession()
     {
-        var user = await Arrange.User.WithSession().SeedAsync(Services);
+        var user = await Arrange.User.SeedAsync(Services);
 
         var payload = new LoginCommand
         {
@@ -83,8 +103,24 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 
-        var exists = await Cache.GetAsync(user.Sessions[0].Id.ToString());
+        var content = await result.Content.ReadFromJsonAsync<LoginResponse>();
+
+        Assert.NotNull(content);
+
+        var id = content.AccessToken.GetClaimValue("jti");
+
+        var exists = await Cache.GetAsync(id);
 
         Assert.NotNull(exists);
+    }
+}
+
+public static class JwtTokenExtensions
+{
+    private static readonly JwtSecurityTokenHandler Handler = new();
+
+    public static string GetClaimValue(this string token, string type)
+    {
+        return Handler.ReadJwtToken(token).Claims.Single(x => x.Type == type).Value;
     }
 }

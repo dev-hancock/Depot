@@ -94,31 +94,9 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         Assert.NotNull(problem);
     }
 
-    [Fact]
-    public async Task Login_WithExactPassword_UsingEmail_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Email = user.Email,
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
-    }
 
     [Fact]
-    public async Task Login_WithExactPassword_UsingEmailAndUsername_ShouldReturnBadRequest()
+    public async Task Login_WithEmailAndUsername_ShouldReturnBadRequest()
     {
         var user = await Arrange.User.SeedAsync(Services);
 
@@ -136,29 +114,6 @@ public class LoginContractTests(IntegrationFixture fixture) : IntegrationTest(fi
         var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
 
         Assert.NotNull(content);
-    }
-
-    [Fact]
-    public async Task Login_WithExactPassword_UsingUsername_ShouldReturnSession()
-    {
-        var user = await Arrange.User.SeedAsync(Services);
-
-        var payload = new LoginCommand
-        {
-            Username = user.Username,
-            Password = user.Password
-        };
-
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
-
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
-
-        Assert.NotNull(session);
-
-        Assert.NotNull(session.AccessToken);
-        Assert.NotNull(session.RefreshToken);
     }
 
     [Fact]
