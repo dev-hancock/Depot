@@ -16,6 +16,6 @@ public static class ResultExtensions
 
     private static IResult ToProblem(List<Error> errors)
     {
-        return errors.ToProblem();
+        return errors.ToResult();
     }
 }

@@ -1,6 +1,5 @@
-namespace Depot.Auth.Middleware;
+namespace Depot.Auth.Middleware.Exceptions;
 
-using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
@@ -50,7 +49,6 @@ public class GlobalExceptionHandler : IExceptionHandler
     {
         return exception switch
         {
-            ValidationException => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status500InternalServerError
         };
     }

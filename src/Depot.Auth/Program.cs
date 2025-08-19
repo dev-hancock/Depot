@@ -9,6 +9,7 @@ using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Middleware;
+using Middleware.Exceptions;
 using Persistence;
 using Scalar.AspNetCore;
 using Services;
@@ -96,6 +97,7 @@ public class Program
         services.AddSingleton<ITimeProvider, SystemTimeProvider>();
 
         services.AddAuthorization();
+        services.AddExceptionHandler<ValidationExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
     }

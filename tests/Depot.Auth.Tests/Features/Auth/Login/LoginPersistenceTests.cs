@@ -69,7 +69,7 @@ public class LoginPersistenceTests(IntegrationFixture fixture) : IntegrationTest
 
         var payload = new LoginCommand
         {
-            Email = user.Email,
+            Username = user.Username,
             Password = user.Password
         };
 

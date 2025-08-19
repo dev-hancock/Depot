@@ -2,11 +2,11 @@ namespace Depot.Auth.Tests.Features.Auth.Login;
 
 using System.Net.Http.Json;
 using Bogus;
+using Depot.Auth.Persistence;
 using DotNet.Testcontainers.Containers;
 using Factories;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
-using Persistence;
 using Testcontainers.PostgreSql;
 
 public class PostgreSqlFixture(string database) : IAsyncLifetime

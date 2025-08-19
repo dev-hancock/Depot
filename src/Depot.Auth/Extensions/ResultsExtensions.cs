@@ -1,34 +1,58 @@
 namespace Depot.Auth.Extensions;
 
 using ErrorOr;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 
 public static class ResultsExtensions
 {
-    public static IResult ToProblem(this List<Error> errors)
+    private static readonly int BadRequest = StatusCodes.Status400BadRequest;
+
+
+    private static IResult ToBadRequest(this List<Error> errors)
     {
-        return errors.ToResult();
+        var problem = new ProblemDetails
+        {
+            Title = ReasonPhrases.GetReasonPhrase(BadRequest),
+            Status = BadRequest,
+            Detail = "One or more validation errors occurred.",
+            Extensions =
+            {
+                ["errors"] = errors
+                    .GroupBy(x => x.Code)
+                    .ToDictionary(
+                        x => x.Key,
+                        x => x.Select(y => y.Description).ToArray())
+            }
+        };
+
+        return Results.Json(problem);
+    }
+
+    private static IResult ToInternalServerError(this List<Error> _)
+    {
+        return Results.Problem(
+            title: ReasonPhrases.GetReasonPhrase(500),
+            statusCode: 500);
     }
 
     public static IResult ToResult(this List<Error> errors)
     {
         if (errors.Count == 0)
         {
-            return Results.Problem(
-                title: ReasonPhrases.GetReasonPhrase(500),
-                statusCode: 500);
+            return errors.ToInternalServerError();
         }
 
         if (errors.All(x => x.Type == ErrorType.Validation))
         {
-            return Results.ValidationProblem(
-                errors
-                    .GroupBy(x => x.Code)
-                    .ToDictionary(
-                        x => x.Key,
-                        x => x.Select(y => y.Description).ToArray()));
+            return errors.ToBadRequest();
         }
 
+        return errors.ToProblem();
+    }
+
+    private static IResult ToProblem(this List<Error> errors)
+    {
         var error = errors.First();
 
         var status = GetStatusCode(error.Type);
