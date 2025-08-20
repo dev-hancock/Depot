@@ -2,83 +2,71 @@ namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
 
 using System.Net;
 using System.Net.Http.Json;
-using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 
 public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
 {
-    public static TheoryData<LoginPayload> InvalidVariants()
-    {
-        return
-        [
-            new LoginPayload(null, Faker.Internet.Email(), null)
-            {
-                Label = "Email only"
-            },
-            new LoginPayload(null, Faker.Internet.Email(), "")
-            {
-                Label = "Email with empty password"
-            },
-            new LoginPayload(null, "", null)
-            {
-                Label = "Empty email and password"
-            },
-            new LoginPayload(null, " ", null)
-            {
-                Label = "Whitespace email and password"
-            },
-            new LoginPayload(null, "not-an-email", null)
-            {
-                Label = "Invalid email format"
-            },
-            new LoginPayload(null, "not-an-email", Faker.Internet.StrongPassword())
-            {
-                Label = "Invalid email format with password"
-            },
+    private static readonly string ValidUsername = "username";
 
-            new LoginPayload(Faker.Internet.UserName(), null, null)
-            {
-                Label = "Username only"
-            },
-            new LoginPayload(Faker.Internet.UserName(), null, "")
-            {
-                Label = "Username with empty password"
-            },
-            new LoginPayload("", null, "")
-            {
-                Label = "Empty username and password"
-            },
-            new LoginPayload(" ", null, "")
-            {
-                Label = "Whitespace username and password"
-            },
+    private static readonly string ValidEmail = "user@example.com";
 
-            new LoginPayload(null, null, Faker.Internet.StrongPassword())
-            {
-                Label = "Password only"
-            },
-            new LoginPayload(Faker.Internet.UserName(), Faker.Internet.Email(), Faker.Internet.StrongPassword())
-            {
-                Label = "Valid username and email with password"
-            },
-            new LoginPayload(null, null, null)
-            {
-                Label = "All fields empty"
-            }
-        ];
-    }
+    private static readonly string ValidPassword = "Sup3r$ecret!";
+
+    public static IEnumerable<object?[]> InvalidVariants =>
+    [
+        [null, ValidEmail, null],
+        [null, ValidEmail, ""],
+        [null, ValidEmail, " "],
+
+        [null, "not-an-email", null],
+        [null, "not-an-email", ValidPassword],
+
+        [ValidUsername, null, null],
+        [ValidUsername, null, ""],
+        [ValidUsername, null, " "],
+        
+        ["", null, ValidPassword],
+        [" ", null, ValidPassword],
+        [null, "", ValidPassword],
+        [null, " ", ValidPassword],
+        [null, null, ValidPassword],
+        
+        ["", null, ""],
+        [" ", null, ""],
+        [" ", null, " "],
+        [null, "", null],
+        [null, " ", ""],
+        [null, " ", " "],
+        ["", "", ""],
+        [" ", "", ""],
+        ["", " ", ""],
+        [" ", " ", ""],
+
+        [ValidUsername, ValidEmail, ValidPassword],
+        
+        [ValidUsername, "", ValidPassword],
+        ["", ValidEmail, ValidPassword],
+        
+        [ValidUsername, " ", ValidPassword],
+        [" ", ValidEmail, ValidPassword],
+        
+        [ValidUsername, ValidEmail, ""],
+        [ValidUsername, ValidEmail, " "],
+
+        [null, null, null]
+    ];
 
     [Theory]
     [MemberData(nameof(InvalidVariants))]
-    public async Task Login_WithInvalidPayload_ShouldReturnBadRequest(LoginPayload value)
+    public async Task Login_WithInvalidPayload_ShouldReturnBadRequest(string? username, string? email, string? password)
     {
         var payload = new LoginCommand
         {
-            Username = value.Username,
-            Email = value.Email,
-            Password = value.Password!
+            Username = username,
+            Email = email,
+            Password = password!
         };
 
         var res = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
@@ -98,15 +86,5 @@ public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
         Assert.NotEmpty(content.Detail!);
 
         Assert.NotNull(content.Extensions["errors"]);
-    }
-
-    public record LoginPayload(string? Username, string? Email, string? Password)
-    {
-        public string Label { get; init; } = "";
-
-        public override string ToString()
-        {
-            return Label;
-        }
     }
 }
