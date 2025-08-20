@@ -48,7 +48,7 @@ jobs:
 
       - name: Sonar begin
         env:
-          SONAR_TOKEN: ${ { secrets.SONAR_TOKEN } } }
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: >
           ./.sonar/scanner/dotnet-sonarscanner begin
             /k:"dev-hancock_Depot"
