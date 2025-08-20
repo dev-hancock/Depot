@@ -16,7 +16,14 @@ public class LoginValidator : AbstractValidator<LoginCommand>
                     .Must(x => x.Username is null || x.Email is null)
                     .WithMessage("Only one of email or username should be provided."));
 
-        When(x => !string.IsNullOrWhiteSpace(x.Email),
+        When(x => x.Username is not null,
+            () =>
+                RuleFor(x => x.Username)
+                    .NotEmpty()
+                    .Must(y => !y!.Contains('@'))
+                    .WithMessage("Username cannot contain '@' character."));
+
+        When(x => x.Email is not null,
             () =>
                 RuleFor(x => x.Email)
                     .EmailAddress()

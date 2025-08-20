@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.WebUtilities;
 
 public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
 {
-    private static readonly string ValidUsername = "username";
+    private const string ValidUsername = "username";
 
-    private static readonly string ValidEmail = "user@example.com";
+    private const string ValidEmail = "user@example.com";
 
-    private static readonly string ValidPassword = "Sup3r$ecret!";
+    private const string ValidPassword = "Sup3r$ecret!";
 
     public static IEnumerable<object?[]> InvalidVariants =>
     [
@@ -26,13 +26,13 @@ public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
         [ValidUsername, null, null],
         [ValidUsername, null, ""],
         [ValidUsername, null, " "],
-        
+
         ["", null, ValidPassword],
         [" ", null, ValidPassword],
         [null, "", ValidPassword],
         [null, " ", ValidPassword],
         [null, null, ValidPassword],
-        
+
         ["", null, ""],
         [" ", null, ""],
         [" ", null, " "],
@@ -45,13 +45,16 @@ public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
         [" ", " ", ""],
 
         [ValidUsername, ValidEmail, ValidPassword],
-        
+        [ValidEmail, null, ValidPassword],
+        [null, ValidUsername, ValidPassword],
+        [ValidEmail, null, ValidPassword],
+
         [ValidUsername, "", ValidPassword],
         ["", ValidEmail, ValidPassword],
-        
+
         [ValidUsername, " ", ValidPassword],
         [" ", ValidEmail, ValidPassword],
-        
+
         [ValidUsername, ValidEmail, ""],
         [ValidUsername, ValidEmail, " "],
 

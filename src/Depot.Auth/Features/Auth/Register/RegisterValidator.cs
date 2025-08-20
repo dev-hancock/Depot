@@ -8,12 +8,15 @@ public class RegisterValidator : AbstractValidator<RegisterCommand>
     {
         RuleFor(x => x.Email)
             .NotEmpty()
+            .WithMessage("Email is required.")
             .EmailAddress()
-            .WithMessage("Email is required and must be a valid email address.");
+            .WithMessage("Email must be a valid email address.");
 
         RuleFor(x => x.Username)
             .NotEmpty()
-            .WithMessage("Username is required.");
+            .WithMessage("Username is required.")
+            .Matches("^[ \ta-zA-Z0-9._-]+$")
+            .WithMessage("Username can only contain letters, numbers, dots, underscores, or hyphens.");
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Password is required.")
