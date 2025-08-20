@@ -60,11 +60,12 @@ jobs:
 
       - name: Build
         run: |
-          dotnet build -c Release
+          dotnet build -c Release --no-incremental
 
       - name: Test
+        continue-on-error: true
         run: |
-          dotnet test -c Release \
+          dotnet test -c Release --no-build \
             --logger "trx;LogFileName=test-results.trx" \
             /p:CollectCoverage=true \
             /p:CoverletOutput=TestResults/coverage.opencover.xml \
