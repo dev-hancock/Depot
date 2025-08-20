@@ -47,6 +47,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Depot.Repository.Tests", "t
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Depot.Auth.Domain", "src\Depot.Auth.Domain\Depot.Auth.Domain.csproj", "{CB50D218-FEFF-473B-B7C5-E94D54EBBE9D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{54417BDF-A04D-4C17-A2F0-2A15F9499DA8}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build.yml = .github\workflows\build.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -110,5 +115,6 @@ Global
 		{26571F4F-77F2-4B5D-831F-C7C112EF8750} = {5A1A737C-3190-43A4-8EAC-A1F6181ABB98}
 		{717A3584-2973-442F-BB37-CFD49B561DB1} = {3BE40410-6D2C-49C8-959E-001C3741056D}
 		{CB50D218-FEFF-473B-B7C5-E94D54EBBE9D} = {5A1A737C-3190-43A4-8EAC-A1F6181ABB98}
+		{54417BDF-A04D-4C17-A2F0-2A15F9499DA8} = {E167B63F-0E9A-4484-8D25-992824686872}
 	EndGlobalSection
 EndGlobal
