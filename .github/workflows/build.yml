@@ -53,7 +53,7 @@ jobs:
           ./.sonar/scanner/dotnet-sonarscanner begin \
             /k:"dev-hancock_Depot" \
             /o:"dev-hancock" \
-            /d:sonar.host.url="https://sonarcloud.io"
+            /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" \
             /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml"
