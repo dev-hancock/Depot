@@ -3,7 +3,6 @@ namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
 using System.Net;
 using System.Net.Http.Json;
 using Data;
-using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 
 public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
@@ -42,10 +41,10 @@ public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
     [MemberData(nameof(Equivalents))]
     public async Task Login_WithValidPayload_ShouldReturnSession(string username, string email)
     {
-        var user = await Arrange.User
+        var user = Arrange.User
             .WithUsername(ValidUsername)
             .WithEmail(ValidEmail)
-            .SeedAsync(Services);
+            .Build(Services);
 
         var payload = new LoginCommand
         {

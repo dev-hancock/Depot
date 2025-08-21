@@ -1,12 +1,11 @@
 namespace Depot.Auth.Tests.Data.Extensions;
 
-using Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 public static class DatabaseExtensions
 {
-    public async static Task<TSpec> SeedAsync<TSpec, TEntity>(this IBuilder<TSpec, TEntity> builder, IServiceProvider services)
+    public async static Task<TSpec> SeedAsync<TSpec, TEntity>(this ISeeder<TSpec, TEntity> builder, IServiceProvider services)
         where TEntity : class
     {
         using var scope = services.CreateScope();

@@ -1,29 +1,227 @@
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Security.Cryptography;
 using Bogus;
+using Data.Builders;
 using Depot.Auth.Persistence;
 using DotNet.Testcontainers.Containers;
-using Factories;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Options;
 using Testcontainers.PostgreSql;
 
-public class PostgreSqlFixture(string database) : IAsyncLifetime
+[CollectionDefinition("Integration")]
+public class IntegrationTestCollection : ICollectionFixture<IntegrationFixture>;
+
+public class ArrangeFixture
 {
-    private IDatabaseContainer _db = null!;
+    public UserBuilder User => new();
+}
+
+public class DatabaseFixture(ApplicationFixture application) : IAsyncLifetime
+{
+    public Task InitializeAsync()
+    {
+        return Do(context => context.Database.EnsureCreatedAsync());
+    }
+
+    public Task DisposeAsync()
+    {
+        return Do(context => context.Database.EnsureDeletedAsync());
+    }
+
+    private async Task<T?> Do<T>(Func<DbContext, Task<T?>> action)
+    {
+        using var scope = application.Services.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<DbContext>();
+
+        var result = await action(context);
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+
+        return result;
+    }
+
+    private async Task Do(Func<DbContext, Task> action)
+    {
+        using var scope = application.Services.CreateScope();
+
+        var context = scope.ServiceProvider.GetRequiredService<DbContext>();
+
+        await action(context);
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public Task SeedAsync(params object[] entities)
+    {
+        return Do(context => context.AddRangeAsync(entities));
+    }
+
+    public Task<T?> FindAsync<T>(params object[] keys) where T : class
+    {
+        return Do<T>(context => context.FindAsync<T>(keys).AsTask());
+    }
+}
+
+[Collection("Integration")]
+public class IntegrationFixture : IAsyncLifetime, IDisposable
+{
+    public static readonly Faker Faker = new();
+
+    public IntegrationFixture()
+    {
+        var application = new ApplicationFixture();
+
+        Database = new DatabaseFixture(application);
+
+        Client = new RequestFixture(application);
+
+        Token = new TokenFixture(application);
+
+        Cache = application.GetService<IDistributedCache>();
+    }
+
+    public RequestFixture Client { get; }
+
+    public IDistributedCache Cache { get; }
+
+    public DatabaseFixture Database { get; }
+
+    public ArrangeFixture Arrange { get; } = new();
+
+    public TokenFixture Token { get; }
+
+    public Task InitializeAsync()
+    {
+        return Database.InitializeAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Database.DisposeAsync();
+    }
+
+    public void Dispose()
+    {
+        Client.Dispose();
+    }
+}
+
+public class ApplicationFixture : IAsyncLifetime, IDisposable
+{
+    public ApplicationFixture()
+    {
+        Key = new ECDsaSecurityKey(ECDsa.Create())
+        {
+            KeyId = "test"
+        };
+    }
+
+    public Uri BaseAddress => Server.BaseAddress;
+
+    public PostgreSqlFixture Default { get; } = new();
+
+    public PostgreSqlFixture Cache { get; } = new();
+
+    public TestServer Server { get; private set; } = null!;
+
+    public IServiceProvider Services { get; private set; } = null!;
+
+    public IWebHost Host { get; private set; } = null!;
+
+    public SecurityKey Key { get; }
+
+    public async Task InitializeAsync()
+    {
+        Host = CreateWebHost();
+
+        await Default.InitializeAsync();
+
+        await Cache.InitializeAsync();
+
+        await Host.StartAsync();
+
+        Services = Host.Services;
+
+        Server = Host.GetTestServer();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await Default.DisposeAsync();
+
+        await Cache.DisposeAsync();
+
+        await Host.StopAsync();
+    }
+
+    public void Dispose()
+    {
+        Host.Dispose();
+    }
+
+    public T GetService<T>() where T : notnull
+    {
+        return Services.GetRequiredService<T>();
+    }
+
+    private IWebHost CreateWebHost()
+    {
+        var builder = new WebHostBuilder().UseStartup<Program>().UseTestServer();
+
+        ConfigureWebHost(builder);
+
+        return builder.Build();
+    }
+
+    private void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Development");
+
+        builder.UseSetting("ConnectionStrings:Default", Default.ConnectionString);
+        builder.UseSetting("ConnectionStrings:Cache", Cache.ConnectionString);
+
+        builder.ConfigureServices(services =>
+        {
+            services.AddDbContext<DbContext, AuthDbContext>();
+
+            services.AddSingleton(Key);
+        });
+    }
+}
+
+public class PostgreSqlFixture : IAsyncLifetime
+{
+    private readonly PostgreSqlBuilder _builder = new();
+
+    private readonly IDatabaseContainer _db;
+
+    public PostgreSqlFixture()
+    {
+        _db = _builder.Build();
+    }
 
     public string ConnectionString => _db.GetConnectionString();
 
     public async Task InitializeAsync()
     {
-        var builder = new PostgreSqlBuilder()
-            .WithDatabase(database)
-            .WithUsername("test")
-            .WithPassword("test");
-
-        _db = builder.Build();
-
         await _db.StartAsync();
     }
 
@@ -33,123 +231,122 @@ public class PostgreSqlFixture(string database) : IAsyncLifetime
     }
 }
 
-public class IntegrationFixture : IAsyncLifetime
+public class RequestFixture(ApplicationFixture application) : IDisposable
 {
-    private readonly PostgreSqlFixture _auth = new("auth");
-
-    private readonly PostgreSqlFixture _cache = new("cache");
-
-    public string Auth => _auth.ConnectionString;
-
-    public string Cache => _cache.ConnectionString;
-
-    public async Task InitializeAsync()
-    {
-        await Task.WhenAll(_auth.InitializeAsync(), _cache.InitializeAsync());
-    }
-
-    public async Task DisposeAsync()
-    {
-        await Task.WhenAll(_auth.DisposeAsync(), _cache.DisposeAsync());
-    }
-}
-
-[CollectionDefinition("Integration")]
-public class IntegrationTestCollection : ICollectionFixture<IntegrationFixture>;
-
-[Collection("Integration")]
-public abstract class IntegrationTest : IDisposable
-{
-    protected static readonly Faker Faker = new();
-
-    private readonly IServiceScope _scope;
-
-    public IntegrationTest(IntegrationFixture fixture)
-    {
-        var factory = new TestAppFactory(fixture);
-
-        Client = factory.CreateClient();
-
-        _scope = factory.Services.CreateScope();
-
-        Services = _scope.ServiceProvider;
-
-        Db = Services.GetRequiredService<AuthDbContext>();
-
-        Cache = Services.GetRequiredService<IDistributedCache>();
-    }
-
-    public IDistributedCache Cache { get; }
-
-    protected IServiceProvider Services { get; }
-
-    protected HttpClient Client { get; }
-
-    protected AuthDbContext Db { get; }
+    private readonly HttpClient _client = application.Server.CreateClient();
 
     public void Dispose()
     {
-        _scope.Dispose();
+        _client.Dispose();
+    }
+
+    public RequestBuilder Create(HttpMethod method, string uri)
+    {
+        return new RequestBuilder(_client, method, uri);
+    }
+
+    public RequestBuilder Get(string uri)
+    {
+        return Create(HttpMethod.Get, uri);
+    }
+
+    public RequestBuilder Post(string uri, object payload)
+    {
+        return Create(HttpMethod.Post, uri).WithJson(payload);
+    }
+
+    public RequestBuilder Put(string uri, object payload)
+    {
+        return Create(HttpMethod.Put, uri).WithJson(payload);
+    }
+
+    public RequestBuilder Delete(string uri)
+    {
+        return Create(HttpMethod.Delete, uri);
     }
 }
 
-public static class Requests
+public class RequestBuilder(HttpClient client, HttpMethod method, string uri)
 {
-    private static HttpRequestMessage Create(
-        HttpMethod method,
-        string uri,
-        object? payload = null,
-        string? token = null,
-        params (string Key, string Value)[] headers)
-    {
-        var request = new HttpRequestMessage(method, uri);
+    private readonly HttpRequestMessage _request = new(method, uri);
 
-        if (payload != null)
+    public RequestBuilder WithJson(object payload)
+    {
+        _request.Content = JsonContent.Create(payload);
+
+        return this;
+    }
+
+    public RequestBuilder WithHeader(string key, string value)
+    {
+        _request.Headers.Add(key, value);
+
+        return this;
+    }
+
+    public RequestBuilder WithAuthorization(string token)
+    {
+        _request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        return this;
+    }
+
+    public async Task<HttpResponseMessage> SendAsync()
+    {
+        return await client.SendAsync(_request);
+    }
+}
+
+public class TokenFixture(ApplicationFixture application)
+{
+    private readonly JwtOptions _options = application.GetService<IOptions<JwtOptions>>().Value;
+
+    private AccessTokenBuilder AccessToken => new(application.Key, _options);
+}
+
+public class AccessTokenBuilder(SecurityKey key, JwtOptions options)
+{
+    private readonly List<Claim> _claims = new();
+
+    private readonly JwtSecurityTokenHandler _handler = new();
+
+    public AccessTokenBuilder WithSession(Guid id)
+    {
+        _claims.Add(new Claim(JwtRegisteredClaimNames.Jti, id.ToString()));
+
+        return this;
+    }
+
+    public AccessTokenBuilder WithUser(Guid id)
+    {
+        _claims.Add(new Claim(JwtRegisteredClaimNames.Sub, id.ToString()));
+
+        return this;
+    }
+
+    public AccessTokenBuilder WithRoles(params string[] roles)
+    {
+        foreach (var role in roles)
         {
-            request.Content = JsonContent.Create(payload);
+            _claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        if (headers is { Length: > 0 })
-        {
-            foreach (var header in headers)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
-        }
-
-        if (token != null)
-        {
-            request.Headers.Add("Authorization", $"Bearer {token}");
-        }
-
-        return request;
+        return this;
     }
 
-    public static HttpRequestMessage Put<T>(
-        string uri, T payload, string? token = null,
-        params (string Key, string Value)[] headers)
+    public string Build()
     {
-        return Create(HttpMethod.Put, uri, payload, token, headers);
-    }
+        var signing = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
 
-    public static HttpRequestMessage Post<T>(
-        string uri, T payload, string? token = null,
-        params (string Key, string Value)[] headers)
-    {
-        return Create(HttpMethod.Post, uri, payload, token, headers);
-    }
+        var token = new JwtSecurityToken(
+            options.Issuer,
+            options.Audience,
+            _claims,
+            DateTime.UtcNow,
+            DateTime.UtcNow.Add(options.AccessTokenLifetime),
+            signing
+        );
 
-    public static HttpRequestMessage Get(
-        string uri, string? token = null,
-        params (string Key, string Value)[] headers)
-    {
-        return Create(HttpMethod.Get, uri, null, token, headers);
-    }
-
-    public static HttpRequestMessage Delete(
-        string uri, string? token = null,
-        params (string Key, string Value)[] headers)
-    {
-        return Create(HttpMethod.Delete, uri, null, token, headers);
+        return _handler.WriteToken(token);
     }
 }

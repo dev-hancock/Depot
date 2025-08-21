@@ -1,32 +1,48 @@
 namespace Depot.Auth.Extensions;
 
+using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Options;
-using Services;
 
 public static class JwtExtensions
 {
-    public static WebApplicationBuilder AddJwtAuthentication(this WebApplicationBuilder builder)
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, Action<JwtOptions> configure)
     {
-        builder.Services
-            .AddOptions<JwtOptions>()
-            .Bind(builder.Configuration.GetSection(JwtOptions.SectionName))
-            .Validate(o =>
-            {
-                o.Validate();
+        var jwt = new JwtOptions();
 
-                return true;
-            })
-            .ValidateOnStart();
+        configure(jwt);
 
-        builder.Services.AddSingleton<ISecurityKeyProvider, SecurityKeyProvider>();
+        services.AddSingleton(Options.Create(jwt));
 
-        builder.Services
+        var ecdsa = ECDsa.Create();
+
+        ecdsa.ImportFromPem(File.ReadAllText(jwt.KeyPath));
+
+        var key = new ECDsaSecurityKey(ecdsa)
+        {
+            KeyId = "depot-key"
+        };
+
+        services.AddSingleton<SecurityKey>(key);
+
+        services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
+            .AddJwtBearer(opt =>
+            {
+                opt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwt.Audience,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key
+                };
+            });
 
-        builder.Services.ConfigureOptions<JwtBearerOptionsConfiguration>();
-
-        return builder;
+        return services;
     }
 }

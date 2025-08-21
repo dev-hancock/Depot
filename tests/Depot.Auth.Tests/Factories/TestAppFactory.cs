@@ -7,11 +7,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Persistence;
 
-public class TestAppFactory : WebApplicationFactory<Program>
+public class ApplicationFixture : WebApplicationFactory<Program>
 {
     private readonly IntegrationFixture _fixture;
 
-    public TestAppFactory(IntegrationFixture fixture)
+    public ApplicationFixture(IntegrationFixture fixture)
     {
         _fixture = fixture;
     }

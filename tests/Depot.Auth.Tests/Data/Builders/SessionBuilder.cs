@@ -1,11 +1,12 @@
 namespace Depot.Auth.Tests.Data.Builders;
 
+using Abstractions;
 using Bogus;
 using Domain.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Models;
 
-public class SessionBuilder(UserBuilder user)
+public class SessionBuilder(UserBuilder user) : IBuilder<TestSession>
 {
     private static readonly Faker Faker = new();
 
@@ -15,18 +16,21 @@ public class SessionBuilder(UserBuilder user)
 
     public bool IsRevoked { get; private set; }
 
+    public string RefreshToken { get; private set; } = Faker.Random.AlphaNumeric(32);
+
     public TestSession Build(IServiceProvider services)
     {
         var tokens = services.GetRequiredService<ITokenGenerator>();
 
         return new TestSession(
             Id,
+            user.Id,
             tokens.GenerateAccessToken(
                 user.Id,
                 Id,
                 user.Roles.ToArray(),
                 Expiry).Value,
-            tokens.GenerateRefreshToken(Expiry).Value,
+            RefreshToken,
             IsRevoked,
             Expiry
         );
@@ -42,6 +46,13 @@ public class SessionBuilder(UserBuilder user)
     public SessionBuilder WithExpiry(DateTime expiry)
     {
         Expiry = expiry;
+
+        return this;
+    }
+
+    public SessionBuilder WithRefreshToken(string token)
+    {
+        RefreshToken = token;
 
         return this;
     }

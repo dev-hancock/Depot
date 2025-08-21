@@ -2,11 +2,10 @@ namespace Depot.Auth.Tests.Data.Builders;
 
 using Abstractions;
 using Bogus;
-using Domain.Users;
 using Extensions;
 using Models;
 
-public class UserBuilder(MappingDelegate<TestUser, User> mapping) : IBuilder<TestUser, User>
+public class UserBuilder : IBuilder<TestUser>
 {
     private static readonly Faker Faker = new();
 
@@ -27,8 +26,6 @@ public class UserBuilder(MappingDelegate<TestUser, User> mapping) : IBuilder<Tes
     public IReadOnlyList<SessionBuilder> Sessions => _sessions;
 
     public IReadOnlyList<string> Roles => _roles;
-
-    public MappingDelegate<TestUser, User> Mapping { get; } = mapping;
 
     public TestUser Build(IServiceProvider services)
     {

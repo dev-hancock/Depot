@@ -20,8 +20,8 @@ public static class Mapping
             new Password(hasher.Hash(x.Password)),
             x.Sessions
                 .Select(y => new Session(
-                    new SessionId(y.Id),
-                    new UserId(x.Id),
+                    new SessionId(x.Id),
+                    new UserId(y.UserId),
                     new RefreshToken(y.RefreshToken, y.ExpiresAt),
                     y.IsRevoked
                 ))
@@ -30,3 +30,22 @@ public static class Mapping
         );
     };
 }
+
+public class UserSeeder : ISeeder<TestUser, User>
+{
+    private readonly MappingDelegate<TestUser, User> _mapping;
+
+    public UserSeeder(MappingDelegate<TestUser, User> mapping)
+    {
+        _mapping = mapping;
+    }
+
+    public User Invoke(IServiceProvider services, TestUser model)
+    {
+        return _mapping(services, model);
+    }
+}
+
+public interface ISeeder<TestUser, User> { }
+
+public static class Database { }

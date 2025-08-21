@@ -33,7 +33,7 @@ public class Program
         //         retainedFileCountLimit: 14)
         //     .CreateLogger();
 
-        ConfigureServices(builder);
+        ConfigureServices(builder.Services, builder.Configuration);
 
         var app = builder.Build();
 
@@ -42,16 +42,13 @@ public class Program
         app.Run();
     }
 
-    private static void ConfigureServices(WebApplicationBuilder builder)
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        builder.AddJwtAuthentication();
+        services.AddJwtAuthentication(opt => configuration.GetSection("Jwt").Bind(opt));
 
-        var services = builder.Services;
-        var configuration = builder.Configuration;
+        services.AddOpenApi("v1");
 
-        builder.Services.AddOpenApi("v1");
-
-        builder.Services
+        services
             .AddApiVersioning(opt =>
             {
                 opt.ReportApiVersions = true;

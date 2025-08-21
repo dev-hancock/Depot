@@ -6,7 +6,7 @@ using Services;
 
 public static class JwtExtensions
 {
-    public static WebApplicationBuilder AddJwtAuthentication(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         builder.Services
             .AddOptions<JwtOptions>()
@@ -19,7 +19,10 @@ public static class JwtExtensions
             })
             .ValidateOnStart();
 
-        builder.Services.AddSingleton<ISecurityKeyProvider, SecurityKeyProvider>();
+        builder.Services.AddSingleton<ISecurityKeyProvider>(sp =>
+        {
+            return new SecurityKeyProvider(c)
+        });
 
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

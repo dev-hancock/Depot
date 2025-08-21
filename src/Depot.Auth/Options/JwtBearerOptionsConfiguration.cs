@@ -27,7 +27,7 @@ public class JwtBearerOptionsConfiguration : IConfigureNamedOptions<JwtBearerOpt
             ValidAudience = _jwt.Audience,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = _key.GetSecurityKey(_jwt.KeyPath)
+            IssuerSigningKey = _key.GetKey()
         };
     }
 

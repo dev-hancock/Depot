@@ -1,20 +1,24 @@
 namespace Depot.Auth.Services;
 
 using System.Security.Cryptography;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Options;
 
 public interface ISecurityKeyProvider
 {
-    SecurityKey GetSecurityKey(string filepath);
+    SecurityKey GetKey();
 }
 
-public class SecurityKeyProvider : ISecurityKeyProvider
+public class SecurityKeyProvider(IOptions<JwtOptions> options) : ISecurityKeyProvider
 {
-    public SecurityKey GetSecurityKey(string filepath)
+    private readonly JwtOptions _options = options.Value;
+
+    public SecurityKey GetKey()
     {
         var key = ECDsa.Create();
 
-        key.ImportFromPem(File.ReadAllText(filepath));
+        key.ImportFromPem(File.ReadAllText(_options.KeyPath));
 
         return new ECDsaSecurityKey(key)
         {
