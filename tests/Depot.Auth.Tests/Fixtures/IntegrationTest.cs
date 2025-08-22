@@ -22,9 +22,9 @@ using Testcontainers.PostgreSql;
 [CollectionDefinition("Integration")]
 public class IntegrationTestCollection : ICollectionFixture<IntegrationFixture>;
 
-public class ArrangeFixture
+public class ArrangeFixture(ApplicationFixture application)
 {
-    public UserBuilder User => new();
+    public UserBuilder User => new(application);
 }
 
 public class DatabaseFixture(ApplicationFixture application) : IAsyncLifetime
@@ -81,9 +81,15 @@ public class DatabaseFixture(ApplicationFixture application) : IAsyncLifetime
 }
 
 [Collection("Integration")]
+public abstract class IntegrationTest(IntegrationFixture fixture)
+{
+    protected IntegrationFixture Fixture { get; } = fixture;
+}
+
+[Collection("Integration")]
 public class IntegrationFixture : IAsyncLifetime, IDisposable
 {
-    public static readonly Faker Faker = new();
+    public readonly Faker Faker = new();
 
     public IntegrationFixture()
     {
@@ -95,6 +101,8 @@ public class IntegrationFixture : IAsyncLifetime, IDisposable
 
         Token = new TokenFixture(application);
 
+        Arrange = new ArrangeFixture(application);
+
         Cache = application.GetService<IDistributedCache>();
     }
 
@@ -104,7 +112,7 @@ public class IntegrationFixture : IAsyncLifetime, IDisposable
 
     public DatabaseFixture Database { get; }
 
-    public ArrangeFixture Arrange { get; } = new();
+    public ArrangeFixture Arrange { get; }
 
     public TokenFixture Token { get; }
 
@@ -235,6 +243,8 @@ public class RequestFixture(ApplicationFixture application) : IDisposable
 {
     private readonly HttpClient _client = application.Server.CreateClient();
 
+    private readonly JwtOptions options = application.GetService<IOptions<JwtOptions>>().Value;
+
     public void Dispose()
     {
         _client.Dispose();
@@ -242,7 +252,7 @@ public class RequestFixture(ApplicationFixture application) : IDisposable
 
     public RequestBuilder Create(HttpMethod method, string uri)
     {
-        return new RequestBuilder(_client, method, uri);
+        return new RequestBuilder(_client, method, uri, options, application.Key);
     }
 
     public RequestBuilder Get(string uri)
@@ -266,7 +276,7 @@ public class RequestFixture(ApplicationFixture application) : IDisposable
     }
 }
 
-public class RequestBuilder(HttpClient client, HttpMethod method, string uri)
+public class RequestBuilder(HttpClient client, HttpMethod method, string uri, JwtOptions options, SecurityKey key)
 {
     private readonly HttpRequestMessage _request = new(method, uri);
 
@@ -277,9 +287,9 @@ public class RequestBuilder(HttpClient client, HttpMethod method, string uri)
         return this;
     }
 
-    public RequestBuilder WithHeader(string key, string value)
+    public RequestBuilder WithHeader(string name, string value)
     {
-        _request.Headers.Add(key, value);
+        _request.Headers.Add(name, value);
 
         return this;
     }
@@ -289,6 +299,17 @@ public class RequestBuilder(HttpClient client, HttpMethod method, string uri)
         _request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         return this;
+    }
+
+    public RequestBuilder WithAuthorization(Action<AccessTokenBuilder> configure)
+    {
+        var builder = new AccessTokenBuilder(key, options);
+
+        configure(builder);
+
+        var token = builder.Build();
+
+        return WithAuthorization(token);
     }
 
     public async Task<HttpResponseMessage> SendAsync()
@@ -301,7 +322,7 @@ public class TokenFixture(ApplicationFixture application)
 {
     private readonly JwtOptions _options = application.GetService<IOptions<JwtOptions>>().Value;
 
-    private AccessTokenBuilder AccessToken => new(application.Key, _options);
+    public AccessTokenBuilder AccessToken => new(application.Key, _options);
 }
 
 public class AccessTokenBuilder(SecurityKey key, JwtOptions options)

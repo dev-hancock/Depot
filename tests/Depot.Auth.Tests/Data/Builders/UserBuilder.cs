@@ -2,16 +2,21 @@ namespace Depot.Auth.Tests.Data.Builders;
 
 using Abstractions;
 using Bogus;
+using Domain.Auth;
+using Domain.Interfaces;
+using Domain.Users;
 using Extensions;
-using Models;
+using Features.Auth.Login;
 
-public class UserBuilder : IBuilder<TestUser>
+public class UserBuilder(ApplicationFixture application) : IBuilder<User>
 {
     private static readonly Faker Faker = new();
 
     private readonly List<string> _roles = [];
 
     private readonly List<SessionBuilder> _sessions = [];
+
+    private readonly ISecretHasher _hasher = application.GetService<ISecretHasher>();
 
     public Guid Id { get; } = Faker.Random.Guid();
 
@@ -27,14 +32,14 @@ public class UserBuilder : IBuilder<TestUser>
 
     public IReadOnlyList<string> Roles => _roles;
 
-    public TestUser Build(IServiceProvider services)
+    public User Build()
     {
-        return new TestUser(
-            Id,
-            Username,
-            Email,
-            Password,
-            _sessions.Select(x => x.Build(services)).ToArray(),
+        return new User(
+            new UserId(Id),
+            new Username(Username),
+            new Email(Email),
+            new Password(_hasher.Hash(Password)),
+            _sessions.Select(x => x.Build()).ToArray(),
             CreatedAt
         );
     }

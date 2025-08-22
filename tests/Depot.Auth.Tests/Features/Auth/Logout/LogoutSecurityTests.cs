@@ -1,9 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 using System.Net;
-using System.Net.Http.Json;
-using Data;
-using Data.Extensions;
 using Depot.Auth.Features.Auth.Logout;
 using Login;
 using Microsoft.IdentityModel.Tokens;
@@ -13,18 +10,20 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
     [Fact]
     public async Task Logout_WithoutRevokedRefreshToken_ShouldReturnNotFound()
     {
-        var user = await Arrange.User
+        var user = Fixture.Arrange.User
             .WithSession(x => x.WithRevoked())
-            .SeedAsync(Services);
+            .Build();
+
+        await Fixture.Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
-
-        var result = await Client.SendAsync(request);
+        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+            .WithAuthorization(x => x.WithUser(user.Id.Value))
+            .SendAsync();
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
@@ -32,19 +31,21 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
     [Fact]
     public async Task Logout_WithoutExpiredRefreshToken_ShouldReturnBadRequest()
     {
-        var user = await Arrange.User
+        var user = Fixture.Arrange.User
             .WithSession(x =>
                 x.WithExpiry(DateTime.UtcNow.AddDays(-1)))
-            .SeedAsync(Services);
+            .Build();
+
+        await Fixture.Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
-
-        var result = await Client.SendAsync(request);
+        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+            .WithAuthorization(x => x.WithUser(user.Id.Value))
+            .SendAsync();
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
     }
@@ -52,14 +53,16 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
     [Fact]
     public async Task Logout_WithoutAccessToken_ShouldReturnUnauthorized()
     {
-        var user = await Arrange.User.WithSession().SeedAsync(Services);
+        var user = Fixture.Arrange.User.WithSession().Build();
+
+        await Fixture.Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Client.PostAsJsonAsync("api/v1/auth/logout", payload);
+        var result = await Fixture.Client.Post("api/v1/auth/logout", payload).SendAsync();
 
         Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
     }
@@ -67,16 +70,18 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
     [Fact]
     public async Task Logout_WithInvalidRefreshToken_ShouldReturnNotFound()
     {
-        var user = await Arrange.User.WithSession().SeedAsync(Services);
+        var user = Fixture.Arrange.User.WithSession().Build();
+
+        await Fixture.Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
-            RefreshToken = Base64UrlEncoder.Encode(Faker.Random.Bytes(32))
+            RefreshToken = Base64UrlEncoder.Encode(Fixture.Faker.Random.Bytes(32))
         };
 
-        var request = Requests.Post("api/v1/auth/logout", payload, user.Sessions[0].AccessToken);
-
-        var result = await Client.SendAsync(request);
+        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+            .WithAuthorization(x => x.WithUser(user.Id.Value))
+            .SendAsync();
 
         Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
     }

@@ -28,7 +28,7 @@ public class Program
 
         builder.Host.UseSerilog();
 
-        ConfigureServices(builder);
+        ConfigureServices(builder.Services, builder.Configuration);
 
         var app = builder.Build();
 
@@ -37,19 +37,17 @@ public class Program
         app.Run();
     }
 
-    private static void ConfigureServices(WebApplicationBuilder builder)
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        builder.AddJwtAuthentication();
-
-        var services = builder.Services;
+        services.AddJwtAuthentication(opt => configuration.GetSection("Jwt").Bind(opt));
 
         services.AddOpenApi();
 
         services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
 
-        services.AddDbContextFactory<RepoDbContext>(opt => opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+        services.AddDbContextFactory<RepoDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Default")));
 
-        services.AddStorage(builder.Configuration);
+        services.AddStorage(configuration);
 
         services.AddSingleton(TimeProvider.System);
 

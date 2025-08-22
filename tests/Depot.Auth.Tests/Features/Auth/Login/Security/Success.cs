@@ -3,8 +3,6 @@ namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
-using Data;
-using Data.Extensions;
 using Depot.Auth.Features.Auth.Login;
 
 public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
@@ -20,10 +18,12 @@ public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
     [InlineData(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldReturnAccessToken(string? username, string? email)
     {
-        var user = await Arrange.User
-            .WithUsername(username ?? Faker.Internet.UserName())
-            .WithEmail(email ?? Faker.Internet.Email())
-            .SeedAsync(Services);
+        var user = Fixture.Arrange.User
+            .WithUsername(username ?? Fixture.Faker.Internet.UserName())
+            .WithEmail(email ?? Fixture.Faker.Internet.Email())
+            .Build();
+
+        await Fixture.Database.SeedAsync(user);
 
         var payload = new LoginCommand
         {
@@ -32,7 +32,7 @@ public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
             Password = user.Password
         };
 
-        var result = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
+        var result = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
 
         Assert.Equal(HttpStatusCode.OK, result.StatusCode);
 

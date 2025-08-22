@@ -72,7 +72,7 @@ public class Validation(IntegrationFixture fixture) : IntegrationTest(fixture)
             Password = password!
         };
 
-        var res = await Client.PostAsJsonAsync("api/v1/auth/login", payload);
+        var res = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
 
         Assert.Equal(HttpStatusCode.BadRequest, res.StatusCode);
 
