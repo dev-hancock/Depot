@@ -1,14 +1,11 @@
 namespace Depot.Auth.Persistence;
 
-using System.Reactive.Threading.Tasks;
 using Domain.Auth;
 using Domain.Common;
 using Domain.Organisations;
 using Domain.Tenants;
 using Domain.Users;
-using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 public class AuthDbContext : DbContext
 {
@@ -19,42 +16,6 @@ public class AuthDbContext : DbContext
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Organisation> Organisations => Set<Organisation>();
-
-    public DbSet<Tenant> Tenants => Set<Tenant>();
-
-    public DbSet<Role> Roles => Set<Role>();
-
-    public DbSet<Permission> Permissions => Set<Permission>();
-
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
-
-    public DbSet<Membership> Memberships => Set<Membership>();
-
-    public DbSet<Session> Sessions => Set<Session>();
-
-    public override async Task<int> SaveChangesAsync(CancellationToken token = default)
-    {
-        var entities = ChangeTracker
-            .Entries<Root>()
-            .Select(x => x.Entity)
-            .ToList();
-
-        var result = await base.SaveChangesAsync(token);
-
-        var mediator = this.GetService<IMediator>();
-
-        foreach (var entity in entities)
-        {
-            foreach (var notification in entity.Events)
-            {
-                await mediator.Publish(notification).ToTask(token);
-            }
-
-            entity.Clear();
-        }
-
-        return result;
-    }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

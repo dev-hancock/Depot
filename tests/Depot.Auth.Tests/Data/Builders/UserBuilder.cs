@@ -6,17 +6,16 @@ using Domain.Auth;
 using Domain.Interfaces;
 using Domain.Users;
 using Extensions;
-using Features.Auth.Login;
 
-public class UserBuilder(ApplicationFixture application) : IBuilder<User>
+public class UserBuilder(ApplicationFixture fixture) : IBuilder<User>
 {
     private static readonly Faker Faker = new();
+
+    private readonly ISecretHasher _hasher = fixture.GetService<ISecretHasher>();
 
     private readonly List<string> _roles = [];
 
     private readonly List<SessionBuilder> _sessions = [];
-
-    private readonly ISecretHasher _hasher = application.GetService<ISecretHasher>();
 
     public Guid Id { get; } = Faker.Random.Guid();
 

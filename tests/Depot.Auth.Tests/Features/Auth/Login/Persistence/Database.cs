@@ -6,15 +6,16 @@ using Depot.Auth.Features.Auth.Login;
 using Domain.Auth;
 using Utils;
 
-public class Database(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class Database : IntegrationTest
 {
     private const string ValidUsername = "username";
 
     private const string ValidEmail = "user@example.com";
 
-    [Theory]
-    [InlineData(null, ValidEmail)]
-    [InlineData(ValidUsername, null)]
+    [Test]
+    [Arguments(null, ValidEmail)]
+    [Arguments(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldPersistSession(string? username, string? email)
     {
         var user = Fixture.Arrange.User
@@ -30,18 +31,18 @@ public class Database(IntegrationFixture fixture) : IntegrationTest(fixture)
             Password = user.Password
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var content = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.NotNull(content);
+        var content = await Assert.That(result).IsNotNull();
 
         var id = content.AccessToken.GetClaimValue<Guid>("jti");
 
         var exists = await Fixture.Database.FindAsync<Session>(new SessionId(id));
 
-        Assert.NotNull(exists);
+        await Assert.That(exists).IsNotNull();
     }
 }

@@ -2,11 +2,11 @@ namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 using System.Net;
 using Depot.Auth.Features.Auth.Logout;
-using Login;
 
-public class LogoutContractTests(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class LogoutContractTests : IntegrationTest
 {
-    [Fact]
+    [Test]
     public async Task Logout_WithRefreshToken_ShouldReturnOk()
     {
         var user = Fixture.Arrange.User.WithSession().Build();
@@ -22,10 +22,10 @@ public class LogoutContractTests(IntegrationFixture fixture) : IntegrationTest(f
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(result.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
 
-    [Fact]
+    [Test]
     public async Task Logout_WithoutRefreshToken_ShouldReturnOk()
     {
         var user = Fixture.Arrange.User.WithSession().Build();
@@ -38,6 +38,6 @@ public class LogoutContractTests(IntegrationFixture fixture) : IntegrationTest(f
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(result.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
 }

@@ -2,12 +2,12 @@ namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 using System.Net;
 using Depot.Auth.Features.Auth.Logout;
-using Login;
 using Microsoft.IdentityModel.Tokens;
 
-public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class LogoutSecurityTests : IntegrationTest
 {
-    [Fact]
+    [Test]
     public async Task Logout_WithoutRevokedRefreshToken_ShouldReturnNotFound()
     {
         var user = Fixture.Arrange.User
@@ -21,14 +21,14 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var response = await Fixture.Client.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
 
-    [Fact]
+    [Test]
     public async Task Logout_WithoutExpiredRefreshToken_ShouldReturnBadRequest()
     {
         var user = Fixture.Arrange.User
@@ -43,14 +43,14 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var response = await Fixture.Client.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
     }
 
-    [Fact]
+    [Test]
     public async Task Logout_WithoutAccessToken_ShouldReturnUnauthorized()
     {
         var user = Fixture.Arrange.User.WithSession().Build();
@@ -62,12 +62,12 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload).SendAsync();
+        var response = await Fixture.Client.Post("api/v1/auth/logout", payload).SendAsync();
 
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
+    [Test]
     public async Task Logout_WithInvalidRefreshToken_ShouldReturnNotFound()
     {
         var user = Fixture.Arrange.User.WithSession().Build();
@@ -79,10 +79,10 @@ public class LogoutSecurityTests(IntegrationFixture fixture) : IntegrationTest(f
             RefreshToken = Base64UrlEncoder.Encode(Fixture.Faker.Random.Bytes(32))
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var response = await Fixture.Client.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.NotFound, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NotFound);
     }
 }

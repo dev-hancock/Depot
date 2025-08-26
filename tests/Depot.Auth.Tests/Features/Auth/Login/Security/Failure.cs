@@ -5,7 +5,8 @@ using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
 using Microsoft.AspNetCore.Mvc;
 
-public class Failure(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class Failure : IntegrationTest
 {
     private const string ValidUsername = "valid";
 
@@ -19,20 +20,23 @@ public class Failure(IntegrationFixture fixture) : IntegrationTest(fixture)
 
     private const string InvalidPassword = "Super$ecr3t!";
 
-    public static IEnumerable<object?[]> InvalidVariants =>
-    [
-        [ValidUsername, null, InvalidPassword],
-        [null, ValidEmail, InvalidPassword],
+    public static IEnumerable<object?[]> InvalidVariants()
+    {
+        return
+        [
+            [ValidUsername, null, InvalidPassword],
+            [null, ValidEmail, InvalidPassword],
 
-        [InvalidUsername, null, ValidPassword],
-        [null, InvalidEmail, ValidPassword],
+            [InvalidUsername, null, ValidPassword],
+            [null, InvalidEmail, ValidPassword],
 
-        [ValidUsername, null, $" {InvalidPassword} "],
-        [null, ValidEmail, $" {InvalidPassword} "]
-    ];
+            [ValidUsername, null, $" {InvalidPassword} "],
+            [null, ValidEmail, $" {InvalidPassword} "]
+        ];
+    }
 
-    [Theory]
-    [MemberData(nameof(InvalidVariants))]
+    [Test]
+    [MethodDataSource(nameof(InvalidVariants))]
     public async Task Login_WithWrongCredentials_ShouldReturnUnauthorized(string? username, string? email, string? password)
     {
         var user = Fixture.Arrange.User
@@ -50,12 +54,12 @@ public class Failure(IntegrationFixture fixture) : IntegrationTest(fixture)
             Password = password!
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
 
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
 
-        var content = await result.Content.ReadFromJsonAsync<ProblemDetails>();
+        var result = await response.Content.ReadFromJsonAsync<ProblemDetails>();
 
-        Assert.NotNull(content);
+        _ = await Assert.That(result).IsNotNull();
     }
 }

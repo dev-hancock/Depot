@@ -2,12 +2,12 @@ namespace Depot.Auth.Tests.Features.Auth.Refresh;
 
 using System.Net;
 using Depot.Auth.Features.Auth.Refresh;
-using Login;
 using Microsoft.IdentityModel.Tokens;
 
-public class RefreshSecurityTests(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class RefreshSecurityTests : IntegrationTest
 {
-    [Fact]
+    [Test]
     public async Task Refresh_WithRevokedToken_ShouldReturnUnauthorized()
     {
         var user = Fixture.Arrange.User.WithSession(x => x.WithRevoked()).Build();
@@ -19,14 +19,14 @@ public class RefreshSecurityTests(IntegrationFixture fixture) : IntegrationTest(
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/refresh", payload)
+        var response = await Fixture.Client.Post("api/v1/auth/refresh", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
 
-    [Fact]
+    [Test]
     public async Task? Refresh_WithInvalidToken_ShouldReturnNotFound()
     {
         var user = Fixture.Arrange.User.WithSession(x => x.WithRevoked()).Build();
@@ -38,10 +38,10 @@ public class RefreshSecurityTests(IntegrationFixture fixture) : IntegrationTest(
             RefreshToken = Base64UrlEncoder.Encode(Fixture.Faker.Random.Bytes(32))
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/refresh", payload)
+        var response = await Fixture.Client.Post("api/v1/auth/refresh", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
-        Assert.Equal(HttpStatusCode.Unauthorized, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
     }
 }

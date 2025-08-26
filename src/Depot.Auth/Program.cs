@@ -76,12 +76,11 @@ public class Program
             opt.CreateInfrastructure = true;
         });
 
-        services.AddEntityFrameworkNpgsql();
-        services.AddDbContextFactory<AuthDbContext>((sp, opt) =>
+        services.AddDbContextFactory<AuthDbContext>(opt =>
         {
-            opt.UseInternalServiceProvider(sp);
-            opt.UseNpgsql(configuration.GetConnectionString("Auth"));
+            opt.UseNpgsql(configuration.GetConnectionString("Default")!);
         });
+        services.AddScoped<DomainEventsInterceptor>();
 
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();

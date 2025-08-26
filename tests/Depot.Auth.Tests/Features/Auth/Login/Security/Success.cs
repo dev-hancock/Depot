@@ -5,7 +5,8 @@ using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
 
-public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
+[ClassDataSource(typeof(IntegrationFixture))]
+public class Success : IntegrationTest
 {
     private const string ValidUsername = "username";
 
@@ -13,9 +14,9 @@ public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
 
     private readonly JwtSecurityTokenHandler _handler = new();
 
-    [Theory]
-    [InlineData(null, ValidEmail)]
-    [InlineData(ValidUsername, null)]
+    [Test]
+    [Arguments(null, ValidEmail)]
+    [Arguments(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldReturnAccessToken(string? username, string? email)
     {
         var user = Fixture.Arrange.User
@@ -32,18 +33,19 @@ public class Success(IntegrationFixture fixture) : IntegrationTest(fixture)
             Password = user.Password
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
 
-        Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var session = await result.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-        Assert.NotNull(session);
-        Assert.NotEmpty(session.AccessToken);
-        Assert.NotEmpty(session.RefreshToken);
+        var session = await Assert.That(result).IsNotNull();
+
+        await Assert.That(session.AccessToken).IsNotNull();
+        await Assert.That(session.RefreshToken).IsNotEmpty();
 
         var token = _handler.ReadJwtToken(session.AccessToken);
 
-        Assert.Equal(user.Id.ToString(), token.Subject);
+        await Assert.That(token.Subject).IsEqualTo(user.Id.ToString());
     }
 }
