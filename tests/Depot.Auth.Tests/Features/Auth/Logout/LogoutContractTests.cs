@@ -2,23 +2,25 @@ namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 using System.Net;
 using Depot.Auth.Features.Auth.Logout;
+using Setup;
 
-[ClassDataSource(typeof(IntegrationFixture))]
-public class LogoutContractTests : IntegrationTest
+public class LogoutContractTests
 {
     [Test]
     public async Task Logout_WithRefreshToken_ShouldReturnOk()
     {
-        var user = Fixture.Arrange.User.WithSession().Build();
+        using var db = Database.CreateScope();
 
-        await Fixture.Database.SeedAsync(user);
+        var user = Arrange.User.WithSession().Build();
+
+        await db.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var result = await Requests.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 
@@ -28,13 +30,15 @@ public class LogoutContractTests : IntegrationTest
     [Test]
     public async Task Logout_WithoutRefreshToken_ShouldReturnOk()
     {
-        var user = Fixture.Arrange.User.WithSession().Build();
+        using var db = Database.CreateScope();
 
-        await Fixture.Database.SeedAsync(user);
+        var user = Arrange.User.WithSession().Build();
+
+        await db.SeedAsync(user);
 
         var payload = new LogoutCommand();
 
-        var result = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var result = await Requests.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 

@@ -3,6 +3,7 @@ namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
+using Setup;
 
 public static class Unique
 {
@@ -17,7 +18,7 @@ public static class Unique
     }
 }
 
-public class LoginContractSuccess : IntegrationTest
+public class LoginContractSuccess
 {
     private const string User = "user";
 
@@ -50,13 +51,15 @@ public class LoginContractSuccess : IntegrationTest
     [MethodDataSource(nameof(EmailVariants))]
     public async Task Login_WithValidEmail_ShouldReturnSession(LoginCase c)
     {
-        var user = Fixture.Arrange.User
+        using var db = Database.CreateScope();
+
+        var user = Arrange.User
             .WithUsername(c.Username)
             .WithEmail(c.Email)
             .WithPassword(Password)
             .Build();
 
-        await Fixture.Database.SeedAsync(user);
+        await db.SeedAsync(user);
 
         var payload = new LoginCommand
         {
@@ -64,7 +67,7 @@ public class LoginContractSuccess : IntegrationTest
             Password = Password
         };
 
-        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 

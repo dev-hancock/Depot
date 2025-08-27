@@ -1,3 +1,4 @@
-namespace Depot.Auth.Tests.Features.Auth.Refresh;
+// namespace Depot.Auth.Tests.Features.Auth.Refresh;
+//
+// public class RefreshPersistenceTests : IntegrationTest;
 
-public class RefreshPersistenceTests : IntegrationTest;

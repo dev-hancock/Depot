@@ -1,4 +1,4 @@
-namespace Depot.Auth.Tests.Fixtures.Builders;
+namespace Depot.Auth.Tests.Setup;
 
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;

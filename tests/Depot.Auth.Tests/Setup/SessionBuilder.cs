@@ -1,10 +1,9 @@
-namespace Depot.Auth.Tests.Data.Builders;
+namespace Depot.Auth.Tests.Setup;
 
-using Abstractions;
 using Bogus;
 using Domain.Auth;
 
-public class SessionBuilder(UserBuilder user) : IBuilder<Session>
+public class SessionBuilder(UserBuilder user)
 {
     private static readonly Faker Faker = new();
 

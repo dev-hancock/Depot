@@ -37,10 +37,4 @@
         <Folder Include="Features\Users\"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <None Update="test.pem">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
-    </ItemGroup>
-
 </Project>

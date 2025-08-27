@@ -1,17 +1,15 @@
-namespace Depot.Auth.Tests.Data.Builders;
+namespace Depot.Auth.Tests.Setup;
 
-using Abstractions;
 using Bogus;
 using Domain.Auth;
 using Domain.Interfaces;
 using Domain.Users;
-using Extensions;
 
-public class UserBuilder(ApplicationFixture fixture) : IBuilder<User>
+public class UserBuilder
 {
     private static readonly Faker Faker = new();
 
-    private readonly ISecretHasher _hasher = fixture.GetService<ISecretHasher>();
+    private readonly ISecretHasher _hasher = Global.Service<ISecretHasher>();
 
     private readonly List<string> _roles = [];
 

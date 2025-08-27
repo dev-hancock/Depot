@@ -5,9 +5,9 @@ using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Setup;
 
-[ClassDataSource(typeof(IntegrationFixture))]
-public class Validation : IntegrationTest
+public class Validation
 {
     private const string ValidUsername = "username";
 
@@ -76,7 +76,7 @@ public class Validation : IntegrationTest
             Password = password!
         };
 
-        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
 

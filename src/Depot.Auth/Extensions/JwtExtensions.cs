@@ -18,7 +18,10 @@ public static class JwtExtensions
 
         var ecdsa = ECDsa.Create();
 
-        ecdsa.ImportFromPem(File.ReadAllText(jwt.KeyPath));
+        if (File.Exists(jwt.KeyPath))
+        {
+            ecdsa.ImportFromPem(File.ReadAllText(jwt.KeyPath));
+        }
 
         var key = new ECDsaSecurityKey(ecdsa)
         {

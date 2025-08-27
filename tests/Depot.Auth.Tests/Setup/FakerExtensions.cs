@@ -1,4 +1,4 @@
-namespace Depot.Auth.Tests.Data.Extensions;
+namespace Depot.Auth.Tests.Setup;
 
 using Bogus.DataSets;
 

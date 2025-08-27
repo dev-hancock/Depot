@@ -1,13 +1,23 @@
-namespace Depot.Auth.Tests.Fixtures.Builders;
+namespace Depot.Auth.Tests.Setup;
 
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Options;
 
-public class RequestBuilder(HttpClient client, HttpMethod method, string uri, JwtOptions options, SecurityKey key)
+public class RequestBuilder(HttpMethod method, string uri) : IDisposable
 {
+    private readonly SecurityKey _key = Global.Key;
+
+    private readonly JwtOptions _options = Global.Service<IOptions<JwtOptions>>().Value;
+
     private readonly HttpRequestMessage _request = new(method, uri);
+
+    public void Dispose()
+    {
+        _request.Dispose();
+    }
 
     public RequestBuilder WithContent(object payload)
     {
@@ -39,7 +49,7 @@ public class RequestBuilder(HttpClient client, HttpMethod method, string uri, Jw
 
     public RequestBuilder WithAuthorization(Action<AccessTokenBuilder> configure)
     {
-        var builder = new AccessTokenBuilder(options, key);
+        var builder = new AccessTokenBuilder(_options, _key);
 
         configure(builder);
 
@@ -50,6 +60,6 @@ public class RequestBuilder(HttpClient client, HttpMethod method, string uri, Jw
 
     public async Task<HttpResponseMessage> SendAsync()
     {
-        return await client.SendAsync(_request);
+        return await Global.Client.SendAsync(_request);
     }
 }

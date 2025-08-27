@@ -4,9 +4,9 @@ using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
 using Microsoft.AspNetCore.Mvc;
+using Setup;
 
-[ClassDataSource(typeof(IntegrationFixture))]
-public class Failure : IntegrationTest
+public class Failure
 {
     private const string ValidUsername = "valid";
 
@@ -39,13 +39,15 @@ public class Failure : IntegrationTest
     [MethodDataSource(nameof(InvalidVariants))]
     public async Task Login_WithWrongCredentials_ShouldReturnUnauthorized(string? username, string? email, string? password)
     {
-        var user = Fixture.Arrange.User
+        using var db = Database.CreateScope();
+
+        var user = Arrange.User
             .WithUsername(ValidUsername)
             .WithEmail(ValidEmail)
             .WithPassword(ValidPassword)
             .Build();
 
-        await Fixture.Database.SeedAsync(user);
+        await db.SeedAsync(user);
 
         var payload = new LoginCommand
         {
@@ -54,7 +56,7 @@ public class Failure : IntegrationTest
             Password = password!
         };
 
-        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
 

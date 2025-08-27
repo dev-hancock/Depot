@@ -2,9 +2,9 @@ namespace Depot.Auth.Tests.Features.Auth.Logout.Contract;
 
 using System.Net;
 using Depot.Auth.Features.Auth.Logout;
+using Setup;
 
-[ClassDataSource(typeof(IntegrationFixture))]
-public class Success : IntegrationTest
+public class Success
 {
     private const string ValidRefreshToken = "valid-refresh-token";
 
@@ -13,18 +13,20 @@ public class Success : IntegrationTest
     [Arguments(ValidRefreshToken)]
     public async Task Logout_WithValidPayload_ShouldReturnNoContent(string? token)
     {
-        var user = Fixture.Arrange.User
+        using var db = Database.CreateScope();
+
+        var user = Arrange.User
             .WithSession(x => x.WithRefreshToken(ValidRefreshToken))
             .Build();
 
-        await Fixture.Database.SeedAsync(user);
+        await db.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = token
         };
 
-        var response = await Fixture.Client.Post("api/v1/auth/logout", payload)
+        var response = await Requests.Post("api/v1/auth/logout", payload)
             .WithAuthorization(x => x.WithUser(user.Id.Value))
             .SendAsync();
 

@@ -4,9 +4,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
+using Setup;
 
-[ClassDataSource(typeof(IntegrationFixture))]
-public class Success : IntegrationTest
+public class Success
 {
     private const string ValidUsername = "username";
 
@@ -19,12 +19,14 @@ public class Success : IntegrationTest
     [Arguments(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldReturnAccessToken(string? username, string? email)
     {
-        var user = Fixture.Arrange.User
-            .WithUsername(username ?? Fixture.Faker.Internet.UserName())
-            .WithEmail(email ?? Fixture.Faker.Internet.Email())
+        using var db = Database.CreateScope();
+
+        var user = Arrange.User
+            .WithUsername(ValidUsername)
+            .WithEmail(ValidEmail)
             .Build();
 
-        await Fixture.Database.SeedAsync(user);
+        await db.SeedAsync(user);
 
         var payload = new LoginCommand
         {
@@ -33,7 +35,7 @@ public class Success : IntegrationTest
             Password = user.Password
         };
 
-        var response = await Fixture.Client.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 

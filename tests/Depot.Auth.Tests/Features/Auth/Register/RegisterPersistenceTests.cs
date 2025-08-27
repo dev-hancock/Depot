@@ -1,3 +1,4 @@
-namespace Depot.Auth.Tests.Auth;
+// namespace Depot.Auth.Tests.Features.Auth.Register;
+//
+// public class RegisterPersistenceTests : IntegrationTest;
 
-public class RegisterPersistenceTests : IntegrationTest;
