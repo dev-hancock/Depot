@@ -13,13 +13,11 @@ public class Success
     [Arguments(ValidRefreshToken)]
     public async Task Logout_WithValidPayload_ShouldReturnNoContent(string? token)
     {
-        using var db = Database.CreateScope();
-
         var user = Arrange.User
             .WithSession(x => x.WithRefreshToken(ValidRefreshToken))
             .Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {

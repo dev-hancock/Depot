@@ -19,14 +19,12 @@ public class Success
     [Arguments(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldReturnAccessToken(string? username, string? email)
     {
-        using var db = Database.CreateScope();
-
         var user = Arrange.User
             .WithUsername(ValidUsername)
             .WithEmail(ValidEmail)
             .Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LoginCommand
         {

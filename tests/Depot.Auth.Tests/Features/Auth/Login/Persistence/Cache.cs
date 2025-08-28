@@ -16,14 +16,12 @@ public class Cache
     [Arguments(ValidUsername, null)]
     public async Task Login_WithValidPayload_ShouldPersistSession(string? username, string? email)
     {
-        var db = Database.CreateScope();
-
         var user = Arrange.User
             .WithUsername(ValidUsername)
             .WithEmail(ValidEmail)
             .Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LoginCommand
         {

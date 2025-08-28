@@ -5,9 +5,20 @@ using Persistence;
 
 public static class Database
 {
-    public static ScopedDatabase CreateScope()
+    public async static Task SeedAsync(params object[] models)
     {
-        return new ScopedDatabase(GetDbContext());
+        await using var context = GetDbContext();
+
+        context.AddRange(models);
+
+        await context.SaveChangesAsync();
+    }
+
+    public async static Task<T?> FindAsync<T>(params object[] keys) where T : class
+    {
+        await using var context = GetDbContext();
+
+        return await context.FindAsync<T>(keys);
     }
 
     private static DbContext GetDbContext()

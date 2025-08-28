@@ -9,11 +9,9 @@ public class LogoutContractTests
     [Test]
     public async Task Logout_WithRefreshToken_ShouldReturnOk()
     {
-        using var db = Database.CreateScope();
-
         var user = Arrange.User.WithSession().Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
@@ -30,11 +28,9 @@ public class LogoutContractTests
     [Test]
     public async Task Logout_WithoutRefreshToken_ShouldReturnOk()
     {
-        using var db = Database.CreateScope();
-
         var user = Arrange.User.WithSession().Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LogoutCommand();
 

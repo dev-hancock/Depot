@@ -39,15 +39,13 @@ public class Failure
     [MethodDataSource(nameof(InvalidVariants))]
     public async Task Login_WithWrongCredentials_ShouldReturnUnauthorized(string? username, string? email, string? password)
     {
-        using var db = Database.CreateScope();
-
         var user = Arrange.User
             .WithUsername(ValidUsername)
             .WithEmail(ValidEmail)
             .WithPassword(ValidPassword)
             .Build();
 
-        await db.SeedAsync(user);
+        await Database.SeedAsync(user);
 
         var payload = new LoginCommand
         {

@@ -5,26 +5,13 @@ using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
 using Setup;
 
-public static class Unique
-{
-    public static string Email(string user, string suffix)
-    {
-        return $"{user}-{Guid.NewGuid()}{suffix}";
-    }
-
-    public static string Username(string user)
-    {
-        return $"{user}-{Guid.NewGuid()}";
-    }
-}
-
 public class LoginContractSuccess
 {
-    private const string User = "user";
+    private static readonly string Username = "user";
 
-    private const string EmailSuffix = "@example.com";
+    private static readonly string Email = "user@example.com";
 
-    private const string Password = "Sup3r$ecret!";
+    private static readonly string Password = "Sup3r$ecret!";
 
     private static IEnumerable<Func<string, string>> Variants()
     {
@@ -40,27 +27,26 @@ public class LoginContractSuccess
     {
         foreach (var variant in Variants())
         {
-            var email = Unique.Email(User, EmailSuffix);
-            var username = Unique.Username(User);
-
-            yield return new LoginCase(username, email, variant(email));
+            yield return new LoginCase(Username, Email, variant(Email));
         }
+    }
+
+    [Before(Class)]
+    public async static Task Setup()
+    {
+        var user = Arrange.User
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
+            .Build();
+
+        await Database.SeedAsync(user);
     }
 
     [Test]
     [MethodDataSource(nameof(EmailVariants))]
     public async Task Login_WithValidEmail_ShouldReturnSession(LoginCase c)
     {
-        using var db = Database.CreateScope();
-
-        var user = Arrange.User
-            .WithUsername(c.Username)
-            .WithEmail(c.Email)
-            .WithPassword(Password)
-            .Build();
-
-        await db.SeedAsync(user);
-
         var payload = new LoginCommand
         {
             Email = c.Variant,
