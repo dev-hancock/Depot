@@ -14,8 +14,6 @@ public class Application : WebApplicationFactory<Program>
         builder.ConfigureServices(services =>
         {
             services.AddSingleton(Global.Key);
-
-            // services.AddDbContext<AuthDbContext>(opt => opt.UseNpgsql(Global.Auth.GetConnectionString()));
         });
     }
 }

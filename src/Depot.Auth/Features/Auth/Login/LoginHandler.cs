@@ -11,7 +11,7 @@ using Persistence;
 
 public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly ISecretHasher _hasher;
 
@@ -20,12 +20,12 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
     private readonly ITokenGenerator _tokens;
 
     public LoginHandler(
-        IDbContextFactory<AuthDbContext> factory,
+        AuthDbContext context,
         ITimeProvider time,
         ISecretHasher hasher,
         ITokenGenerator tokens)
     {
-        _factory = factory;
+        _context = context;
         _time = time;
         _hasher = hasher;
         _tokens = tokens;
@@ -38,8 +38,6 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private async Task<ErrorOr<LoginResponse>> Handle(LoginCommand message, CancellationToken ct)
     {
-        await using var db = await _factory.CreateDbContextAsync(ct);
-
         var username = Username
             .TryCreate(message.Username)
             .Match(u => u.Normalized, _ => null!);
@@ -48,7 +46,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             .TryCreate(message.Email)
             .Match(e => e.Normalized, _ => null!);
 
-        var user = await db.Users
+        var user = await _context.Users
             .Include(x => x.Memberships).ThenInclude(x => x.Role).ThenInclude(x => x.Permissions).ThenInclude(x => x.Permission)
             .Include(x => x.Memberships).ThenInclude(x => x.Tenant)
             .Include(x => x.Sessions)
@@ -69,7 +67,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             return ErrorOr<LoginResponse>.From(result.Errors);
         }
 
-        await db.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
 
         return new LoginResponse
         {

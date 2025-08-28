@@ -11,13 +11,13 @@ using Persistence;
 
 public class MeHandler : IMessageHandler<MeQuery, ErrorOr<MeResponse>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly IUserContext _user;
 
-    public MeHandler(IDbContextFactory<AuthDbContext> factory, IUserContext user)
+    public MeHandler(AuthDbContext context, IUserContext user)
     {
-        _factory = factory;
+        _context = context;
         _user = user;
     }
 
@@ -28,9 +28,7 @@ public class MeHandler : IMessageHandler<MeQuery, ErrorOr<MeResponse>>
 
     private async Task<ErrorOr<MeResponse>> Handle(MeQuery _, CancellationToken token)
     {
-        await using var context = await _factory.CreateDbContextAsync(token);
-
-        var user = await context.Users
+        var user = await _context.Users
             .Where(x => x.Id == new UserId(_user.UserId))
             .SingleOrDefaultAsync(token);
 

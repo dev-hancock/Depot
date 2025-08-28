@@ -9,32 +9,46 @@ using Setup;
 
 public class Validation
 {
-    private const string ValidUsername = "username";
+    public static readonly string Password = "Super$ecr3t!";
 
-    private const string ValidEmail = "user@example.com";
+    private static readonly string Hash = Unique.Hash();
 
-    private const string ValidPassword = "Sup3r$ecret!";
+    public static readonly string Username = Unique.Username(Hash);
+
+    public static readonly string Email = Unique.Email(Hash);
+
+    [Before(Class)]
+    public async static Task Setup()
+    {
+        var user = Arrange.User
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
+            .Build();
+
+        await Database.SeedAsync(user);
+    }
 
     public static IEnumerable<object?[]> InvalidVariants()
     {
         return
         [
-            [null, ValidEmail, null],
-            [null, ValidEmail, ""],
-            [null, ValidEmail, " "],
+            [null, Email, null],
+            [null, Email, ""],
+            [null, Email, " "],
 
             [null, "not-an-email", null],
-            [null, "not-an-email", ValidPassword],
+            [null, "not-an-email", Username],
 
-            [ValidUsername, null, null],
-            [ValidUsername, null, ""],
-            [ValidUsername, null, " "],
+            [Username, null, null],
+            [Username, null, ""],
+            [Username, null, " "],
 
-            ["", null, ValidPassword],
-            [" ", null, ValidPassword],
-            [null, "", ValidPassword],
-            [null, " ", ValidPassword],
-            [null, null, ValidPassword],
+            ["", null, Username],
+            [" ", null, Username],
+            [null, "", Username],
+            [null, " ", Username],
+            [null, null, Username],
 
             ["", null, ""],
             [" ", null, ""],
@@ -47,19 +61,19 @@ public class Validation
             ["", " ", ""],
             [" ", " ", ""],
 
-            [ValidUsername, ValidEmail, ValidPassword],
-            [ValidEmail, null, ValidPassword],
-            [null, ValidUsername, ValidPassword],
-            [ValidEmail, null, ValidPassword],
+            [Username, Email, Password],
+            [Email, null, Password],
+            [null, Username, Password],
+            [Email, null, Password],
 
-            [ValidUsername, "", ValidPassword],
-            ["", ValidEmail, ValidPassword],
+            [Username, "", Password],
+            ["", Email, Password],
 
-            [ValidUsername, " ", ValidPassword],
-            [" ", ValidEmail, ValidPassword],
+            [Username, " ", Password],
+            [" ", Email, Password],
 
-            [ValidUsername, ValidEmail, ""],
-            [ValidUsername, ValidEmail, " "],
+            [Username, Email, ""],
+            [Username, Email, " "],
 
             [null, null, null]
         ];

@@ -12,7 +12,7 @@ using Persistence;
 
 public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<RegisterResponse>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly ISecretHasher _hasher;
 
@@ -21,12 +21,12 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
     private readonly ITokenGenerator _tokens;
 
     public RegisterHandler(
-        IDbContextFactory<AuthDbContext> factory,
+        AuthDbContext context,
         ITimeProvider time,
         ISecretHasher hasher,
         ITokenGenerator tokens)
     {
-        _factory = factory;
+        _context = context;
         _time = time;
         _hasher = hasher;
         _tokens = tokens;
@@ -39,8 +39,6 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
     private async Task<ErrorOr<RegisterResponse>> Handle(RegisterCommand message, CancellationToken token)
     {
-        await using var db = await _factory.CreateDbContextAsync(token);
-
         var username = Username
             .TryCreate(message.Username)
             .Match(u => u.Normalized, _ => null!);
@@ -49,7 +47,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             .TryCreate(message.Email)
             .Match(e => e.Normalized, _ => null!);
 
-        var exists = await db.Users
+        var exists = await _context.Users
             .AsNoTracking()
             .Where(x => x.Email.Normalized == email || x.Username.Normalized == username)
             .AnyAsync(token);
@@ -74,9 +72,9 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             return ErrorOr<RegisterResponse>.From(result.Errors);
         }
 
-        db.Users.Add(user);
+        _context.Users.Add(user);
 
-        await db.SaveChangesAsync(token);
+        await _context.SaveChangesAsync(token);
 
         return new RegisterResponse
         {

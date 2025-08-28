@@ -10,7 +10,7 @@ public class RequestBuilder(HttpMethod method, string uri) : IDisposable
 {
     private readonly SecurityKey _key = Global.Key;
 
-    private readonly JwtOptions _options = Global.Service<IOptions<JwtOptions>>().Value;
+    private readonly JwtOptions _options = Service.Get<IOptions<JwtOptions>>().Value;
 
     private readonly HttpRequestMessage _request = new(method, uri);
 

@@ -76,7 +76,7 @@ public class Program
             opt.CreateInfrastructure = true;
         });
 
-        services.AddDbContextFactory<AuthDbContext>(opt =>
+        services.AddDbContext<AuthDbContext>(opt =>
         {
             opt.UseNpgsql(configuration.GetConnectionString("Default")!);
         });

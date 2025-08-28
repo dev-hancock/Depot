@@ -9,7 +9,7 @@ public class UserBuilder
 {
     private static readonly Faker Faker = new();
 
-    private readonly ISecretHasher _hasher = Global.Service<ISecretHasher>();
+    private readonly ISecretHasher _hasher = Service.Get<ISecretHasher>();
 
     private readonly List<string> _roles = [];
 

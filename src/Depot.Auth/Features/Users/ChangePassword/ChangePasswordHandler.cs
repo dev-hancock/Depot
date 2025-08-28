@@ -13,7 +13,7 @@ using Persistence;
 
 public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, ErrorOr<ChangePasswordResponse>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly ISecretHasher _hasher;
 
@@ -24,13 +24,13 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
     private readonly IUserContext _user;
 
     public ChangePasswordHandler(
-        IDbContextFactory<AuthDbContext> factory,
+        AuthDbContext context,
         IUserContext user,
         ISecretHasher hasher,
         ITokenGenerator tokens,
         ITimeProvider time)
     {
-        _factory = factory;
+        _context = context;
         _user = user;
         _hasher = hasher;
         _tokens = tokens;
@@ -44,9 +44,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
     private async Task<ErrorOr<ChangePasswordResponse>> Handle(ChangePasswordCommand message, CancellationToken ct)
     {
-        await using var db = await _factory.CreateDbContextAsync(ct);
-
-        var user = await db.Users
+        var user = await _context.Users
             .Where(x => x.Id.Equals(_user.UserId))
             .SingleOrDefaultAsync(ct);
 
@@ -73,7 +71,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
             return ErrorOr<ChangePasswordResponse>.From(result.Errors);
         }
 
-        await db.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(ct);
 
         return new ChangePasswordResponse
         {

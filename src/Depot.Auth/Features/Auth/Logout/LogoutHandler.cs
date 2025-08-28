@@ -12,18 +12,18 @@ using Persistence;
 
 public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 {
-    private readonly IUserContext _context;
-
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly ISecretHasher _hasher;
 
     private readonly TimeProvider _time;
 
-    public LogoutHandler(IDbContextFactory<AuthDbContext> factory, IUserContext context, ISecretHasher hasher, TimeProvider time)
+    private readonly IUserContext _user;
+
+    public LogoutHandler(AuthDbContext context, IUserContext user, ISecretHasher hasher, TimeProvider time)
     {
-        _factory = factory;
         _context = context;
+        _user = user;
         _hasher = hasher;
         _time = time;
     }
@@ -35,12 +35,10 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 
     private async Task<ErrorOr<Success>> Handle(LogoutCommand message, CancellationToken token)
     {
-        await using var db = await _factory.CreateDbContextAsync(token);
-
-        var user = await db.Users
+        var user = await _context.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
-            .Where(x => x.Id == new UserId(_context.UserId))
+            .Where(x => x.Id == new UserId(_user.UserId))
             .SingleOrDefaultAsync(token);
 
         if (user is null)
@@ -55,7 +53,7 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
             return result;
         }
 
-        await db.SaveChangesAsync(token);
+        await _context.SaveChangesAsync(token);
 
         return Result.Success;
     }

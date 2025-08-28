@@ -13,7 +13,7 @@ using Persistence;
 
 public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshResponse>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly ITimeProvider _time;
 
@@ -22,12 +22,12 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
     private readonly IUserContext _user;
 
     public RefreshHandler(
-        IDbContextFactory<AuthDbContext> factory,
+        AuthDbContext context,
         IUserContext user,
         ITimeProvider time,
         ITokenGenerator tokens)
     {
-        _factory = factory;
+        _context = context;
         _user = user;
         _time = time;
         _tokens = tokens;
@@ -40,9 +40,7 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
 
     private async Task<ErrorOr<RefreshResponse>> Handle(RefreshCommand message, CancellationToken token)
     {
-        await using var db = await _factory.CreateDbContextAsync(token);
-
-        var user = await db.Users
+        var user = await _context.Users
             .Include(x => x.Sessions)
             .ThenInclude(x => x.RefreshToken)
             .Where(x => x.Id == new UserId(_user.UserId))
@@ -62,7 +60,7 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
             return ErrorOr<RefreshResponse>.From(result.Errors);
         }
 
-        await db.SaveChangesAsync(token);
+        await _context.SaveChangesAsync(token);
 
         return new RefreshResponse
         {

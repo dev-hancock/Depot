@@ -10,13 +10,13 @@ using Persistence;
 
 public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandler.Request, ErrorOr<Organisation>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly TimeProvider _time;
 
-    public CreateOrganisationHandler(IDbContextFactory<AuthDbContext> factory, TimeProvider time)
+    public CreateOrganisationHandler(AuthDbContext context, TimeProvider time)
     {
-        _factory = factory;
+        _context = context;
         _time = time;
     }
 
@@ -27,9 +27,7 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
 
     private async Task<ErrorOr<Organisation>> Handle(Request message, CancellationToken token)
     {
-        await using var context = await _factory.CreateDbContextAsync(token);
-
-        var user = await context.Users
+        var user = await _context.Users
             .AsNoTracking()
             .Where(x => x.Id == new UserId(message.UserId))
             .FirstOrDefaultAsync(token);
@@ -44,7 +42,7 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return Error.Unauthorized();
         }
 
-        var exists = await context.Organisations
+        var exists = await _context.Organisations
             .AsNoTracking()
             .Where(x => x.Slug == message.Name)
             .Where(x => x.CreatedBy == user.Id)
@@ -62,9 +60,9 @@ public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandl
             return result;
         }
 
-        context.Organisations.Add(result.Value);
+        _context.Organisations.Add(result.Value);
 
-        await context.SaveChangesAsync(token);
+        await _context.SaveChangesAsync(token);
 
         return result;
     }

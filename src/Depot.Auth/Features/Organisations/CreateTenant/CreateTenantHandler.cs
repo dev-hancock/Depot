@@ -10,13 +10,13 @@ using Persistence;
 
 public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, ErrorOr<Tenant>>
 {
-    private readonly IDbContextFactory<AuthDbContext> _factory;
+    private readonly AuthDbContext _context;
 
     private readonly TimeProvider _time;
 
-    public CreateTenantHandler(IDbContextFactory<AuthDbContext> factory, TimeProvider time)
+    public CreateTenantHandler(AuthDbContext context, TimeProvider time)
     {
-        _factory = factory;
+        _context = context;
         _time = time;
     }
 
@@ -27,9 +27,7 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
 
     private async Task<ErrorOr<Tenant>> Handle(Request message, CancellationToken token)
     {
-        await using var context = await _factory.CreateDbContextAsync(token);
-
-        var user = await context.Users
+        var user = await _context.Users
             .AsNoTracking()
             .Where(x => x.Id == new UserId(message.UserId))
             .FirstOrDefaultAsync(token);
@@ -39,7 +37,7 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
             return Error.NotFound();
         }
 
-        var organisation = await context.Organisations
+        var organisation = await _context.Organisations
             .Include(x => x.Tenants)
             .Where(x => x.Slug == message.Organisation)
             .Where(x => x.CreatedBy == user.Id)
@@ -57,7 +55,7 @@ public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, 
             return result;
         }
 
-        await context.SaveChangesAsync(token);
+        await _context.SaveChangesAsync(token);
 
         return result;
     }
