@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
-using Depot.Auth.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Depot.Auth.Extensions;
@@ -9,30 +9,36 @@ public static class JwtExtensions
 {
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, Action<JwtOptions> configure)
     {
-        var jwt = new JwtOptions();
+        services.Configure(configure);
 
-        configure(jwt);
-
-        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(jwt));
-
-        var ecdsa = ECDsa.Create();
-
-        if (File.Exists(jwt.KeyPath))
+        services.AddSingleton<SecurityKey>(sp =>
         {
-            ecdsa.ImportFromPem(File.ReadAllText(jwt.KeyPath));
-        }
+            var jwt = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
 
-        var key = new ECDsaSecurityKey(ecdsa)
-        {
-            KeyId = "depot-key"
-        };
+            var ecdsa = ECDsa.Create();
 
-        services.AddSingleton<SecurityKey>(key);
+            if (File.Exists(jwt.KeyPath))
+            {
+                ecdsa.ImportFromPem(File.ReadAllText(jwt.KeyPath));
+            }
+
+            return new ECDsaSecurityKey(ecdsa)
+            {
+                KeyId = "depot-key"
+            };
+        });
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(opt =>
+            .AddJwtBearer();
+
+        services
+            .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IServiceProvider>((opt, sp) =>
             {
+                var key = sp.GetRequiredService<SecurityKey>();
+                var jwt = sp.GetRequiredService<IOptions<JwtOptions>>().Value;
+
                 opt.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

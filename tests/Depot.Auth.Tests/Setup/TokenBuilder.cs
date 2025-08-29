@@ -1,6 +1,5 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Depot.Auth.Options;
+using Depot.Auth.Extensions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Depot.Auth.Tests.Setup;

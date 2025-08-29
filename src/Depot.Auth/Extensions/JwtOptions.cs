@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Depot.Auth.Options;
+namespace Depot.Auth.Extensions;
 
 public class JwtOptions
 {

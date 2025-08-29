@@ -9,6 +9,11 @@ public static class ResultExtensions
         return (await result).Match(x => Results.Created(at(x), x), ToProblem);
     }
 
+    public static async Task<IResult> ToNoContentAsync<T>(this Task<ErrorOr<T>> result)
+    {
+        return (await result).Match(_ => Results.NoContent(), ToProblem);
+    }
+
     public static async Task<IResult> ToOkAsync<T>(this Task<ErrorOr<T>> result)
     {
         return (await result).Match(Results.Ok, ToProblem);

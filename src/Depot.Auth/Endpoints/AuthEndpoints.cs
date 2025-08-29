@@ -39,7 +39,7 @@ public static class AuthEndpoints
 
     private static Task<IResult> LogoutAsync([FromBody] LogoutCommand request, [FromServices] IMediator mediator, HttpContext context)
     {
-        return mediator.Send(request).ToTask(context.RequestAborted).ToOkAsync();
+        return mediator.Send(request).ToTask(context.RequestAborted).ToNoContentAsync();
     }
 
     private static Task<IResult> RefreshTokenAsync([FromBody] RefreshCommand request, [FromServices] IMediator mediator,

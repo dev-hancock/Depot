@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using Depot.Auth.Options;
+using Depot.Auth.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 

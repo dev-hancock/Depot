@@ -11,6 +11,9 @@ public class Application : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:Default", Global.Auth.GetConnectionString());
         builder.UseSetting("ConnectionStrings:Cache", Global.Cache.GetConnectionString());
 
+        builder.UseSetting("Jwt:Issuer", "test");
+        builder.UseSetting("Jwt:Audience", "test-client");
+
         builder.ConfigureServices(services =>
         {
             services.AddSingleton(Global.Key);
