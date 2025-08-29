@@ -32,7 +32,7 @@ public class Logout_Success
             RefreshToken = token
         };
 
-        var response = await Requests.Post("api/v1/auth/logout", payload)
+        var response = await Requests.Logout(payload)
             .WithAuthorization(x => x.WithUser(Id))
             .SendAsync();
 
