@@ -1,19 +1,14 @@
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
 
 public class Login_Success
 {
-    public static readonly string Password = "Super$ecr3t!";
+    private static readonly Faker Faker = new();
 
-    private static readonly string Id = Unique.Id();
+    private static readonly string Password = Faker.Internet.StrongPassword();
 
-    public static readonly string Username = Unique.Username(Id);
+    private static readonly string Username = Faker.Internet.UserName();
 
-    public static readonly string Email = Unique.Email(Id);
+    private static readonly string Email = Faker.Internet.Email();
 
     public static IEnumerable<(string?, string?)> Data()
     {
@@ -59,11 +54,11 @@ public class Login_Success
             Username = username, Email = email, Password = Password
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.ReadAsAsync<LoginResponse>();
 
         var session = await Assert.That(result).IsNotNull();
 

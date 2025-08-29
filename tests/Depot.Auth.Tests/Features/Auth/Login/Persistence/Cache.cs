@@ -1,26 +1,22 @@
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-using Microsoft.Extensions.Caching.Distributed;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
 
 public class Login_Cache
 {
-    private static readonly string Id = Unique.Id();
+    private static readonly Faker Faker = new();
 
-    public static readonly string Username = Unique.Username(Id);
+    private static readonly string Password = Faker.Internet.StrongPassword();
 
-    public static readonly string Email = Unique.Email(Id);
+    private static readonly string Username = Faker.Internet.UserName();
 
-    public static readonly string Password = "Super$ecr3t!";
+    private static readonly string Email = Faker.Internet.Email();
 
     public static IEnumerable<(string?, string?)> Data()
     {
         yield return (null, Email);
         yield return (Username, null);
     }
+
+    private static IDistributedCache Cache => Service.Get<IDistributedCache>();
 
     [Before(Class)]
     public static async Task Setup()
@@ -43,17 +39,17 @@ public class Login_Cache
             Username = username, Email = email, Password = Password
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.ReadAsAsync<LoginResponse>();
 
         var content = await Assert.That(result).IsNotNull();
 
-        var id = content!.AccessToken.GetClaimValue("jti");
+        var id = content.AccessToken.GetClaimValue("jti");
 
-        var exists = await Service.Get<IDistributedCache>().GetAsync(id);
+        var exists = await Cache.GetAsync(id);
 
         await Assert.That(exists).IsNotNull();
     }

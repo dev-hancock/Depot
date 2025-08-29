@@ -1,6 +1,4 @@
-using System.Net;
 using Depot.Auth.Features.Auth.Logout;
-using Depot.Auth.Tests.Setup;
 
 namespace Depot.Auth.Tests.Features.Auth.Logout;
 

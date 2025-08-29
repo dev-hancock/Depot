@@ -1,46 +1,54 @@
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
 
-public class DatabaseTests
+public class Login_Database
 {
-    private const string ValidUsername = "username";
+    private static readonly Faker Faker = new();
 
-    private const string ValidEmail = "user@example.com";
+    private static readonly string Password = Faker.Internet.StrongPassword();
 
-    [Test]
-    [Arguments(null, ValidEmail)]
-    [Arguments(ValidUsername, null)]
-    public async Task Login_WithValidPayload_ShouldPersistSession(string? username, string? email)
+    private static readonly string Username = Faker.Internet.UserName();
+
+    private static readonly string Email = Faker.Internet.Email();
+
+    public static IEnumerable<(string?, string?)> Data()
+    {
+        yield return (null, Email);
+        yield return (Username, null);
+    }
+
+    [Before(Class)]
+    public static async Task Setup()
     {
         var user = Arrange.User
-            .WithUsername(ValidUsername)
-            .WithEmail(ValidEmail)
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
             .Build();
 
         await Database.SeedAsync(user);
+    }
 
+    [Test]
+    [MethodDataSource(nameof(Data))]
+    public async Task Login_WithValidPayload_PersistsSession(string? username, string? email)
+    {
         var payload = new LoginCommand
         {
-            Username = user.Username, Password = user.Password
+            Username = username, Email = email, Password = Password
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.ReadAsAsync<LoginResponse>();
 
         var content = await Assert.That(result).IsNotNull();
 
-        // TODO: Re-enable when session persistence is implemented
-        // var id = content.AccessToken.GetClaimValue<Guid>("jti");
-        //
-        // var exists = await Fixture.Database.FindAsync<Session>(new SessionId(id));
-        //
-        // await Assert.That(exists).IsNotNull();
+        var id = content.AccessToken.GetClaimValue("jti");
+
+        var exists = await Database.FindSessionAsync(id);
+
+        await Assert.That(exists).IsNotNull();
     }
 }

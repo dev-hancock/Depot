@@ -1,62 +1,53 @@
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 
-public class Failure
+public class Login_Failure
 {
-    private const string ValidUsername = "valid";
+    private static readonly Faker Faker = new();
 
-    private const string ValidEmail = "valid@example.com";
+    private static readonly string Password = Faker.Internet.StrongPassword();
 
-    private const string ValidPassword = "Sup3r$ecret!";
+    private static readonly string Username = Faker.Internet.UserName();
 
-    private const string InvalidUsername = "invalid";
+    private static readonly string Email = Faker.Internet.Email();
 
-    private const string InvalidEmail = "invalid@example.com";
-
-    private const string InvalidPassword = "Super$ecr3t!";
-
-    public static IEnumerable<object?[]> InvalidVariants()
+    public static IEnumerable<(string?, string?, string?)> Data()
     {
-        return
-        [
-            [ValidUsername, null, InvalidPassword],
-            [null, ValidEmail, InvalidPassword],
+        yield return (Username, null, Faker.Internet.StrongPassword());
+        yield return (null, Email, Faker.Internet.StrongPassword());
 
-            [InvalidUsername, null, ValidPassword],
-            [null, InvalidEmail, ValidPassword],
+        yield return (Faker.Internet.UserName(), null, Password);
+        yield return (null, Faker.Internet.Email(), Password);
 
-            [ValidUsername, null, $" {InvalidPassword} "],
-            [null, ValidEmail, $" {InvalidPassword} "]
-        ];
+        yield return (Username, null, $" {Faker.Internet.StrongPassword()} ");
+        yield return (null, Email, $" {Faker.Internet.StrongPassword()} ");
     }
 
-    [Test]
-    [MethodDataSource(nameof(InvalidVariants))]
-    public async Task Login_WithWrongCredentials_ShouldReturnUnauthorized(string? username, string? email, string? password)
+    [Before(Class)]
+    public static async Task Setup()
     {
         var user = Arrange.User
-            .WithUsername(ValidUsername)
-            .WithEmail(ValidEmail)
-            .WithPassword(ValidPassword)
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
             .Build();
 
         await Database.SeedAsync(user);
+    }
 
+    [Test]
+    [MethodDataSource(nameof(Data))]
+    public async Task Login_WithWrongCredentials_ReturnsUnauthorized(string? username, string? email, string? password)
+    {
         var payload = new LoginCommand
         {
             Username = username, Email = email, Password = password!
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
 
-        var result = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var result = await response.ReadAsAsync<ProblemDetails>();
 
         _ = await Assert.That(result).IsNotNull();
     }

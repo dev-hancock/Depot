@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Depot.Auth.Tests.Setup;
 
-public static class Database
+public static partial class Database
 {
     public static Task<T?> FindAsync<T>(params object[] keys) where T : class
     {

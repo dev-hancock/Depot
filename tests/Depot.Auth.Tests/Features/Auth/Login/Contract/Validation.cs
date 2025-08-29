@@ -1,70 +1,60 @@
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.WebUtilities;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
 
 public class Login_Validation
 {
-    public static readonly string Password = "Super$ecr3t!";
+    private static readonly Faker Faker = new();
 
-    private static readonly string Id = Unique.Id();
+    private static readonly string Password = Faker.Internet.StrongPassword();
 
-    public static readonly string Username = Unique.Username(Id);
+    private static readonly string Username = Faker.Internet.UserName();
 
-    public static readonly string Email = Unique.Email(Id);
+    private static readonly string Email = Faker.Internet.Email();
 
-    public static IEnumerable<object?[]> Data()
+    public static IEnumerable<(string?, string?, string?)> Data()
     {
-        return
-        [
-            [null, Email, null],
-            [null, Email, ""],
-            [null, Email, " "],
+        yield return (null, Email, null);
+        yield return (null, Email, "");
+        yield return (null, Email, " ");
 
-            [null, "not-an-email", null],
-            [null, "not-an-email", Username],
+        yield return (null, "not-an-email", null);
+        yield return (null, "not-an-email", Username);
 
-            [Username, null, null],
-            [Username, null, ""],
-            [Username, null, " "],
+        yield return (Username, null, null);
+        yield return (Username, null, "");
+        yield return (Username, null, " ");
 
-            ["", null, Username],
-            [" ", null, Username],
-            [null, "", Username],
-            [null, " ", Username],
-            [null, null, Username],
+        yield return ("", null, Username);
+        yield return (" ", null, Username);
+        yield return (null, "", Username);
+        yield return (null, " ", Username);
+        yield return (null, null, Username);
 
-            ["", null, ""],
-            [" ", null, ""],
-            [" ", null, " "],
-            [null, "", null],
-            [null, " ", ""],
-            [null, " ", " "],
-            ["", "", ""],
-            [" ", "", ""],
-            ["", " ", ""],
-            [" ", " ", ""],
+        yield return ("", null, "");
+        yield return (" ", null, "");
+        yield return (" ", null, " ");
+        yield return (null, "", null);
+        yield return (null, " ", "");
+        yield return (null, " ", " ");
+        yield return ("", "", "");
+        yield return (" ", "", "");
+        yield return ("", " ", "");
+        yield return (" ", " ", "");
 
-            [Username, Email, Password],
-            [Email, null, Password],
-            [null, Username, Password],
-            [Email, null, Password],
+        yield return (Username, Email, Password);
+        yield return (Email, null, Password);
+        yield return (null, Username, Password);
+        yield return (Email, null, Password);
 
-            [Username, "", Password],
-            ["", Email, Password],
+        yield return (Username, "", Password);
+        yield return ("", Email, Password);
 
-            [Username, " ", Password],
-            [" ", Email, Password],
+        yield return (Username, " ", Password);
+        yield return (" ", Email, Password);
 
-            [Username, Email, ""],
-            [Username, Email, " "],
+        yield return (Username, Email, "");
+        yield return (Username, Email, " ");
 
-            [null, null, null]
-        ];
+        yield return (null, null, null);
     }
 
     [Before(Class)]
@@ -88,11 +78,11 @@ public class Login_Validation
             Username = username, Email = email, Password = password!
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
 
-        var result = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        var result = await response.ReadAsAsync<ProblemDetails>();
 
         var content = await Assert.That(result).IsNotNull();
 

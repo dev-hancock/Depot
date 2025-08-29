@@ -1,4 +1,3 @@
-using Bogus;
 using Depot.Auth.Domain.Auth;
 
 namespace Depot.Auth.Tests.Setup;

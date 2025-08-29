@@ -1,4 +1,3 @@
-using Bogus;
 using Depot.Auth.Domain.Auth;
 using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Domain.Users;
@@ -15,7 +14,7 @@ public class UserBuilder
 
     private readonly List<SessionBuilder> _sessions = [];
 
-    public Guid Id { get; } = Faker.Random.Guid();
+    public Guid Id { get; private set; } = Faker.Random.Guid();
 
     public DateTime CreatedAt { get; private set; } = Faker.Date.Past(1, DateTime.UtcNow);
 
@@ -51,6 +50,13 @@ public class UserBuilder
     public UserBuilder WithEmail(string email)
     {
         Email = email;
+
+        return this;
+    }
+
+    public UserBuilder WithId(Guid id)
+    {
+        Id = id;
 
         return this;
     }

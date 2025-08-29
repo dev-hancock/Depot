@@ -1,6 +1,6 @@
 namespace Depot.Auth.Tests.Setup;
 
-public static class Requests
+public static partial class Requests
 {
     public static RequestBuilder Delete(string uri)
     {

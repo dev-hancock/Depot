@@ -1,49 +1,60 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Net;
-using System.Net.Http.Json;
-using Depot.Auth.Features.Auth.Login;
-using Depot.Auth.Tests.Setup;
-
 namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 
-public class Success
+public class Login_Success
 {
-    private readonly JwtSecurityTokenHandler _handler = new();
+    private static readonly JwtSecurityTokenHandler Handler = new();
 
-    private const string ValidUsername = "username";
+    private static readonly Faker Faker = new();
 
-    private const string ValidEmail = "user@example.com";
+    private static readonly Guid Id = Guid.NewGuid();
 
-    [Test]
-    [Arguments(null, ValidEmail)]
-    [Arguments(ValidUsername, null)]
-    public async Task Login_WithValidPayload_ShouldReturnAccessToken(string? username, string? email)
+    private static readonly string Password = Faker.Internet.StrongPassword();
+
+    private static readonly string Username = Faker.Internet.UserName();
+
+    private static readonly string Email = Faker.Internet.Email();
+
+    public static IEnumerable<(string?, string?)> Data()
+    {
+        yield return (null, Email);
+        yield return (Username, null);
+    }
+
+    [Before(Class)]
+    public static async Task Setup()
     {
         var user = Arrange.User
-            .WithUsername(ValidUsername)
-            .WithEmail(ValidEmail)
+            .WithId(Id)
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
             .Build();
 
         await Database.SeedAsync(user);
+    }
 
+    [Test]
+    [MethodDataSource(nameof(Data))]
+    public async Task Login_WithValidPayload_ReturnsAccessToken(string? username, string? email)
+    {
         var payload = new LoginCommand
         {
-            Username = username, Email = email, Password = user.Password
+            Username = username, Email = email, Password = Password
         };
 
-        var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
+        var response = await Requests.Login(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var result = await response.ReadAsAsync<LoginResponse>();
 
         var session = await Assert.That(result).IsNotNull();
 
         await Assert.That(session.AccessToken).IsNotNull();
         await Assert.That(session.RefreshToken).IsNotEmpty();
 
-        var token = _handler.ReadJwtToken(session.AccessToken);
+        var token = Handler.ReadJwtToken(session.AccessToken);
 
-        await Assert.That(token.Subject).IsEqualTo(user.Id.ToString());
+        await Assert.That(token.Subject).IsEqualTo(Id.ToString());
     }
 }
