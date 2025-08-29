@@ -2,14 +2,14 @@ namespace Depot.Auth.Tests.Features.Auth.Logout.Contract;
 
 public class Logout_Success
 {
-    private const string RefershToken = "valid-refresh-token";
+    private const string RefreshToken = "valid-refresh-token";
 
     private static readonly Guid Id = Guid.NewGuid();
 
     public static IEnumerable<string?> Data()
     {
         yield return null;
-        yield return RefershToken;
+        yield return RefreshToken;
     }
 
     [Before(Class)]
@@ -17,7 +17,7 @@ public class Logout_Success
     {
         var user = Arrange.User
             .WithId(Id)
-            .WithSession(x => x.WithRefreshToken(RefershToken))
+            .WithSession(x => x.WithRefreshToken(RefreshToken))
             .Build();
 
         await Database.SeedAsync(user);
