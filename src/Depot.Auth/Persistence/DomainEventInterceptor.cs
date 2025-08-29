@@ -1,15 +1,15 @@
-namespace Depot.Auth.Persistence;
-
 using System.Reactive.Threading.Tasks;
-using Domain.Common;
+using Depot.Auth.Domain.Common;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
+namespace Depot.Auth.Persistence;
+
 public class DomainEventsInterceptor(IMediator mediator) : SaveChangesInterceptor
 {
-    public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(
-        DbContextEventData data,
-        InterceptionResult<int> result,
+    public override async ValueTask<int> SavedChangesAsync(
+        SaveChangesCompletedEventData data,
+        int result,
         CancellationToken token = default)
     {
         var context = data.Context;

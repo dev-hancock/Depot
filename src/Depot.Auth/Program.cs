@@ -1,20 +1,20 @@
-﻿namespace Depot.Auth;
-
-using Asp.Versioning;
-using Domain.Interfaces;
-using Endpoints;
-using Extensions;
+﻿using Asp.Versioning;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Endpoints;
+using Depot.Auth.Extensions;
+using Depot.Auth.Middleware;
+using Depot.Auth.Middleware.Exceptions;
+using Depot.Auth.Persistence;
+using Depot.Auth.Services;
+using Depot.Auth.Validation;
 using FluentValidation;
 using Mestra.Abstractions;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Middleware;
-using Middleware.Exceptions;
-using Persistence;
 using Scalar.AspNetCore;
-using Services;
 using Sloop.Extensions;
-using Validation;
+
+namespace Depot.Auth;
 
 public class Program
 {
@@ -40,6 +40,28 @@ public class Program
         Configure(app);
 
         app.Run();
+    }
+
+    private static void Configure(WebApplication app)
+    {
+        app.MapOpenApi();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapScalarApiReference(opt => opt.AddDocuments("v1"));
+        }
+
+        app.UseExceptionHandler();
+
+        app.UseRouting();
+        app.UseHttpsRedirection();
+
+        app.UseAuthentication();
+        app.UseMiddleware<UserContextMiddleware>();
+        app.UseAuthorization();
+
+        app.MapEndpoints();
+        app.MapGet("/ping", () => "pong");
     }
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
@@ -76,11 +98,13 @@ public class Program
             opt.CreateInfrastructure = true;
         });
 
-        services.AddDbContext<AuthDbContext>(opt =>
-        {
-            opt.UseNpgsql(configuration.GetConnectionString("Default")!);
-        });
         services.AddScoped<DomainEventsInterceptor>();
+
+        services.AddDbContext<AuthDbContext>((sp, opt) =>
+        {
+            opt.UseNpgsql(configuration.GetConnectionString("Default")!)
+                .AddInterceptors(sp.GetRequiredService<DomainEventsInterceptor>());
+        });
 
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();
@@ -96,27 +120,5 @@ public class Program
         services.AddExceptionHandler<ValidationExceptionHandler>();
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails();
-    }
-
-    private static void Configure(WebApplication app)
-    {
-        app.MapOpenApi();
-
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapScalarApiReference(opt => opt.AddDocuments("v1"));
-        }
-
-        app.UseExceptionHandler();
-
-        app.UseRouting();
-        app.UseHttpsRedirection();
-
-        app.UseAuthentication();
-        app.UseMiddleware<UserContextMiddleware>();
-        app.UseAuthorization();
-
-        app.MapEndpoints();
-        app.MapGet("/ping", () => "pong");
     }
 }

@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Users.ChangePassword;
-
 using FluentValidation;
+
+namespace Depot.Auth.Features.Users.ChangePassword;
 
 public class ChangePasswordValidator : AbstractValidator<ChangePasswordCommand>
 {

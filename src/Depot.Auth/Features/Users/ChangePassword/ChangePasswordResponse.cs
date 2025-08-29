@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Users.ChangePassword;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Auth.Features.Users.ChangePassword;
 
 public class ChangePasswordResponse
 {

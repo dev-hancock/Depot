@@ -1,10 +1,10 @@
-namespace Depot.Repository.Endpoints.Meta;
-
 using Microsoft.AspNetCore.Mvc;
+
+namespace Depot.Repository.Endpoints.Meta;
 
 public static class MetaEndpoint
 {
-    public async static Task<IResult> Handle([FromRoute] string id, HttpContext httpContext)
+    public static async Task<IResult> Handle([FromRoute] string id, HttpContext httpContext)
     {
         return Results.NoContent();
     }

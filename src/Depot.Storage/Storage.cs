@@ -1,17 +1,16 @@
-﻿namespace Depot.Storage;
-
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+namespace Depot.Storage;
+
 public interface IStorage
 {
-    Task<string> SaveAsync(Guid id, string location, string ext, Stream content, CancellationToken token);
+    Task DeleteAsync(string location, CancellationToken token);
 
     Task<Stream> OpenAsync(string location, CancellationToken token);
-
-    Task DeleteAsync(string location, CancellationToken token);
+    Task<string> SaveAsync(Guid id, string location, string ext, Stream content, CancellationToken token);
 }
 
 public class StorageOptions
@@ -32,12 +31,12 @@ public class FileSystemStorage : IStorage
         Directory.CreateDirectory(Path.GetFullPath(_options.Root));
     }
 
-    public async Task<Stream> OpenAsync(string location, CancellationToken token)
+    public Task DeleteAsync(string location, CancellationToken token)
     {
         throw new NotImplementedException();
     }
 
-    public Task DeleteAsync(string location, CancellationToken token)
+    public async Task<Stream> OpenAsync(string location, CancellationToken token)
     {
         throw new NotImplementedException();
     }

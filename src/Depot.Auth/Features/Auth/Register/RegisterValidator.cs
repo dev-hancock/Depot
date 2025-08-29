@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Auth.Register;
-
 using FluentValidation;
+
+namespace Depot.Auth.Features.Auth.Register;
 
 public class RegisterValidator : AbstractValidator<RegisterCommand>
 {

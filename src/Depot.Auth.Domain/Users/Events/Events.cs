@@ -1,8 +1,8 @@
-namespace Depot.Auth.Domain.Users.Events;
-
-using Auth;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Tenants;
 using Mestra.Abstractions;
-using Tenants;
+
+namespace Depot.Auth.Domain.Users.Events;
 
 public sealed record PasswordChangedEvent(User User) : INotification;
 

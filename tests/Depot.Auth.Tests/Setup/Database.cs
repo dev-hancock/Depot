@@ -1,18 +1,33 @@
-namespace Depot.Auth.Tests.Setup;
-
+using Depot.Auth.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Tests.Setup;
 
 public static class Database
 {
-    public async static Task SeedAsync(params object[] models)
+    public static Task<T?> FindAsync<T>(params object[] keys) where T : class
+    {
+        return WithScope<T?>(context => context.FindAsync<T>(keys).AsTask());
+    }
+
+    public static async Task RemoveAsync(params object[] models)
+    {
+        await WithScope(context => context.RemoveRange(models));
+    }
+
+    public static async Task SeedAsync(params object[] models)
     {
         await WithScope(context => context.AddRangeAsync(models));
     }
 
-    public static Task<T?> FindAsync<T>(params object[] keys) where T : class
+    public static async Task Setup()
     {
-        return WithScope<T?>(context => context.FindAsync<T>(keys).AsTask());
+        await WithScope(context => context.Database.EnsureCreatedAsync());
+    }
+
+    public static async Task Teardown()
+    {
+        await WithScope(context => context.Database.EnsureDeletedAsync());
     }
 
     private static Task<T?> WithScope<T>(Func<DbContext, Task<T?>> action)
@@ -41,20 +56,5 @@ public static class Database
                 await context.SaveChangesAsync();
             }
         });
-    }
-
-    public async static Task RemoveAsync(params object[] models)
-    {
-        await WithScope(context => context.RemoveRange(models));
-    }
-
-    public async static Task Setup()
-    {
-        await WithScope(context => context.Database.EnsureCreatedAsync());
-    }
-
-    public async static Task Teardown()
-    {
-        await WithScope(context => context.Database.EnsureDeletedAsync());
     }
 }

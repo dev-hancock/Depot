@@ -1,6 +1,3 @@
 namespace Depot.Auth.Endpoints;
 
-public class OrganisationEndpoints
-{
-    
-}
+public class OrganisationEndpoints { }

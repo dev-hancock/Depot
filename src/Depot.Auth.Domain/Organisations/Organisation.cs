@@ -1,10 +1,10 @@
-namespace Depot.Auth.Domain.Organisations;
-
-using Auth;
-using Common;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Tenants;
+using Depot.Auth.Domain.Users.Events;
 using ErrorOr;
-using Tenants;
-using Users.Events;
+
+namespace Depot.Auth.Domain.Organisations;
 
 public class Organisation : Root
 {

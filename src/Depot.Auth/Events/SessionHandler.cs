@@ -1,10 +1,10 @@
-namespace Depot.Auth.Events;
-
 using System.Reactive;
 using System.Reactive.Threading.Tasks;
-using Domain.Users.Events;
+using Depot.Auth.Domain.Users.Events;
 using Mestra.Abstractions;
 using Microsoft.Extensions.Caching.Distributed;
+
+namespace Depot.Auth.Events;
 
 public class SessionHandler :
     IMessageHandler<SessionCreatedEvent>,

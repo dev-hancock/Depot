@@ -1,13 +1,13 @@
-namespace Depot.Auth.Features.Auth.Login;
-
 using System.Reactive.Linq;
-using Domain.Interfaces;
-using Domain.Users;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Users;
+using Depot.Auth.Mappings;
+using Depot.Auth.Persistence;
 using ErrorOr;
-using Mappings;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Features.Auth.Login;
 
 public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>>
 {
@@ -19,11 +19,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private readonly ITokenGenerator _tokens;
 
-    public LoginHandler(
-        AuthDbContext context,
-        ITimeProvider time,
-        ISecretHasher hasher,
-        ITokenGenerator tokens)
+    public LoginHandler(AuthDbContext context, ITimeProvider time, ISecretHasher hasher, ITokenGenerator tokens)
     {
         _context = context;
         _time = time;

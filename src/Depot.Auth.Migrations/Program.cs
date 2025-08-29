@@ -1,11 +1,11 @@
-namespace Depot.Auth.Migrator;
-
+using Depot.Auth.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Migrator;
 
 public class Program
 {
-    public async static Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
 

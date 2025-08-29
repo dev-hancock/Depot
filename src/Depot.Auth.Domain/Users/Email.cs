@@ -1,6 +1,6 @@
-namespace Depot.Auth.Domain.Users;
-
 using ErrorOr;
+
+namespace Depot.Auth.Domain.Users;
 
 public record Email
 {
@@ -19,6 +19,11 @@ public record Email
         return new Email(value);
     }
 
+    public static implicit operator string(Email email)
+    {
+        return email.Value;
+    }
+
     public static ErrorOr<Email> TryCreate(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -27,11 +32,6 @@ public record Email
         }
 
         return Create(value);
-    }
-
-    public static implicit operator string(Email email)
-    {
-        return email.Value;
     }
 
     public override string ToString()

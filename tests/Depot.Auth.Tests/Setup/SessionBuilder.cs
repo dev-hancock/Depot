@@ -1,7 +1,7 @@
-namespace Depot.Auth.Tests.Setup;
-
 using Bogus;
-using Domain.Auth;
+using Depot.Auth.Domain.Auth;
+
+namespace Depot.Auth.Tests.Setup;
 
 public class SessionBuilder(UserBuilder user)
 {
@@ -25,13 +25,6 @@ public class SessionBuilder(UserBuilder user)
         );
     }
 
-    public SessionBuilder WithRevoked()
-    {
-        IsRevoked = true;
-
-        return this;
-    }
-
     public SessionBuilder WithExpiry(DateTime expiry)
     {
         Expiry = expiry;
@@ -42,6 +35,13 @@ public class SessionBuilder(UserBuilder user)
     public SessionBuilder WithRefreshToken(string token)
     {
         RefreshToken = token;
+
+        return this;
+    }
+
+    public SessionBuilder WithRevoked()
+    {
+        IsRevoked = true;
 
         return this;
     }

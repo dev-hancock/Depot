@@ -1,14 +1,14 @@
-namespace Depot.Auth.Features.Auth.Logout;
-
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Interfaces;
-using Domain.Users.Errors;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Users.Errors;
+using Depot.Auth.Middleware;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Middleware;
-using Persistence;
+
+namespace Depot.Auth.Features.Auth.Logout;
 
 public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 {

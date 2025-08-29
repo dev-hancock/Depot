@@ -34,7 +34,7 @@
     depends_on:
       depot.db:
         condition: service_healthy
-   
+  
   depot.repo.db:
     container_name: depot.repo.db
     build:

@@ -1,10 +1,9 @@
-namespace Depot.Auth.Extensions;
-
 using System.Security.Cryptography;
+using Depot.Auth.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Options;
+
+namespace Depot.Auth.Extensions;
 
 public static class JwtExtensions
 {
@@ -14,7 +13,7 @@ public static class JwtExtensions
 
         configure(jwt);
 
-        services.AddSingleton(Options.Create(jwt));
+        services.AddSingleton(Microsoft.Extensions.Options.Options.Create(jwt));
 
         var ecdsa = ECDsa.Create();
 

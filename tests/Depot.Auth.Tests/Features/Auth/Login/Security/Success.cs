@@ -1,18 +1,18 @@
-namespace Depot.Auth.Tests.Features.Auth.Login.Security;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
-using Setup;
+using Depot.Auth.Tests.Setup;
+
+namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 
 public class Success
 {
+    private readonly JwtSecurityTokenHandler _handler = new();
+
     private const string ValidUsername = "username";
 
     private const string ValidEmail = "user@example.com";
-
-    private readonly JwtSecurityTokenHandler _handler = new();
 
     [Test]
     [Arguments(null, ValidEmail)]
@@ -28,9 +28,7 @@ public class Success
 
         var payload = new LoginCommand
         {
-            Username = username,
-            Email = email,
-            Password = user.Password
+            Username = username, Email = email, Password = user.Password
         };
 
         var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();

@@ -1,6 +1,6 @@
-namespace Depot.Auth.Domain.Users;
+using Depot.Auth.Domain.Tenants;
 
-using Tenants;
+namespace Depot.Auth.Domain.Users;
 
 public class Role
 {
@@ -25,8 +25,7 @@ public class Role
     {
         return new Role
         {
-            Id = Guid.NewGuid(),
-            Name = name
+            Id = Guid.NewGuid(), Name = name
         };
     }
 

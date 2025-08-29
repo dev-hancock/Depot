@@ -1,17 +1,15 @@
-namespace Depot.Repository.Persistence;
-
-using Domain;
+using Depot.Repository.Domain;
 using Microsoft.EntityFrameworkCore;
+
+namespace Depot.Repository.Persistence;
 
 public class RepoDbContext : DbContext
 {
-    public RepoDbContext(DbContextOptions<RepoDbContext> options) : base(options)
-    {
-    }
+    public RepoDbContext(DbContextOptions<RepoDbContext> options) : base(options) { }
 
     public DbSet<Artifact> Artifacts => Set<Artifact>();
 
-    public DbSet<Repository> Repositories => Set<Repository>();
+    public DbSet<Domain.Repository> Repositories => Set<Domain.Repository>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -36,8 +34,7 @@ public class RepoDbContext : DbContext
 
             b.HasIndex(a => new
             {
-                a.Repository,
-                a.Name
+                a.Repository, a.Name
             });
             b.HasIndex(a => a.Hash);
             b.HasIndex(a => a.Location).IsUnique();

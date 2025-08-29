@@ -1,8 +1,8 @@
-namespace Depot.Auth.Middleware.Exceptions;
-
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+
+namespace Depot.Auth.Middleware.Exceptions;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {
@@ -24,17 +24,14 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         var problem = new ProblemDetails
         {
-            Title = ReasonPhrases.GetReasonPhrase(status),
-            Status = status
+            Title = ReasonPhrases.GetReasonPhrase(status), Status = status
         };
 
         if (_environment.IsDevelopment())
         {
             problem.Extensions["exception"] = new
             {
-                message = exception.Message,
-                trace = exception.StackTrace,
-                inner = exception.InnerException?.Message
+                message = exception.Message, trace = exception.StackTrace, inner = exception.InnerException?.Message
             };
         }
 

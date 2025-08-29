@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Auth.Login;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Auth.Features.Auth.Login;
 
 public class LoginResponse
 {

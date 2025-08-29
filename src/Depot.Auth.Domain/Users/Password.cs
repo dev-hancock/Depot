@@ -9,13 +9,13 @@ public class Password
 
     public string Encoded { get; }
 
-    public static implicit operator string(Password password)
-    {
-        return password.Encoded;
-    }
-
     public static Password Create(string value)
     {
         return new Password(value);
+    }
+
+    public static implicit operator string(Password password)
+    {
+        return password.Encoded;
     }
 }

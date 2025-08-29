@@ -1,8 +1,8 @@
-namespace Depot.Auth.Features.Auth.Login;
-
 using System.Text.Json.Serialization;
 using ErrorOr;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Features.Auth.Login;
 
 public class LoginCommand : IRequest<ErrorOr<LoginResponse>>
 {

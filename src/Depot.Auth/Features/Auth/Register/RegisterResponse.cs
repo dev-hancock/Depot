@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Auth.Register;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Auth.Features.Auth.Register;
 
 public class RegisterResponse
 {

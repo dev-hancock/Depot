@@ -1,10 +1,10 @@
-namespace Depot.Repository.Endpoints.Artifacts;
-
 using Microsoft.AspNetCore.Mvc;
+
+namespace Depot.Repository.Endpoints.Artifacts;
 
 public static class QueryEndpoint
 {
-    public async static Task<IResult> Handle(HttpContext httpContext)
+    public static async Task<IResult> Handle(HttpContext httpContext)
     {
         return Results.NoContent();
     }

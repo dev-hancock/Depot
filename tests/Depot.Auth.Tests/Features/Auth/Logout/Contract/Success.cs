@@ -1,8 +1,8 @@
-namespace Depot.Auth.Tests.Features.Auth.Logout.Contract;
-
 using System.Net;
 using Depot.Auth.Features.Auth.Logout;
-using Setup;
+using Depot.Auth.Tests.Setup;
+
+namespace Depot.Auth.Tests.Features.Auth.Logout.Contract;
 
 public class Success
 {

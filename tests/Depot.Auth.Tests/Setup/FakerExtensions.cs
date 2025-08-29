@@ -1,6 +1,6 @@
-namespace Depot.Auth.Tests.Setup;
-
 using Bogus.DataSets;
+
+namespace Depot.Auth.Tests.Setup;
 
 public static class FakerExtensions
 {

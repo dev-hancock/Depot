@@ -1,12 +1,12 @@
-namespace Depot.Auth.Features.Organisations.CreateTenant;
-
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Tenants;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Tenants;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Features.Organisations.CreateTenant;
 
 public class CreateTenantHandler : IMessageHandler<CreateTenantHandler.Request, ErrorOr<Tenant>>
 {

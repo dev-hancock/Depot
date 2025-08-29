@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Users.GetOrganisations;
 
-public class GetOrganisationsValidator
-{
-}
+public class GetOrganisationsValidator { }

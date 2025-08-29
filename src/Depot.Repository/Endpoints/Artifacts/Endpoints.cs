@@ -1,6 +1,6 @@
-namespace Depot.Repository.Endpoints.Artifacts;
+using Depot.Repository.Endpoints.Meta;
 
-using Meta;
+namespace Depot.Repository.Endpoints.Artifacts;
 
 public static class Endpoints
 {

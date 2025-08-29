@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Organisations.RemoveMember;
 
-public class RemoveMemberCommand
-{
-}
+public class RemoveMemberCommand { }

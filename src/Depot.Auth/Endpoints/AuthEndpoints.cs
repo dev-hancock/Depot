@@ -1,13 +1,13 @@
-namespace Depot.Auth.Endpoints;
-
 using System.Reactive.Threading.Tasks;
-using Extensions;
-using Features.Auth.Login;
-using Features.Auth.Logout;
-using Features.Auth.Refresh;
-using Features.Auth.Register;
+using Depot.Auth.Extensions;
+using Depot.Auth.Features.Auth.Login;
+using Depot.Auth.Features.Auth.Logout;
+using Depot.Auth.Features.Auth.Refresh;
+using Depot.Auth.Features.Auth.Register;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;
+
+namespace Depot.Auth.Endpoints;
 
 public static class AuthEndpoints
 {

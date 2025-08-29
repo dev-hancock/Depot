@@ -2,9 +2,9 @@ namespace Depot.Auth.Tests.Setup;
 
 public static class Requests
 {
-    public static RequestBuilder Request(HttpMethod method, string uri)
+    public static RequestBuilder Delete(string uri)
     {
-        return new RequestBuilder(method, uri);
+        return Request(HttpMethod.Delete, uri);
     }
 
     public static RequestBuilder Get(string uri)
@@ -22,8 +22,8 @@ public static class Requests
         return Request(HttpMethod.Put, uri).WithContent(payload);
     }
 
-    public static RequestBuilder Delete(string uri)
+    public static RequestBuilder Request(HttpMethod method, string uri)
     {
-        return Request(HttpMethod.Delete, uri);
+        return new RequestBuilder(method, uri);
     }
 }

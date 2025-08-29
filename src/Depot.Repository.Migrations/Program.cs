@@ -1,11 +1,11 @@
-namespace Depot.Repository.Migrations;
-
+using Depot.Repository.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Repository.Migrations;
 
 public class Program
 {
-    public async static Task Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
 

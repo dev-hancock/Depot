@@ -1,13 +1,13 @@
-namespace Depot.Auth.Features.Users.Me;
-
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Users.Errors;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Users.Errors;
+using Depot.Auth.Middleware;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Middleware;
-using Persistence;
+
+namespace Depot.Auth.Features.Users.Me;
 
 public class MeHandler : IMessageHandler<MeQuery, ErrorOr<MeResponse>>
 {

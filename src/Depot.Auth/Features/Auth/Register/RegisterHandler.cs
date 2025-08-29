@@ -1,14 +1,14 @@
-namespace Depot.Auth.Features.Auth.Register;
-
 using System.Reactive.Linq;
-using Domain.Interfaces;
-using Domain.Users;
-using Domain.Users.Errors;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Users;
+using Depot.Auth.Domain.Users.Errors;
+using Depot.Auth.Mappings;
+using Depot.Auth.Persistence;
 using ErrorOr;
-using Mappings;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Features.Auth.Register;
 
 public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<RegisterResponse>>
 {

@@ -1,8 +1,8 @@
-namespace Depot.Auth.Tests.Setup;
-
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
+
+namespace Depot.Auth.Tests.Setup;
 
 public static class Global
 {
@@ -21,7 +21,7 @@ public static class Global
     public static HttpClient Client = null!;
 
     [Before(TestSession)]
-    public async static Task Setup()
+    public static async Task Setup()
     {
         await Auth.StartAsync();
         await Cache.StartAsync();
@@ -32,7 +32,7 @@ public static class Global
     }
 
     [After(TestSession)]
-    public async static Task Teardown()
+    public static async Task Teardown()
     {
         await Auth.DisposeAsync();
         await Cache.DisposeAsync();

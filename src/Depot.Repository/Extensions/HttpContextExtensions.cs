@@ -1,6 +1,6 @@
-namespace Depot.Repository.Extensions;
-
 using System.Security.Claims;
+
+namespace Depot.Repository.Extensions;
 
 public static class HttpContextExtensions
 {
@@ -16,6 +16,11 @@ public static class HttpContextExtensions
         return Guid.Parse(id);
     }
 
+    public static string? GetUser(this HttpContext context)
+    {
+        return context.User.Identity?.Name;
+    }
+
     public static Guid? GetUserId(this HttpContext context)
     {
         var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -26,10 +31,5 @@ public static class HttpContextExtensions
         }
 
         return Guid.Parse(id);
-    }
-
-    public static string? GetUser(this HttpContext context)
-    {
-        return context.User.Identity?.Name;
     }
 }

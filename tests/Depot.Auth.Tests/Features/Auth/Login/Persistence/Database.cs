@@ -1,9 +1,9 @@
-namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
-
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
-using Setup;
+using Depot.Auth.Tests.Setup;
+
+namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
 
 public class DatabaseTests
 {
@@ -25,8 +25,7 @@ public class DatabaseTests
 
         var payload = new LoginCommand
         {
-            Username = user.Username,
-            Password = user.Password
+            Username = user.Username, Password = user.Password
         };
 
         var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();

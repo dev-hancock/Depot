@@ -1,9 +1,9 @@
-namespace Depot.Auth.Options;
-
+using Depot.Auth.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Services;
+
+namespace Depot.Auth.Options;
 
 public class JwtBearerOptionsConfiguration : IConfigureNamedOptions<JwtBearerOptions>
 {

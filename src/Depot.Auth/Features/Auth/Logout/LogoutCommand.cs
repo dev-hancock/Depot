@@ -1,8 +1,8 @@
-namespace Depot.Auth.Features.Auth.Logout;
-
 using System.Text.Json.Serialization;
 using ErrorOr;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Features.Auth.Logout;
 
 public sealed class LogoutCommand : IRequest<ErrorOr<Success>>
 {

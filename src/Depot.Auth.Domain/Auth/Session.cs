@@ -1,7 +1,7 @@
-namespace Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Users;
 
-using Common;
-using Users;
+namespace Depot.Auth.Domain.Auth;
 
 public readonly record struct SessionId(Guid Value);
 
@@ -52,13 +52,13 @@ public class Session : Entity
         return !IsExpired(now) && !IsRevoked;
     }
 
-    public void Revoke()
-    {
-        IsRevoked = true;
-    }
-
     public void Refresh(RefreshToken token)
     {
         RefreshToken = token;
+    }
+
+    public void Revoke()
+    {
+        IsRevoked = true;
     }
 }

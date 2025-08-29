@@ -1,10 +1,10 @@
-namespace Depot.Auth.Domain.Users;
-
-using Auth;
-using Common;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Tenants;
+using Depot.Auth.Domain.Users.Events;
 using ErrorOr;
-using Events;
-using Tenants;
+
+namespace Depot.Auth.Domain.Users;
 
 public class User : Root
 {
@@ -53,6 +53,27 @@ public class User : Root
         var membership = new Membership();
     }
 
+    public bool CanCreateOrganisation()
+    {
+        return true;
+    }
+
+    public void ChangeEmail(Email email)
+    {
+        Email = email;
+
+        Raise(new EmailChangedEvent(this));
+    }
+
+    public ErrorOr<Success> ChangePassword(Password updated)
+    {
+        Password = updated;
+
+        Raise(new PasswordChangedEvent(this));
+
+        return Result.Success;
+    }
+
     public ErrorOr<Session> CreateSession(RefreshToken token)
     {
         if (FindSession(token).Value is { } _)
@@ -67,6 +88,23 @@ public class User : Root
         Raise(new SessionCreatedEvent(session.Id, session.ExpiresAt));
 
         return session;
+    }
+
+    public ErrorOr<Session> FindSession(string token)
+    {
+        var session = Sessions.SingleOrDefault(t => t.RefreshToken.Value == token);
+
+        if (session is null)
+        {
+            return Error.NotFound();
+        }
+
+        return session;
+    }
+
+    public Session? FindSession(SessionId? id = null)
+    {
+        return Sessions.SingleOrDefault(t => t.Id == id);
     }
 
     public ErrorOr<Session> RefreshSession(string current, RefreshToken updated, DateTime now)
@@ -107,43 +145,5 @@ public class User : Root
         }
 
         return Result.Success;
-    }
-
-    public ErrorOr<Success> ChangePassword(Password updated)
-    {
-        Password = updated;
-
-        Raise(new PasswordChangedEvent(this));
-
-        return Result.Success;
-    }
-
-    public void ChangeEmail(Email email)
-    {
-        Email = email;
-
-        Raise(new EmailChangedEvent(this));
-    }
-
-    public ErrorOr<Session> FindSession(string token)
-    {
-        var session = Sessions.SingleOrDefault(t => t.RefreshToken.Value == token);
-
-        if (session is null)
-        {
-            return Error.NotFound();
-        }
-
-        return session;
-    }
-
-    public Session? FindSession(SessionId? id = null)
-    {
-        return Sessions.SingleOrDefault(t => t.Id == id);
-    }
-
-    public bool CanCreateOrganisation()
-    {
-        return true;
     }
 }

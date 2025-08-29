@@ -1,8 +1,8 @@
-namespace Depot.Auth.Features.Auth.Register;
-
 using System.Text.Json.Serialization;
 using ErrorOr;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Features.Auth.Register;
 
 public class RegisterCommand : IRequest<ErrorOr<RegisterResponse>>
 {

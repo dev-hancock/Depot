@@ -1,10 +1,10 @@
-namespace Depot.Auth.Tests.Features.Auth.Login.Security;
-
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
+using Depot.Auth.Tests.Setup;
 using Microsoft.AspNetCore.Mvc;
-using Setup;
+
+namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 
 public class Failure
 {
@@ -49,9 +49,7 @@ public class Failure
 
         var payload = new LoginCommand
         {
-            Username = username,
-            Email = email,
-            Password = password!
+            Username = username, Email = email, Password = password!
         };
 
         var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();

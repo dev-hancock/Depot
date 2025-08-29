@@ -1,7 +1,7 @@
-namespace Depot.Auth.Domain.Common;
-
 using System.Text.RegularExpressions;
 using ErrorOr;
+
+namespace Depot.Auth.Domain.Common;
 
 public sealed partial record Slug
 {
@@ -22,6 +22,11 @@ public sealed partial record Slug
         return new Slug(value);
     }
 
+    public static implicit operator string(Slug slug)
+    {
+        return slug.Value;
+    }
+
     public static ErrorOr<Slug> TryCreate(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -30,11 +35,6 @@ public sealed partial record Slug
         }
 
         return new Slug(value);
-    }
-
-    public static implicit operator string(Slug slug)
-    {
-        return slug.Value;
     }
 
     public override string ToString()

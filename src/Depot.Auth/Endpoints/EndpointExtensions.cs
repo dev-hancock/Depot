@@ -1,10 +1,30 @@
-namespace Depot.Auth.Endpoints;
-
 using Asp.Versioning;
-using Organisations;
+using Depot.Auth.Endpoints.Organisations;
+
+namespace Depot.Auth.Endpoints;
 
 public static class EndpointExtensions
 {
+    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
+    {
+        var versions = app.NewApiVersionSet()
+            .HasApiVersion(new ApiVersion(1))
+            .ReportApiVersions()
+            .Build();
+
+        var api = app
+            .MapGroup("api/v{version:apiVersion}")
+            .WithApiVersionSet(versions)
+            .MapToApiVersion(new ApiVersion(1))
+            .RequireAuthorization();
+
+        api.MapAuthEndpoints();
+
+        api.MapUserEndpoints();
+
+        return api;
+    }
+
     public static IEndpointRouteBuilder MapOrganisationsEndpoints(this IEndpointRouteBuilder routes)
     {
         var api = routes.MapGroup("/organisations").WithTags("organisations");
@@ -36,26 +56,6 @@ public static class EndpointExtensions
         //
         // api.MapPost("/{tenant_id}/members/{user_id}/roles/{role_id}", AssignRoleEndpoint.Handle)
         //     .WithDescription("Assign role to user in tenant");
-
-        return api;
-    }
-
-    public static IEndpointRouteBuilder MapEndpoints(this IEndpointRouteBuilder app)
-    {
-        var versions = app.NewApiVersionSet()
-            .HasApiVersion(new ApiVersion(1))
-            .ReportApiVersions()
-            .Build();
-
-        var api = app
-            .MapGroup("api/v{version:apiVersion}")
-            .WithApiVersionSet(versions)
-            .MapToApiVersion(new ApiVersion(1))
-            .RequireAuthorization();
-
-        api.MapAuthEndpoints();
-
-        api.MapUserEndpoints();
 
         return api;
     }

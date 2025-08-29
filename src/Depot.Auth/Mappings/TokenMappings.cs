@@ -1,7 +1,7 @@
-namespace Depot.Auth.Mappings;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Interfaces;
 
-using Domain.Auth;
-using Domain.Interfaces;
+namespace Depot.Auth.Mappings;
 
 public static class TokenMappings
 {

@@ -1,32 +1,46 @@
-namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
-
 using System.Net;
 using System.Net.Http.Json;
 using Depot.Auth.Features.Auth.Login;
-using Setup;
+using Depot.Auth.Tests.Setup;
+using Microsoft.Extensions.Caching.Distributed;
 
-public class Cache
+namespace Depot.Auth.Tests.Features.Auth.Login.Persistence;
+
+public class Login_Cache
 {
-    private const string ValidUsername = "username";
+    private static readonly string Id = Unique.Id();
 
-    private const string ValidEmail = "user@example.com";
+    public static readonly string Username = Unique.Username(Id);
 
-    [Test]
-    [Arguments(null, ValidEmail)]
-    [Arguments(ValidUsername, null)]
-    public async Task Login_WithValidPayload_ShouldPersistSession(string? username, string? email)
+    public static readonly string Email = Unique.Email(Id);
+
+    public static readonly string Password = "Super$ecr3t!";
+
+    public static IEnumerable<(string?, string?)> Data()
+    {
+        yield return (null, Email);
+        yield return (Username, null);
+    }
+
+    [Before(Class)]
+    public static async Task Setup()
     {
         var user = Arrange.User
-            .WithUsername(ValidUsername)
-            .WithEmail(ValidEmail)
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .WithPassword(Password)
             .Build();
 
         await Database.SeedAsync(user);
+    }
 
+    [Test]
+    [MethodDataSource(nameof(Data))]
+    public async Task Login_WithValidPayload_CachesSession(string? username, string? email)
+    {
         var payload = new LoginCommand
         {
-            Username = user.Username,
-            Password = user.Password
+            Username = username, Email = email, Password = Password
         };
 
         var response = await Requests.Post("api/v1/auth/login", payload).SendAsync();
@@ -37,11 +51,10 @@ public class Cache
 
         var content = await Assert.That(result).IsNotNull();
 
-        // TODO: Re-enable when caching is implemented
-        // var id = content!.AccessToken.GetClaimValue("jti");
-        //
-        // var exists = await Fixture.Cache.GetAsync(id);
-        //
-        // await Assert.That(exists).IsNotNull();
+        var id = content!.AccessToken.GetClaimValue("jti");
+
+        var exists = await Service.Get<IDistributedCache>().GetAsync(id);
+
+        await Assert.That(exists).IsNotNull();
     }
 }

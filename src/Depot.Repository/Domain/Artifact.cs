@@ -1,6 +1,6 @@
-namespace Depot.Repository.Domain;
-
 using ErrorOr;
+
+namespace Depot.Repository.Domain;
 
 public class Artifact
 {
@@ -29,11 +29,6 @@ public class Artifact
 
     public string CreatedBy { get; private set; }
 
-    public void Move(string location)
-    {
-        Location = location;
-    }
-
     public static ErrorOr<Artifact> FromStream(string name, string repository, long length, string type, string hash, string user,
         TimeProvider time)
     {
@@ -58,5 +53,10 @@ public class Artifact
             CreatedAt = time.GetUtcNow(),
             CreatedBy = user
         };
+    }
+
+    public void Move(string location)
+    {
+        Location = location;
     }
 }

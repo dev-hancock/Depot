@@ -1,8 +1,8 @@
-namespace Depot.Auth.Features.Users.ChangePassword;
-
 using System.Text.Json.Serialization;
 using ErrorOr;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Features.Users.ChangePassword;
 
 public class ChangePasswordCommand : IRequest<ErrorOr<ChangePasswordResponse>>
 {

@@ -1,12 +1,12 @@
-namespace Depot.Repository.Handlers;
-
 using System.Reactive.Linq;
-using Domain;
+using Depot.Repository.Domain;
+using Depot.Repository.Persistence;
+using Depot.Storage;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
-using Storage;
+
+namespace Depot.Repository.Handlers;
 
 public class UploadHandler : IMessageHandler<UploadHandler.Request, ErrorOr<Artifact>>
 {

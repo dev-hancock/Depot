@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Tenants.AddPermission;
 
-public class AddPermissionHandler
-{
-}
+public class AddPermissionHandler { }

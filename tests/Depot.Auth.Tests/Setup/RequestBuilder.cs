@@ -1,10 +1,10 @@
-namespace Depot.Auth.Tests.Setup;
-
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Depot.Auth.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Options;
+
+namespace Depot.Auth.Tests.Setup;
 
 public class RequestBuilder(HttpMethod method, string uri) : IDisposable
 {
@@ -17,6 +17,29 @@ public class RequestBuilder(HttpMethod method, string uri) : IDisposable
     public void Dispose()
     {
         _request.Dispose();
+    }
+
+    public async Task<HttpResponseMessage> SendAsync()
+    {
+        return await Global.Client.SendAsync(_request);
+    }
+
+    public RequestBuilder WithAuthorization(string token)
+    {
+        _request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        return this;
+    }
+
+    public RequestBuilder WithAuthorization(Action<TokenBuilder> configure)
+    {
+        var builder = new TokenBuilder(_options, _key);
+
+        configure(builder);
+
+        var token = builder.Build();
+
+        return WithAuthorization(token);
     }
 
     public RequestBuilder WithContent(object payload)
@@ -33,33 +56,10 @@ public class RequestBuilder(HttpMethod method, string uri) : IDisposable
         return this;
     }
 
-    public RequestBuilder WithAuthorization(string token)
-    {
-        _request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        return this;
-    }
-
     public RequestBuilder WithUserAgent(string value)
     {
         _request.Headers.UserAgent.ParseAdd(value);
 
         return this;
-    }
-
-    public RequestBuilder WithAuthorization(Action<AccessTokenBuilder> configure)
-    {
-        var builder = new AccessTokenBuilder(_options, _key);
-
-        configure(builder);
-
-        var token = builder.Build();
-
-        return WithAuthorization(token);
-    }
-
-    public async Task<HttpResponseMessage> SendAsync()
-    {
-        return await Global.Client.SendAsync(_request);
     }
 }

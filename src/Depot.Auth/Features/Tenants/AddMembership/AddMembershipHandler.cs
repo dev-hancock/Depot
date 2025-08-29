@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Tenants.AddMembership;
 
-public class AddMembershipHandler
-{
-}
+public class AddMembershipHandler { }

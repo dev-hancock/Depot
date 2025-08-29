@@ -46,7 +46,7 @@
     <ItemGroup>
         <Folder Include="Endpoints\Policies\"/>
         <Folder Include="Endpoints\Repos\"/>
-        <Folder Include="Events\" />
+        <Folder Include="Events\"/>
     </ItemGroup>
 
 </Project>

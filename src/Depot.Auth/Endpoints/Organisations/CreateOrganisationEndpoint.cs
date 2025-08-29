@@ -1,15 +1,15 @@
-namespace Depot.Auth.Endpoints.Organisations;
-
 using System.Reactive.Threading.Tasks;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
-using Extensions;
-using Features.Organisations.CreateOrganisation;
+using Depot.Auth.Extensions;
+using Depot.Auth.Features.Organisations.CreateOrganisation;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Endpoints.Organisations;
 
 public class CreateOrganisationEndpoint
 {
-    public async static Task<IResult> Handle(CreateOrganisationRequest request, IMediator mediator, HttpContext context)
+    public static async Task<IResult> Handle(CreateOrganisationRequest request, IMediator mediator, HttpContext context)
     {
         var id = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -29,8 +29,7 @@ public class CreateOrganisationEndpoint
                 ok => Results.Created($"/organisation/{ok.Slug}",
                     new CreateOrganisationResponse
                     {
-                        Key = ok.Slug,
-                        Name = ok.Name
+                        Key = ok.Slug, Name = ok.Name
                     }),
                 errors => errors.ToResult());
     }

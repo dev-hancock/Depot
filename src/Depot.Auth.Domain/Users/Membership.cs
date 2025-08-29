@@ -1,7 +1,7 @@
-namespace Depot.Auth.Domain.Users;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Tenants;
 
-using Auth;
-using Tenants;
+namespace Depot.Auth.Domain.Users;
 
 public class Membership
 {

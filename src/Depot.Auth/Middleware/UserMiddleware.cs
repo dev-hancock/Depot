@@ -1,6 +1,6 @@
-namespace Depot.Auth.Middleware;
-
 using System.Security.Claims;
+
+namespace Depot.Auth.Middleware;
 
 public interface IUserContext
 {
@@ -16,13 +16,13 @@ public interface IUserContext
 
     Guid SessionId { get; }
 
-    void SetUser(Guid id);
-
-    void SetTenant(Guid id);
+    void Clear();
 
     void SetSession(Guid id);
 
-    void Clear();
+    void SetTenant(Guid id);
+
+    void SetUser(Guid id);
 }
 
 public class UserContext : IUserContext
@@ -35,15 +35,12 @@ public class UserContext : IUserContext
 
     public bool IsAuthenticated { get; private set; }
 
-    public void SetUser(Guid userId)
+    public void Clear()
     {
-        UserId = userId;
-        IsAuthenticated = true;
-    }
-
-    public void SetTenant(Guid id)
-    {
-        TenantId = id;
+        UserId = Guid.Empty;
+        SessionId = Guid.Empty;
+        TenantId = Guid.Empty;
+        IsAuthenticated = false;
     }
 
     public void SetSession(Guid id)
@@ -51,12 +48,15 @@ public class UserContext : IUserContext
         SessionId = id;
     }
 
-    public void Clear()
+    public void SetTenant(Guid id)
     {
-        UserId = Guid.Empty;
-        SessionId = Guid.Empty;
-        TenantId = Guid.Empty;
-        IsAuthenticated = false;
+        TenantId = id;
+    }
+
+    public void SetUser(Guid userId)
+    {
+        UserId = userId;
+        IsAuthenticated = true;
     }
 }
 
@@ -67,21 +67,6 @@ public class UserContextMiddleware
     public UserContextMiddleware(RequestDelegate next)
     {
         _next = next;
-    }
-
-    private string? GetUser(ClaimsPrincipal principal)
-    {
-        return principal.FindFirstValue(ClaimTypes.NameIdentifier);
-    }
-
-    private string? GetTenant(ClaimsPrincipal principal)
-    {
-        return principal.FindFirstValue("tenant_id");
-    }
-
-    private string? GetSession(ClaimsPrincipal principal)
-    {
-        return principal.FindFirstValue("session_id");
     }
 
     public async Task Invoke(HttpContext context, IUserContext user)
@@ -109,5 +94,20 @@ public class UserContextMiddleware
         }
 
         await _next(context);
+    }
+
+    private string? GetSession(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue("session_id");
+    }
+
+    private string? GetTenant(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue("tenant_id");
+    }
+
+    private string? GetUser(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(ClaimTypes.NameIdentifier);
     }
 }

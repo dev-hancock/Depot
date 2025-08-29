@@ -1,14 +1,14 @@
-namespace Depot.Repository.Endpoints.Artifacts;
-
 using System.Reactive.Linq;
-using Extensions;
-using Handlers;
+using Depot.Repository.Extensions;
+using Depot.Repository.Handlers;
 using Mestra.Abstractions;
 using Microsoft.AspNetCore.Mvc;
 
+namespace Depot.Repository.Endpoints.Artifacts;
+
 public static class UploadEndpoint
 {
-    public async static Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, IMediator mediator,
+    public static async Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, IMediator mediator,
         HttpContext context)
     {
         var id = context.GetUserId();

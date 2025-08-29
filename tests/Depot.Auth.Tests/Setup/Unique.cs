@@ -1,21 +1,21 @@
-namespace Depot.Auth.Tests.Setup;
-
 using System.Security.Cryptography;
+
+namespace Depot.Auth.Tests.Setup;
 
 public static class Unique
 {
-    public static string Hash()
+    public static string Email(string id)
+    {
+        return $"user_{id}@example.com";
+    }
+
+    public static string Id()
     {
         return RandomNumberGenerator.GetHexString(8, true);
     }
 
-    public static string Username(string hash)
+    public static string Username(string id)
     {
-        return $"user_{hash}";
-    }
-
-    public static string Email(string hash)
-    {
-        return $"user_{hash}@example.com";
+        return $"user_{id}";
     }
 }

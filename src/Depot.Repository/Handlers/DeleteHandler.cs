@@ -1,8 +1,8 @@
-namespace Depot.Repository.Handlers;
-
 using System.Reactive;
 using System.Reactive.Linq;
 using Mestra.Abstractions;
+
+namespace Depot.Repository.Handlers;
 
 public class DeleteHandler : IMessageHandler<DeleteHandler.Request>
 {

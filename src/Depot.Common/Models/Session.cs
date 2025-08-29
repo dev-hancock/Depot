@@ -1,6 +1,6 @@
-namespace Depot.Common.Models;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Common.Models;
 
 public class Session
 {

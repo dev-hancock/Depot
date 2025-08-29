@@ -1,7 +1,7 @@
-namespace Depot.Repository.Services;
-
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+
+namespace Depot.Repository.Services;
 
 public interface ISecurityKeyProvider
 {

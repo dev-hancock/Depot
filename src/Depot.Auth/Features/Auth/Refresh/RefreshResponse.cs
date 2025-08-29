@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Auth.Refresh;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Auth.Features.Auth.Refresh;
 
 public sealed class RefreshResponse
 {

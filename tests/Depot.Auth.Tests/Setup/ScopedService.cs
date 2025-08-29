@@ -1,6 +1,6 @@
-namespace Depot.Auth.Tests.Setup;
-
 using Microsoft.Extensions.DependencyInjection;
+
+namespace Depot.Auth.Tests.Setup;
 
 public class ScopedService<T>(IServiceScope scope, T value) : IDisposable
 {

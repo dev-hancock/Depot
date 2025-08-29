@@ -1,10 +1,10 @@
-namespace Depot.Auth.Domain.Tenants;
-
-using Auth;
-using Common;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Organisations;
+using Depot.Auth.Domain.Users;
 using ErrorOr;
-using Organisations;
-using Users;
+
+namespace Depot.Auth.Domain.Tenants;
 
 public class Tenant
 {
@@ -51,18 +51,14 @@ public class Tenant
         return new Tenant(name, creator, time.GetUtcNow());
     }
 
+    public void AddMembership(User user, Role role) { }
+
     public void AddRole(Role role)
     {
         Roles.Add(role);
     }
 
-    public void AddMembership(User user, Role role)
-    {
-    }
-
-    public void AssignRole(User user, Role role)
-    {
-    }
+    public void AssignRole(User user, Role role) { }
 }
 
 public static class Tenants

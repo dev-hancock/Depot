@@ -1,12 +1,12 @@
-namespace Depot.Auth.Features.Organisations.CreateOrganisation;
-
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Organisations;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Organisations;
+using Depot.Auth.Persistence;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Persistence;
+
+namespace Depot.Auth.Features.Organisations.CreateOrganisation;
 
 public class CreateOrganisationHandler : IMessageHandler<CreateOrganisationHandler.Request, ErrorOr<Organisation>>
 {

@@ -12,11 +12,6 @@ public sealed record RefreshToken
 
     public string Value { get; } = null!;
 
-    public static implicit operator string(RefreshToken token)
-    {
-        return token.Value;
-    }
-
     public static RefreshToken Create(string secret, DateTime expiresAt)
     {
         if (secret.Length < 32)
@@ -25,5 +20,10 @@ public sealed record RefreshToken
         }
 
         return new RefreshToken(secret, expiresAt);
+    }
+
+    public static implicit operator string(RefreshToken token)
+    {
+        return token.Value;
     }
 }

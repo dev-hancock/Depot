@@ -1,10 +1,10 @@
-namespace Depot.Repository.Endpoints.Artifacts;
-
 using Microsoft.AspNetCore.Mvc;
+
+namespace Depot.Repository.Endpoints.Artifacts;
 
 public static class DownloadEndpoint
 {
-    public async static Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, HttpContext context)
+    public static async Task<IResult> Handle([FromRoute] string repository, [FromRoute] string path, HttpContext context)
     {
         return Results.NoContent();
     }

@@ -1,9 +1,9 @@
-namespace Depot.Auth.Tests.Setup;
-
 using Bogus;
-using Domain.Auth;
-using Domain.Interfaces;
-using Domain.Users;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Users;
+
+namespace Depot.Auth.Tests.Setup;
 
 public class UserBuilder
 {
@@ -41,9 +41,9 @@ public class UserBuilder
         );
     }
 
-    public UserBuilder WithUsername(string username)
+    public UserBuilder WithCreatedAt(DateTime timestamp)
     {
-        Username = username;
+        CreatedAt = timestamp;
 
         return this;
     }
@@ -62,13 +62,6 @@ public class UserBuilder
         return this;
     }
 
-    public UserBuilder WithCreatedAt(DateTime timestamp)
-    {
-        CreatedAt = timestamp;
-
-        return this;
-    }
-
     public UserBuilder WithRole(string role)
     {
         _roles.Add(role);
@@ -83,6 +76,13 @@ public class UserBuilder
         configure?.Invoke(builder);
 
         _sessions.Add(builder);
+
+        return this;
+    }
+
+    public UserBuilder WithUsername(string username)
+    {
+        Username = username;
 
         return this;
     }

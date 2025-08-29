@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Users.GetTenants;
 
-public class GetTenantsHandler
-{
-}
+public class GetTenantsHandler { }

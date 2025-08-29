@@ -2,9 +2,9 @@ namespace Depot.Auth.Middleware;
 
 public interface ITenantContext
 {
-    public Guid TenantId { get; }
+    Guid TenantId { get; }
 
-    public void Set(Guid tenantId);
+    void Set(Guid tenantId);
 }
 
 public class TenantContext : ITenantContext

@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Auth.Login;
-
 using FluentValidation;
+
+namespace Depot.Auth.Features.Auth.Login;
 
 public class LoginValidator : AbstractValidator<LoginCommand>
 {

@@ -1,15 +1,15 @@
-namespace Depot.Auth.Features.Auth.Refresh;
-
 using System.Reactive.Linq;
-using Domain.Auth;
-using Domain.Interfaces;
-using Domain.Users.Errors;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Domain.Users.Errors;
+using Depot.Auth.Mappings;
+using Depot.Auth.Middleware;
+using Depot.Auth.Persistence;
 using ErrorOr;
-using Mappings;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
-using Middleware;
-using Persistence;
+
+namespace Depot.Auth.Features.Auth.Refresh;
 
 public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshResponse>>
 {

@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Tenants.AddMembership;
 
-public class AddMembershipCommand
-{
-}
+public class AddMembershipCommand { }

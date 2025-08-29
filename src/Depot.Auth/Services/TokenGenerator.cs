@@ -1,12 +1,12 @@
-namespace Depot.Auth.Services;
-
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Domain.Interfaces;
+using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Options;
+
+namespace Depot.Auth.Services;
 
 public class TokenGenerator : ITokenGenerator
 {
@@ -22,23 +22,11 @@ public class TokenGenerator : ITokenGenerator
         _signing = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
     }
 
-    public Token GenerateRefreshToken(DateTime now)
-    {
-        var expires = now + _options.RefreshTokenLifetime;
-
-        var bytes = RandomNumberGenerator.GetBytes(32);
-
-        var encoded = Base64UrlEncoder.Encode(bytes);
-
-        return new Token(encoded, expires);
-    }
-
     public Token GenerateAccessToken(Guid sub, Guid jti, string[] roles, DateTime now)
     {
         var claims = new List<Claim>
         {
-            new(JwtRegisteredClaimNames.Sub, sub.ToString()),
-            new(JwtRegisteredClaimNames.Jti, jti.ToString())
+            new(JwtRegisteredClaimNames.Sub, sub.ToString()), new(JwtRegisteredClaimNames.Jti, jti.ToString())
         };
 
         foreach (var role in roles)
@@ -59,5 +47,16 @@ public class TokenGenerator : ITokenGenerator
         var token = _handler.WriteToken(access);
 
         return new Token(token, expires);
+    }
+
+    public Token GenerateRefreshToken(DateTime now)
+    {
+        var expires = now + _options.RefreshTokenLifetime;
+
+        var bytes = RandomNumberGenerator.GetBytes(32);
+
+        var encoded = Base64UrlEncoder.Encode(bytes);
+
+        return new Token(encoded, expires);
     }
 }

@@ -1,8 +1,8 @@
-namespace Depot.Auth.Tests.Setup;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+
+namespace Depot.Auth.Tests.Setup;
 
 public class Application : WebApplicationFactory<Program>
 {

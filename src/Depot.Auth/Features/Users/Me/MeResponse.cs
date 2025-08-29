@@ -1,6 +1,6 @@
-namespace Depot.Auth.Features.Users.Me;
-
 using System.Text.Json.Serialization;
+
+namespace Depot.Auth.Features.Users.Me;
 
 public class MeResponse
 {

@@ -1,5 +1,3 @@
 namespace Depot.Auth.Features.Users.SetActiveTenant;
 
-public class SetActiveTenantValidator
-{
-}
+public class SetActiveTenantValidator { }

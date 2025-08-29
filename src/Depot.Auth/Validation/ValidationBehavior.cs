@@ -1,8 +1,8 @@
-namespace Depot.Auth.Validation;
-
 using System.Reactive.Linq;
 using FluentValidation;
 using Mestra.Abstractions;
+
+namespace Depot.Auth.Validation;
 
 public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
     where TRequest : IMessage<TResponse>

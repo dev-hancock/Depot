@@ -1,11 +1,11 @@
-namespace Depot.Auth.Persistence;
-
-using Domain.Auth;
-using Domain.Common;
-using Domain.Organisations;
-using Domain.Tenants;
-using Domain.Users;
+using Depot.Auth.Domain.Auth;
+using Depot.Auth.Domain.Common;
+using Depot.Auth.Domain.Organisations;
+using Depot.Auth.Domain.Tenants;
+using Depot.Auth.Domain.Users;
 using Microsoft.EntityFrameworkCore;
+
+namespace Depot.Auth.Persistence;
 
 public class AuthDbContext : DbContext
 {
@@ -123,8 +123,7 @@ public class AuthDbContext : DbContext
 
             e.HasIndex(t => new
             {
-                t.OrganisationId,
-                t.Slug
+                t.OrganisationId, t.Slug
             }).IsUnique();
 
             e.HasOne(t => t.Organisation)
@@ -144,8 +143,7 @@ public class AuthDbContext : DbContext
 
             e.HasIndex(r => new
             {
-                r.TenantId,
-                r.Name
+                r.TenantId, r.Name
             }).IsUnique();
 
             e.HasOne(r => r.Tenant)
@@ -171,8 +169,7 @@ public class AuthDbContext : DbContext
 
             e.HasKey(rp => new
             {
-                rp.RoleId,
-                rp.PermissionId
+                rp.RoleId, rp.PermissionId
             });
 
             e.HasOne(rp => rp.Role)
@@ -195,9 +192,7 @@ public class AuthDbContext : DbContext
 
             e.HasKey(m => new
             {
-                m.UserId,
-                m.TenantId,
-                m.RoleId
+                m.UserId, m.TenantId, m.RoleId
             });
 
             e.HasOne(m => m.User)

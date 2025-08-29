@@ -1,14 +1,14 @@
-﻿namespace Depot.Repository;
-
-using Endpoints;
-using Extensions;
+﻿using Depot.Repository.Endpoints;
+using Depot.Repository.Extensions;
+using Depot.Repository.Middleware;
+using Depot.Repository.Persistence;
+using Depot.Storage;
 using Mestra.Extensions.Microsoft.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
-using Middleware;
-using Persistence;
 using Scalar.AspNetCore;
 using Serilog;
-using Storage;
+
+namespace Depot.Repository;
 
 public class Program
 {
@@ -37,25 +37,6 @@ public class Program
         app.Run();
     }
 
-    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
-    {
-        services.AddJwtAuthentication(opt => configuration.GetSection("Jwt").Bind(opt));
-
-        services.AddOpenApi();
-
-        services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
-
-        services.AddDbContextFactory<RepoDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Default")));
-
-        services.AddStorage(configuration);
-
-        services.AddSingleton(TimeProvider.System);
-
-        services.AddAuthorization();
-        services.AddExceptionHandler<GlobalExceptionHandler>();
-        services.AddProblemDetails();
-    }
-
     private static void Configure(WebApplication app)
     {
         app.MapOpenApi();
@@ -74,5 +55,24 @@ public class Program
 
         app.MapEndpoints();
         app.MapGet("/ping", () => "pong");
+    }
+
+    private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddJwtAuthentication(opt => configuration.GetSection("Jwt").Bind(opt));
+
+        services.AddOpenApi();
+
+        services.AddMestra(opt => opt.AddHandlersFromAssembly(typeof(Program).Assembly));
+
+        services.AddDbContextFactory<RepoDbContext>(opt => opt.UseNpgsql(configuration.GetConnectionString("Default")));
+
+        services.AddStorage(configuration);
+
+        services.AddSingleton(TimeProvider.System);
+
+        services.AddAuthorization();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
+        services.AddProblemDetails();
     }
 }

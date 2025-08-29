@@ -1,5 +1,5 @@
-namespace Depot.Auth.Services;
+using Depot.Auth.Domain.Interfaces;
 
-using Domain.Interfaces;
+namespace Depot.Auth.Services;
 
 public class SystemTimeProvider : ITimeProvider;

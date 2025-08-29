@@ -1,6 +1,6 @@
-namespace Depot.Auth.Options;
-
 using System.ComponentModel.DataAnnotations;
+
+namespace Depot.Auth.Options;
 
 public class JwtOptions
 {

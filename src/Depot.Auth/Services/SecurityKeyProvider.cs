@@ -1,9 +1,9 @@
-namespace Depot.Auth.Services;
-
 using System.Security.Cryptography;
+using Depot.Auth.Options;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Options;
+
+namespace Depot.Auth.Services;
 
 public interface ISecurityKeyProvider
 {

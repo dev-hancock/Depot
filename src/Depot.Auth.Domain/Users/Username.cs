@@ -1,8 +1,8 @@
-namespace Depot.Auth.Domain.Users;
-
 using System.Text;
-using Auth;
+using Depot.Auth.Domain.Auth;
 using ErrorOr;
+
+namespace Depot.Auth.Domain.Users;
 
 public record Username
 {
@@ -20,6 +20,36 @@ public record Username
 
     public string Normalized { get; } = null!;
 
+    public static Username Create(string username)
+    {
+        return new Username(username);
+    }
+
+    public static implicit operator string(Username email)
+    {
+        return email.Value;
+    }
+
+    public static ErrorOr<Username> TryCreate(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return Error.Validation();
+        }
+
+        return Create(value);
+    }
+
+    public override int GetHashCode()
+    {
+        return StringComparer.Ordinal.GetHashCode(Normalized);
+    }
+
+    public override string ToString()
+    {
+        return Value;
+    }
+
     public virtual bool Equals(Username? other)
     {
         if (ReferenceEquals(null, other))
@@ -33,35 +63,5 @@ public record Username
         }
 
         return string.Equals(Normalized, other.Normalized, StringComparison.Ordinal);
-    }
-
-    public static Username Create(string username)
-    {
-        return new Username(username);
-    }
-
-    public static ErrorOr<Username> TryCreate(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return Error.Validation();
-        }
-
-        return Create(value);
-    }
-
-    public static implicit operator string(Username email)
-    {
-        return email.Value;
-    }
-
-    public override string ToString()
-    {
-        return Value;
-    }
-
-    public override int GetHashCode()
-    {
-        return StringComparer.Ordinal.GetHashCode(Normalized);
     }
 }

@@ -1,9 +1,9 @@
-namespace Depot.Auth.Middleware.Exceptions;
-
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+
+namespace Depot.Auth.Middleware.Exceptions;
 
 public class ValidationExceptionHandler : IExceptionHandler
 {
