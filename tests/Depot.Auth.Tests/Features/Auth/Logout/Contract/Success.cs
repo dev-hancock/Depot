@@ -25,7 +25,7 @@ public class Logout_Success
 
     [Test]
     [MethodDataSource(nameof(Data))]
-    public async Task Logout_WithValidPayload_ShouldReturnNoContent(string? token)
+    public async Task Logout_WithValidPayload_ReturnsNoContent(string? token)
     {
         var payload = new LogoutCommand
         {

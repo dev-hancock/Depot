@@ -1,6 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Login.Security;
 
-public class Login_Success
+public class Login_Security
 {
     private static readonly JwtSecurityTokenHandler Handler = new();
 

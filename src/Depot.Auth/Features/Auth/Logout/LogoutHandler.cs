@@ -1,7 +1,6 @@
 using System.Reactive.Linq;
 using Depot.Auth.Domain.Auth;
 using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Domain.Users.Errors;
 using Depot.Auth.Middleware;
 using Depot.Auth.Persistence;
 using ErrorOr;
@@ -43,17 +42,25 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 
         if (user is null)
         {
-            return Errors.UserNotFound();
+            return Result.Success;
         }
 
         var result = user.RevokeSession(message.RefreshToken);
 
         if (result.IsError)
         {
-            return result;
+            // TODO: Log error
+            return Result.Success;
         }
 
-        await _context.SaveChangesAsync(token);
+        try
+        {
+            await _context.SaveChangesAsync(token);
+        }
+        catch (Exception e)
+        {
+            // TODO: Log exception
+        }
 
         return Result.Success;
     }

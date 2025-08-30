@@ -1,5 +1,3 @@
-using Depot.Auth.Domain.Auth;
-
 namespace Depot.Auth.Tests.Setup;
 
 public class SessionBuilder(UserBuilder user)
@@ -38,9 +36,9 @@ public class SessionBuilder(UserBuilder user)
         return this;
     }
 
-    public SessionBuilder WithRevoked()
+    public SessionBuilder WithRevoked(bool revoked = true)
     {
-        IsRevoked = true;
+        IsRevoked = revoked;
 
         return this;
     }

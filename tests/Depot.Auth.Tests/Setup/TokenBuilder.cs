@@ -76,4 +76,9 @@ public class TokenBuilder(JwtOptions options, SecurityKey key)
 
         return this;
     }
+
+    public TokenBuilder WithUser(User user)
+    {
+        return WithUser(user.Id.Value);
+    }
 }
