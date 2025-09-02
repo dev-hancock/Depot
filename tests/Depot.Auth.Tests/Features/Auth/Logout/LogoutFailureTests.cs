@@ -1,6 +1,6 @@
-namespace Depot.Auth.Tests.Features.Auth.Logout.Security;
+namespace Depot.Auth.Tests.Features.Auth.Logout;
 
-public class Logout_Failure
+public class LogoutFailureTests
 {
     [Test]
     public async Task Logout_WithoutAccessToken_ReturnsUnauthorized()

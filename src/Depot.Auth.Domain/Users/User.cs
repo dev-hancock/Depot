@@ -126,7 +126,7 @@ public class User : Root
         return session;
     }
 
-    public ErrorOr<Success> RevokeSession(string? token = null)
+    public ErrorOr<Success> RevokeSession(DateTime now, string? token = null)
     {
         var sessions = string.IsNullOrWhiteSpace(token)
             ? Sessions.Where(x => !x.IsRevoked).ToList()
@@ -137,7 +137,7 @@ public class User : Root
             return Error.NotFound();
         }
 
-        foreach (var session in sessions)
+        foreach (var session in sessions.Where(x => x.IsValid(now)))
         {
             session.Revoke();
 

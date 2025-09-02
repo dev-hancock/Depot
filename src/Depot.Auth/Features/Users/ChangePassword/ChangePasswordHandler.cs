@@ -60,7 +60,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         user.ChangePassword(Password.Create(_hasher.Hash(message.NewPassword)));
 
-        user.RevokeSession();
+        user.RevokeSession(_time.UtcNow);
 
         var now = _time.UtcNow;
 

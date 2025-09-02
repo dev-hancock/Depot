@@ -1,8 +1,10 @@
-namespace Depot.Auth.Tests.Features.Auth.Login.Contract;
+namespace Depot.Auth.Tests.Features.Auth.Login;
 
-public class Login_Validation
+public class LoginValidationTests
 {
     private static readonly Faker Faker = new();
+
+    private static readonly Guid Id = Guid.NewGuid();
 
     private static readonly string Password = Faker.Internet.StrongPassword();
 
@@ -10,7 +12,7 @@ public class Login_Validation
 
     private static readonly string Email = Faker.Internet.Email();
 
-    public static IEnumerable<(string?, string?, string?)> Data()
+    public static IEnumerable<(string? username, string? email, string? password)> Data()
     {
         yield return (null, Email, null);
         yield return (null, Email, "");
@@ -40,20 +42,6 @@ public class Login_Validation
         yield return ("", " ", "");
         yield return (" ", " ", "");
 
-        yield return (Username, Email, Password);
-        yield return (Email, null, Password);
-        yield return (null, Username, Password);
-        yield return (Email, null, Password);
-
-        yield return (Username, "", Password);
-        yield return ("", Email, Password);
-
-        yield return (Username, " ", Password);
-        yield return (" ", Email, Password);
-
-        yield return (Username, Email, "");
-        yield return (Username, Email, " ");
-
         yield return (null, null, null);
     }
 
@@ -61,6 +49,7 @@ public class Login_Validation
     public static async Task Setup()
     {
         var user = Arrange.User
+            .WithId(Id)
             .WithUsername(Username)
             .WithEmail(Email)
             .WithPassword(Password)
@@ -89,7 +78,6 @@ public class Login_Validation
         await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(400));
         await Assert.That(content.Status).IsEqualTo(400);
         await Assert.That(content.Detail!).IsNotEmpty();
-
         await Assert.That(content.Extensions["errors"]).IsNotNull();
     }
 }

@@ -29,6 +29,7 @@ public class ValidationExceptionHandler : IExceptionHandler
             }
         };
 
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = problem.Status.Value;
 
         await context.Response.WriteAsJsonAsync(problem, token);

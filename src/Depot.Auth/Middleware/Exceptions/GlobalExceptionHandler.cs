@@ -6,35 +6,29 @@ namespace Depot.Auth.Middleware.Exceptions;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {
-    private readonly IHostEnvironment _environment;
-
-    private readonly ILogger<GlobalExceptionHandler> _logger;
-
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger, IHostEnvironment environment)
-    {
-        _logger = logger;
-        _environment = environment;
-    }
-
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken token)
     {
-        _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
-
         var status = GetStatusCode(exception);
 
         var problem = new ProblemDetails
         {
-            Title = ReasonPhrases.GetReasonPhrase(status), Status = status
+            Status = status,
+            Title = ReasonPhrases.GetReasonPhrase(status)
         };
 
-        if (_environment.IsDevelopment())
+        var env = context.RequestServices.GetService<IWebHostEnvironment>();
+
+        if (env != null && env.IsDevelopment())
         {
             problem.Extensions["exception"] = new
             {
-                message = exception.Message, trace = exception.StackTrace, inner = exception.InnerException?.Message
+                message = exception.Message,
+                trace = exception.StackTrace,
+                inner = exception.InnerException?.Message
             };
         }
 
+        context.Response.ContentType = "application/problem+json";
         context.Response.StatusCode = problem.Status.Value;
 
         await context.Response.WriteAsJsonAsync(problem, token);

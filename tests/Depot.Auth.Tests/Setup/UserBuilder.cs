@@ -1,6 +1,4 @@
-using Depot.Auth.Domain.Auth;
 using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Domain.Users;
 
 namespace Depot.Auth.Tests.Setup;
 
@@ -82,6 +80,16 @@ public class UserBuilder
         configure?.Invoke(builder);
 
         _sessions.Add(builder);
+
+        return this;
+    }
+
+    public UserBuilder WithSessions(int count)
+    {
+        for (var i = 0; i < count; i++)
+        {
+            _sessions.Add(new SessionBuilder(this));
+        }
 
         return this;
     }

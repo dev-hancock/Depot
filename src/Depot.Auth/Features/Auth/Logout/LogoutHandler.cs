@@ -15,11 +15,11 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
 
     private readonly ISecretHasher _hasher;
 
-    private readonly TimeProvider _time;
+    private readonly ITimeProvider _time;
 
     private readonly IUserContext _user;
 
-    public LogoutHandler(AuthDbContext context, IUserContext user, ISecretHasher hasher, TimeProvider time)
+    public LogoutHandler(AuthDbContext context, IUserContext user, ISecretHasher hasher, ITimeProvider time)
     {
         _context = context;
         _user = user;
@@ -45,7 +45,7 @@ public class LogoutHandler : IMessageHandler<LogoutCommand, ErrorOr<Success>>
             return Result.Success;
         }
 
-        var result = user.RevokeSession(message.RefreshToken);
+        var result = user.RevokeSession(_time.UtcNow, message.RefreshToken);
 
         if (result.IsError)
         {

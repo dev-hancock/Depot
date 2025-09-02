@@ -4,7 +4,7 @@ public class SessionBuilder(UserBuilder user)
 {
     private static readonly Faker Faker = new();
 
-    public Guid Id { get; } = Faker.Random.Guid();
+    public Guid Id { get; private set; } = Faker.Random.Guid();
 
     public DateTime Expiry { get; private set; } = Faker.Date.Soon(1, DateTime.UtcNow);
 
@@ -25,6 +25,13 @@ public class SessionBuilder(UserBuilder user)
     public SessionBuilder WithExpiry(DateTime expiry)
     {
         Expiry = expiry;
+
+        return this;
+    }
+
+    public SessionBuilder WithId(Guid id)
+    {
+        Id = id;
 
         return this;
     }
