@@ -52,16 +52,13 @@ public class Program
         }
 
         app.UseExceptionHandler();
-
         app.UseRouting();
         app.UseHttpsRedirection();
-
         app.UseAuthentication();
         app.UseMiddleware<UserContextMiddleware>();
+        app.UseStatusCodePages();
         app.UseAuthorization();
-
         app.MapEndpoints();
-        app.MapGet("/ping", () => "pong");
     }
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration)

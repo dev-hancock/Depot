@@ -69,10 +69,11 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
         {
             AccessToken = _tokens
                 .GenerateAccessToken(
-                    user.Id.Value,
-                    session.Id.Value,
+                    user.Id,
+                    session.Id,
                     [], // TODO: Add roles and permissions
-                    now)
+                    now,
+                    session.Version)
                 .ToAccessToken(),
             RefreshToken = session.RefreshToken
         };

@@ -2,7 +2,7 @@ namespace Depot.Auth.Tests.Features.Auth.Logout;
 
 public class LogoutSuccessTests
 {
-    public static Faker Faker = new();
+    private static readonly Faker Faker = new();
 
     private static async Task AssertDatabase(UserId id, int expected)
     {

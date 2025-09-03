@@ -17,5 +17,13 @@ public class LogoutFailureTests
         var response = await Requests.Logout(payload).SendAsync();
 
         await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+
+        var result = await response.ReadAsAsync<ProblemDetails>();
+
+        var content = await Assert.That(result).IsNotNull();
+
+        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(401));
+        await Assert.That(content.Status).IsEqualTo(401);
+        await Assert.That(content.Detail!).IsNotEmpty();
     }
 }

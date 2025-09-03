@@ -24,9 +24,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Features\Auth\Refresh\Contract\"/>
-        <Folder Include="Features\Auth\Refresh\Persistence\"/>
-        <Folder Include="Features\Auth\Refresh\Security\"/>
         <Folder Include="Features\Auth\Register\Contract\"/>
         <Folder Include="Features\Auth\Register\Persistence\"/>
         <Folder Include="Features\Auth\Register\Security\"/>

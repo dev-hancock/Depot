@@ -2,7 +2,7 @@ namespace Depot.Auth.Domain.Auth;
 
 public sealed record AccessToken
 {
-    private AccessToken(string value, DateTime expiresAt)
+    private AccessToken(string value, DateTimeOffset expiresAt)
     {
         Value = value;
         ExpiresAt = expiresAt;
@@ -10,9 +10,9 @@ public sealed record AccessToken
 
     public string Value { get; }
 
-    public DateTime ExpiresAt { get; set; }
+    public DateTimeOffset ExpiresAt { get; set; }
 
-    public static AccessToken Create(string value, DateTime expiresAt)
+    public static AccessToken Create(string value, DateTimeOffset expiresAt)
     {
         return new AccessToken(value, expiresAt);
     }

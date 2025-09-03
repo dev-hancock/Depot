@@ -1,4 +1,3 @@
-using Depot.Auth.Domain.Auth;
 using Depot.Auth.Domain.Tenants;
 using Mestra.Abstractions;
 
@@ -10,8 +9,8 @@ public sealed record EmailChangedEvent(User User) : INotification;
 
 public sealed record TenantCreatedEvent(Tenant Tenant) : INotification;
 
-public record SessionCreatedEvent(SessionId SessionId, DateTime ExpiresAt) : INotification;
+public record SessionCreatedEvent(Guid Id, int Version) : INotification;
 
-public record SessionRevokedEvent(SessionId SessionId) : INotification;
+public record SessionRevokedEvent(Guid Id, int Version) : INotification;
 
-public record SessionRefreshedEvent(SessionId SessionId, DateTime ExpiresAt) : INotification;
+public record SessionRefreshedEvent(Guid Id, int Version) : INotification;

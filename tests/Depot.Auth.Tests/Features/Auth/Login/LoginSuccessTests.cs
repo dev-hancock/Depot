@@ -1,3 +1,5 @@
+using Depot.Auth.Events;
+
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
 public class LoginSuccessTests
@@ -6,7 +8,7 @@ public class LoginSuccessTests
 
     private static readonly Faker Faker = new();
 
-    private static readonly Guid Id = Guid.NewGuid();
+    private static readonly Guid UserId = Guid.NewGuid();
 
     private static readonly string Password = Faker.Internet.StrongPassword();
 
@@ -47,32 +49,44 @@ public class LoginSuccessTests
 
     private static async Task AssertToken(JwtSecurityToken token)
     {
-        await Assert.That(token.GetUserId()).IsEqualTo(Id.ToString());
+        await Assert.That(token.GetClaim("sub")).IsNotNull().And.IsEqualTo(UserId.ToString());
+        await Assert.That(token.GetClaim("jti")).IsNotNull();
+        await Assert.That(token.GetClaim("sid")).IsNotNull();
+        await Assert.That(token.GetClaim("ver")).IsNotNull().And.IsEqualTo("1");
+        await Assert.That(token.GetClaim("iat")).IsNotNull().And.IsGreaterThan("0");
     }
 
-    private static async Task AssertDatabase(string id)
+    private static async Task AssertDatabase(JwtSecurityToken token)
     {
+        var id = token.GetSessionId();
+
         var entity = await Database.FindSessionAsync(id);
 
         var session = await Assert.That(entity).IsNotNull();
 
         await Assert.That(session).IsNotNull();
-
-        // TODO: more assertions
+        await Assert.That(session.Version).IsEqualTo(1);
+        await Assert.That(session.ExpiresAt).IsAfter(DateTimeOffset.UtcNow);
+        await Assert.That(session.IsRevoked).IsFalse();
+        await Assert.That(session.UserId.Value).IsEqualTo(UserId);
+        await Assert.That(session.RefreshToken).IsNotNull();
     }
 
-    private static async Task AssertCache(string id)
+    private static async Task AssertCache(JwtSecurityToken token)
     {
-        var exists = await Cache.GetAsync(id);
+        var key = CacheKeys.Session(token.GetSessionId());
 
-        await Assert.That(exists).IsNotNull();
+        var version = await Cache.GetAsync(key);
+
+        await Assert.That(version).IsNotNull();
+        await Assert.That(version).IsEquivalentTo(BitConverter.GetBytes(1));
     }
 
     [Before(Class)]
     public static async Task Setup()
     {
         var user = Arrange.User
-            .WithId(Id)
+            .WithId(UserId)
             .WithUsername(Username)
             .WithEmail(Email)
             .WithPassword(Password)
@@ -106,10 +120,8 @@ public class LoginSuccessTests
 
         await AssertToken(token);
 
-        var id = token.GetSessionId();
+        await AssertDatabase(token);
 
-        await AssertDatabase(id);
-
-        await AssertCache(id);
+        await AssertCache(token);
     }
 }

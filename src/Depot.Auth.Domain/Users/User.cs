@@ -21,8 +21,7 @@ public class User : Root
         CreatedAt = createdAt;
     }
 
-    // ReSharper disable once AutoPropertyCanBeMadeGetOnly.Local
-    public UserId Id { get; private init; }
+    public UserId Id { get; }
 
     public Username Username { get; private set; } = null!;
 
@@ -32,9 +31,9 @@ public class User : Root
 
     public DateTimeOffset CreatedAt { get; private init; }
 
-    public List<Membership> Memberships { get; set; } = [];
+    public List<Membership> Memberships { get; init; } = [];
 
-    public List<Session> Sessions { get; set; } = [];
+    public List<Session> Sessions { get; init; } = [];
 
     public static User Create(Username username, Email email, Password password, DateTime now)
     {
@@ -85,7 +84,7 @@ public class User : Root
 
         Sessions.Add(session);
 
-        Raise(new SessionCreatedEvent(session.Id, session.ExpiresAt));
+        Raise(new SessionCreatedEvent(session.Id, session.Version));
 
         return session;
     }
@@ -121,7 +120,7 @@ public class User : Root
 
         session.Refresh(updated);
 
-        Raise(new SessionRefreshedEvent(session.Id, session.ExpiresAt));
+        Raise(new SessionRefreshedEvent(session.Id, session.Version));
 
         return session;
     }
@@ -141,7 +140,7 @@ public class User : Root
         {
             session.Revoke();
 
-            Raise(new SessionRevokedEvent(session.Id));
+            Raise(new SessionRevokedEvent(session.Id, session.Version));
         }
 
         return Result.Success;

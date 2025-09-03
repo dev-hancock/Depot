@@ -4,9 +4,9 @@ namespace Depot.Auth.Tests.Setup;
 
 public static partial class Database
 {
-    public static Task<Session?> FindSessionAsync(string id)
+    public static Task<Session?> FindSessionAsync(Guid id)
     {
-        return FindAsync<Session>(new SessionId(Guid.Parse(id)));
+        return FindAsync<Session>(new SessionId(id));
     }
 
     public static Task<User?> FindUserAsync(string id)

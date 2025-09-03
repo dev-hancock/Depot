@@ -3,9 +3,21 @@ using Depot.Auth.Domain.Users;
 
 namespace Depot.Auth.Domain.Auth;
 
-public readonly record struct SessionId(Guid Value);
+public readonly record struct SessionId(Guid Value)
+{
+    public static implicit operator Guid(SessionId id)
+    {
+        return id.Value;
+    }
+}
 
-public readonly record struct UserId(Guid Value);
+public readonly record struct UserId(Guid Value)
+{
+    public static implicit operator Guid(UserId id)
+    {
+        return id.Value;
+    }
+}
 
 public class Session : Entity
 {
@@ -26,11 +38,13 @@ public class Session : Entity
 
     public RefreshToken RefreshToken { get; private set; } = null!;
 
-    public DateTime ExpiresAt => RefreshToken.ExpiresAt;
+    public DateTimeOffset ExpiresAt => RefreshToken.ExpiresAt;
 
     public bool IsRevoked { get; private set; }
 
     public User User { get; private init; } = null!;
+
+    public int Version { get; private set; } = 1;
 
     public static Session Create(UserId userId, RefreshToken token)
     {
@@ -55,10 +69,12 @@ public class Session : Entity
     public void Refresh(RefreshToken token)
     {
         RefreshToken = token;
+        Version++;
     }
 
     public void Revoke()
     {
         IsRevoked = true;
+        Version++;
     }
 }

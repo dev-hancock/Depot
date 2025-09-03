@@ -9,7 +9,4 @@ public sealed class RefreshResponse
 
     [JsonPropertyName("refresh_token")]
     public string RefreshToken { get; set; } = null!;
-
-    [JsonPropertyName("expires_at")]
-    public DateTime ExpiresAt { get; set; }
 }
