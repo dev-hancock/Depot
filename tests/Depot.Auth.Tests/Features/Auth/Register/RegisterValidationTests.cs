@@ -4,17 +4,24 @@ public class RegisterValidationTests : TestBase
 {
     private static readonly Faker Faker = new();
 
-    public static IEnumerable<object[]> EquivalentUsernames => Equivalents(Faker.Internet.UserName());
+    private static readonly string Username = Faker.Internet.UserName();
 
-    public static IEnumerable<object[]> EquivalentEmails => Equivalents(Faker.Internet.Email());
+    private static readonly string Email = Faker.Internet.Email();
 
-    private static IEnumerable<object[]> Equivalents(string value)
+    public static IEnumerable<string> Usernames()
     {
-        return Variants(value).Select(variant => new object[]
+        foreach (var variant in Variants(Username))
         {
-            value,
-            variant
-        });
+            yield return variant;
+        }
+    }
+
+    public static IEnumerable<string> Emails()
+    {
+        foreach (var variant in Variants(Email))
+        {
+            yield return variant;
+        }
     }
 
     private static IEnumerable<string> Variants(string value)
@@ -27,80 +34,101 @@ public class RegisterValidationTests : TestBase
         yield return $"{value}\n";
     }
 
-    private static async Task AssertResponse(HttpResponseMessage response)
+    private static async Task<ProblemDetails> AssertResponse(HttpResponseMessage response, HttpStatusCode code)
     {
-        await Assert.That(response.StatusCode).IsBadRequest();
+        await Assert.That(response.StatusCode).IsEqualTo(code);
 
         var result = await response.ReadAsAsync<ProblemDetails>();
 
-        var content = await Assert.That(result).IsNotNull();
-
-        await AssertProblem(content);
+        return await Assert.That(result).IsNotNull();
     }
 
-    private static async Task AssertProblem(ProblemDetails content)
+    private static async Task AssertProblem(ProblemDetails content, int code)
     {
-        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(400));
-        await Assert.That(content.Status).IsEqualTo(400);
+        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(code));
+        await Assert.That(content.Status).IsEqualTo(code);
         await Assert.That(content.Detail!).IsNotEmpty();
+    }
+
+    private static async Task AssertErrors(ProblemDetails content, params string[] expected)
+    {
         await Assert.That(content.Extensions["errors"]).IsNotNull();
+
+        // TODO: Assert error codes
+    }
+
+    [Before(Class)]
+    public static async Task Setup()
+    {
+        var instance = await TestFixture.Instance;
+
+        var user = Arrange.User
+            .WithUsername(Username)
+            .WithEmail(Email)
+            .Build();
+
+        await instance.SeedAsync(user);
     }
 
     [Test]
-    public async Task Register_WithEmptyPayload_ShouldReturnBadRequest()
+    public async Task Register_WithEmptyPayload_ReturnsBadRequest()
     {
         var payload = new RegisterCommand();
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
+        var content = await AssertResponse(response, HttpStatusCode.BadRequest);
+
+        await AssertProblem(content, (int)HttpStatusCode.BadRequest);
+
+        await AssertErrors(content);
     }
 
     [Test]
-    [MethodDataSource(nameof(EquivalentEmails))]
-    public async Task Register_WithExistingEmail_ShouldReturnConflict(string value, string variant)
+    [MethodDataSource(nameof(Emails))]
+    public async Task Register_WithExistingEmail_ReturnsConflict(string email)
     {
-        var user = Arrange.User.WithEmail(value).Build();
-
-        await Fixture.SeedAsync(user);
-
         var payload = new RegisterCommand
         {
-            Username = variant,
+            Username = Faker.Internet.UserName(),
+            Email = email,
+            Password = Faker.Internet.StrongPassword()
+        };
+
+        var response = await Api.Register(payload).SendAsync();
+
+        var content = await AssertResponse(response, HttpStatusCode.Conflict);
+
+        await AssertProblem(content, (int)HttpStatusCode.Conflict);
+
+        await AssertErrors(content);
+    }
+
+    [Test]
+    [MethodDataSource(nameof(Usernames))]
+    public async Task Register_WithExistingUsername_ReturnsConflict(string username)
+    {
+        var payload = new RegisterCommand
+        {
+            Username = username,
             Email = Faker.Internet.Email(),
             Password = Faker.Internet.StrongPassword()
         };
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
-    }
+        var content = await AssertResponse(response, HttpStatusCode.Conflict);
 
-    [Test]
-    [MethodDataSource(nameof(EquivalentUsernames))]
-    public async Task Register_WithExistingUsername_ShouldReturnConflict(string value, string variant)
-    {
-        var user = Arrange.User.WithUsername(value).Build();
+        await AssertProblem(content, (int)HttpStatusCode.Conflict);
 
-        await Fixture.SeedAsync(user);
-
-        var payload = new RegisterCommand
-        {
-            Username = variant,
-            Email = Faker.Internet.Email(),
-            Password = Faker.Internet.StrongPassword()
-        };
-
-        var response = await Api.Register(payload).SendAsync();
-
-        await AssertResponse(response);
+        await AssertErrors(content);
     }
 
     [Test]
     [Arguments("not-an-email")]
     [Arguments("")]
     [Arguments(null)]
-    public async Task Register_WithInvalidEmail_ShouldReturnBadRequest(string? email)
+    public async Task Register_WithInvalidEmail_ReturnsBadRequest(string? email)
     {
         var payload = new RegisterCommand
         {
@@ -111,14 +139,18 @@ public class RegisterValidationTests : TestBase
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
+        var content = await AssertResponse(response, HttpStatusCode.BadRequest);
+
+        await AssertProblem(content, (int)HttpStatusCode.BadRequest);
+
+        await AssertErrors(content);
     }
 
     [Test]
     [Arguments("password")]
     [Arguments("")]
     [Arguments(null)]
-    public async Task Register_WithInvalidPassword_ShouldReturnBadRequest(string? password)
+    public async Task Register_WithInvalidPassword_ReturnsBadRequest(string? password)
     {
         var payload = new RegisterCommand
         {
@@ -129,13 +161,17 @@ public class RegisterValidationTests : TestBase
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
+        var content = await AssertResponse(response, HttpStatusCode.BadRequest);
+
+        await AssertProblem(content, (int)HttpStatusCode.BadRequest);
+
+        await AssertErrors(content);
     }
 
     [Test]
     [Arguments("")]
     [Arguments(null)]
-    public async Task Register_WithInvalidUsername_ShouldReturnBadRequest(string? username)
+    public async Task Register_WithInvalidUsername_ReturnsBadRequest(string? username)
     {
         var payload = new RegisterCommand
         {
@@ -146,11 +182,15 @@ public class RegisterValidationTests : TestBase
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
+        var content = await AssertResponse(response, HttpStatusCode.BadRequest);
+
+        await AssertProblem(content, (int)HttpStatusCode.BadRequest);
+
+        await AssertErrors(content);
     }
 
     [Test]
-    public async Task Register_WithoutEmailOrUsername_ShouldReturnBadRequest()
+    public async Task Register_WithoutEmailOrUsername_ReturnsBadRequest()
     {
         var payload = new RegisterCommand
         {
@@ -159,21 +199,10 @@ public class RegisterValidationTests : TestBase
 
         var response = await Api.Register(payload).SendAsync();
 
-        await AssertResponse(response);
-    }
+        var content = await AssertResponse(response, HttpStatusCode.BadRequest);
 
-    [Test]
-    public async Task Register_WithValidPayload_ShouldReturnSession()
-    {
-        var payload = new RegisterCommand
-        {
-            Username = Faker.Internet.UserName(),
-            Email = Faker.Internet.Email(),
-            Password = Faker.Internet.StrongPassword()
-        };
+        await AssertProblem(content, (int)HttpStatusCode.BadRequest);
 
-        var response = await Api.Register(payload).SendAsync();
-
-        await AssertResponse(response);
+        await AssertErrors(content);
     }
 }
