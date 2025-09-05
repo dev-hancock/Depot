@@ -1,5 +1,4 @@
 using Depot.Auth.Persistence;
-using Microsoft.Extensions.DependencyInjection;
 using TUnit.Core.Interfaces;
 
 namespace Depot.Auth.Tests.Setup;
@@ -14,7 +13,7 @@ public class TestFixture : IAsyncInitializer
 
     public T GetService<T>() where T : notnull
     {
-        return Global.Application.Services.GetRequiredService<T>();
+        return Global.GetService<T>();
     }
 
     public async Task InitializeAsync()

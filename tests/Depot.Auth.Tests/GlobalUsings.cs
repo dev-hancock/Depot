@@ -6,6 +6,7 @@ global using Depot.Auth.Domain.Auth;
 global using Depot.Auth.Domain.Users;
 global using Depot.Auth.Features.Auth.Login;
 global using Depot.Auth.Features.Auth.Logout;
+global using Depot.Auth.Features.Auth.Register;
 global using Depot.Auth.Tests.Setup;
 global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.WebUtilities;
