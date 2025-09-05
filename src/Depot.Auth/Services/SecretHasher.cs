@@ -1,7 +1,13 @@
-using Depot.Auth.Domain.Interfaces;
 using Isopoh.Cryptography.Argon2;
 
 namespace Depot.Auth.Services;
+
+public interface ISecretHasher
+{
+    string Hash(string secret);
+
+    bool Verify(string encoded, string secret);
+}
 
 public class SecretHasher : ISecretHasher
 {

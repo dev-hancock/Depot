@@ -1,60 +1,87 @@
-using Depot.Auth.Persistence;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Depot.Auth.Tests.Setup;
 
-public static partial class Database
+[SuppressMessage("ReSharper", "StaticMemberInGenericType")]
+public class Database<TContext> where TContext : DbContext
 {
-    public static Task<T?> FindAsync<T>(params object[] keys) where T : class
-    {
-        return WithScope<T?>(context => context.FindAsync<T>(keys).AsTask());
-    }
+    private static readonly SemaphoreSlim Lock = new(1, 1);
 
-    public static async Task RemoveAsync(params object[] models)
-    {
-        await WithScope(context => context.RemoveRange(models));
-    }
+    private static volatile bool s_initialised;
 
-    public static async Task SeedAsync(params object[] models)
-    {
-        await WithScope(context => context.AddRangeAsync(models));
-    }
+    private static readonly Database<TContext> Shared = new();
 
-    public static async Task Setup()
-    {
-        await WithScope(context => context.Database.EnsureCreatedAsync());
-    }
+    public static Task<Database<TContext>> Instance => CreateAsync();
 
-    public static async Task Teardown()
+    public async Task<T> With<T>(Func<TContext, Task<T>> action)
     {
-        await WithScope(context => context.Database.EnsureDeletedAsync());
-    }
+        using var scope = GetScope();
 
-    private static Task<T?> WithScope<T>(Func<DbContext, Task<T?>> action)
-    {
-        return Service.Scoped<AuthDbContext, T?>(async context =>
+        await using var context = GetDbContext(scope.ServiceProvider);
+
+        var result = await action(context);
+
+        if (context.ChangeTracker.HasChanges())
         {
-            var result = await action(context);
+            await context.SaveChangesAsync();
+        }
 
-            if (context.ChangeTracker.HasChanges())
+        return result;
+    }
+
+    public async Task With(Func<TContext, Task> action)
+    {
+        using var scope = GetScope();
+
+        await using var context = GetDbContext(scope.ServiceProvider);
+
+        await action(context);
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+    }
+
+    private static async Task<Database<TContext>> CreateAsync()
+    {
+        if (s_initialised)
+        {
+            return Shared;
+        }
+
+        await Lock.WaitAsync();
+
+        try
+        {
+            if (!s_initialised)
             {
-                await context.SaveChangesAsync();
+                using var scope = GetScope();
+
+                await using var context = GetDbContext(scope.ServiceProvider);
+
+                await context.Database.EnsureCreatedAsync();
             }
 
-            return result;
-        });
+            s_initialised = true;
+        }
+        finally
+        {
+            Lock.Release();
+        }
+
+        return Shared;
     }
 
-    private static Task WithScope(Action<DbContext> action)
+    private static TContext GetDbContext(IServiceProvider services)
     {
-        return Service.Scoped<AuthDbContext>(async context =>
-        {
-            action(context);
+        return services.GetRequiredService<TContext>();
+    }
 
-            if (context.ChangeTracker.HasChanges())
-            {
-                await context.SaveChangesAsync();
-            }
-        });
+    private static IServiceScope GetScope()
+    {
+        return Global.Application.Services.CreateScope();
     }
 }

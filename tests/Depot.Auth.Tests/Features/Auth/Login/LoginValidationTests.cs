@@ -1,6 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
-public class LoginValidationTests
+public class LoginValidationTests : TestBase
 {
     private static readonly Faker Faker = new();
 
@@ -45,9 +45,19 @@ public class LoginValidationTests
         yield return (null, null, null);
     }
 
+    private static async Task AssertProblem(ProblemDetails content)
+    {
+        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(400));
+        await Assert.That(content.Status).IsEqualTo(400);
+        await Assert.That(content.Detail!).IsNotEmpty();
+        await Assert.That(content.Extensions["errors"]).IsNotNull();
+    }
+
     [Before(Class)]
     public static async Task Setup()
     {
+        var instance = await TestFixture.Instance;
+
         var user = Arrange.User
             .WithId(Id)
             .WithUsername(Username)
@@ -55,7 +65,7 @@ public class LoginValidationTests
             .WithPassword(Password)
             .Build();
 
-        await Database.SeedAsync(user);
+        await instance.SeedAsync(user);
     }
 
     [Test]
@@ -64,20 +74,19 @@ public class LoginValidationTests
     {
         var payload = new LoginCommand
         {
-            Username = username, Email = email, Password = password!
+            Username = username,
+            Email = email,
+            Password = password!
         };
 
-        var response = await Requests.Login(payload).SendAsync();
+        var response = await Api.Login(payload).SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(response.StatusCode).IsBadRequest();
 
         var result = await response.ReadAsAsync<ProblemDetails>();
 
         var content = await Assert.That(result).IsNotNull();
 
-        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(400));
-        await Assert.That(content.Status).IsEqualTo(400);
-        await Assert.That(content.Detail!).IsNotEmpty();
-        await Assert.That(content.Extensions["errors"]).IsNotNull();
+        await AssertProblem(content);
     }
 }

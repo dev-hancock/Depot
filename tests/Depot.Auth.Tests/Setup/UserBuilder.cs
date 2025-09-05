@@ -1,4 +1,4 @@
-using Depot.Auth.Domain.Interfaces;
+using Depot.Auth.Services;
 
 namespace Depot.Auth.Tests.Setup;
 
@@ -6,7 +6,7 @@ public class UserBuilder
 {
     private static readonly Faker Faker = new();
 
-    private readonly ISecretHasher _hasher = Service.Get<ISecretHasher>();
+    private readonly ISecretHasher _hasher = Global.GetService<ISecretHasher>();
 
     private readonly List<string> _roles = [];
 

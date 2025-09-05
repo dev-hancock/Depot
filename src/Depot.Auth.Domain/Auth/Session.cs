@@ -24,12 +24,13 @@ public class Session : Entity
     // EF Core
     private Session() { }
 
-    internal Session(SessionId id, UserId userId, RefreshToken token, bool isRevoked)
+    internal Session(SessionId id, UserId userId, RefreshToken token, bool isRevoked, int version)
     {
         Id = id;
         UserId = userId;
         RefreshToken = token;
         IsRevoked = isRevoked;
+        Version = version;
     }
 
     public SessionId Id { get; private init; }
@@ -52,7 +53,8 @@ public class Session : Entity
             new SessionId(Guid.NewGuid()),
             userId,
             token,
-            false
+            false,
+            1
         );
     }
 

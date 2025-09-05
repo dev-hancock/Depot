@@ -1,8 +1,6 @@
-using Depot.Auth.Events;
-
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
-public class LoginSuccessTests
+public class LoginSuccessTests : TestBase
 {
     private static readonly JwtSecurityTokenHandler Handler = new();
 
@@ -15,8 +13,6 @@ public class LoginSuccessTests
     private static readonly string Username = Faker.Internet.UserName();
 
     private static readonly string Email = Faker.Internet.Email();
-
-    private static IDistributedCache Cache => Service.Get<IDistributedCache>();
 
     public static IEnumerable<(string?, string?)> Data()
     {
@@ -56,11 +52,11 @@ public class LoginSuccessTests
         await Assert.That(token.GetClaim("iat")).IsNotNull().And.IsGreaterThan("0");
     }
 
-    private static async Task AssertDatabase(JwtSecurityToken token)
+    private async Task AssertDatabase(JwtSecurityToken token)
     {
-        var id = token.GetSessionId();
+        var id = token.GetSession();
 
-        var entity = await Database.FindSessionAsync(id);
+        var entity = await Fixture.Db.FindSessionAsync(id);
 
         var session = await Assert.That(entity).IsNotNull();
 
@@ -72,19 +68,21 @@ public class LoginSuccessTests
         await Assert.That(session.RefreshToken).IsNotNull();
     }
 
-    private static async Task AssertCache(JwtSecurityToken token)
+    private async Task AssertCache(JwtSecurityToken token)
     {
-        var key = CacheKeys.Session(token.GetSessionId());
+        var key = token.GetSession();
 
-        var version = await Cache.GetAsync(key);
+        var version = await Fixture.Cache.GetSessionAsync(key);
 
-        await Assert.That(version).IsNotNull();
-        await Assert.That(version).IsEquivalentTo(BitConverter.GetBytes(1));
+        await Assert.That(version).IsEqualTo(1);
+        await Assert.That(version).IsEquivalentTo(1);
     }
 
     [Before(Class)]
-    public static async Task Setup()
+    public static async Task SetupAsync()
     {
+        var instance = await TestFixture.Instance;
+
         var user = Arrange.User
             .WithId(UserId)
             .WithUsername(Username)
@@ -92,7 +90,7 @@ public class LoginSuccessTests
             .WithPassword(Password)
             .Build();
 
-        await Database.SeedAsync(user);
+        await instance.SeedAsync(user);
     }
 
     [Test]
@@ -106,9 +104,9 @@ public class LoginSuccessTests
             Password = Password
         };
 
-        var response = await Requests.Login(payload).SendAsync();
+        var response = await Api.Login(payload).SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(response.StatusCode).IsOk();
 
         var result = await response.ReadAsAsync<LoginResponse>();
 

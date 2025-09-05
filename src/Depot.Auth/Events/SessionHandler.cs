@@ -8,14 +8,6 @@ using Microsoft.Extensions.Options;
 
 namespace Depot.Auth.Events;
 
-public static class CacheKeys
-{
-    public static string Session(Guid id)
-    {
-        return $"sid:{id}:ver";
-    }
-}
-
 public class SessionHandler(IDistributedCache cache, IOptions<JwtOptions> options) :
     IMessageHandler<SessionCreatedEvent>,
     IMessageHandler<SessionRefreshedEvent>,
@@ -42,13 +34,11 @@ public class SessionHandler(IDistributedCache cache, IOptions<JwtOptions> option
 
     private async Task SetSession(Guid id, int version)
     {
-        var key = CacheKeys.Session(id);
-
         var options = new DistributedCacheEntryOptions
         {
             AbsoluteExpirationRelativeToNow = _options.AccessTokenLifetime + _skew
         };
 
-        await cache.SetAsync(key, BitConverter.GetBytes(version), options);
+        await cache.SetAsync($"{id}:ver", BitConverter.GetBytes(version), options);
     }
 }

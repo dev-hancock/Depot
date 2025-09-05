@@ -1,10 +1,11 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Depot.Auth.Extensions;
+using Depot.Repository.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Depot.Auth.Tests.Setup;
+namespace Depot.Repository.Tests.Setup;
 
-public class TokenBuilder(JwtOptions options, SecurityKey key)
+public class AccessTokenBuilder(JwtOptions options, SecurityKey key)
 {
     private readonly List<Claim> _claims = new();
 
@@ -32,28 +33,28 @@ public class TokenBuilder(JwtOptions options, SecurityKey key)
         return _handler.WriteToken(token);
     }
 
-    public TokenBuilder WithAudience(string audience)
+    public AccessTokenBuilder WithAudience(string audience)
     {
         _audience = audience;
 
         return this;
     }
 
-    public TokenBuilder WithIssuer(string issuer)
+    public AccessTokenBuilder WithIssuer(string issuer)
     {
         _issuer = issuer;
 
         return this;
     }
 
-    public TokenBuilder WithLifetime(TimeSpan lifetime)
+    public AccessTokenBuilder WithLifetime(TimeSpan lifetime)
     {
         _lifetime = lifetime;
 
         return this;
     }
 
-    public TokenBuilder WithRoles(params string[] roles)
+    public AccessTokenBuilder WithRoles(params string[] roles)
     {
         foreach (var role in roles)
         {
@@ -63,22 +64,17 @@ public class TokenBuilder(JwtOptions options, SecurityKey key)
         return this;
     }
 
-    public TokenBuilder WithSession(Guid id)
+    public AccessTokenBuilder WithSession(Guid id)
     {
         _claims.Add(new Claim(JwtRegisteredClaimNames.Jti, id.ToString()));
 
         return this;
     }
 
-    public TokenBuilder WithUser(Guid id)
+    public AccessTokenBuilder WithUser(Guid id)
     {
         _claims.Add(new Claim(JwtRegisteredClaimNames.Sub, id.ToString()));
 
         return this;
-    }
-
-    public TokenBuilder WithUser(User user)
-    {
-        return WithUser(user.Id.Value);
     }
 }

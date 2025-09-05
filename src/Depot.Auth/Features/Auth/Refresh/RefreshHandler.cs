@@ -1,10 +1,9 @@
 using System.Reactive.Linq;
 using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Domain.Users.Errors;
-using Depot.Auth.Mappings;
 using Depot.Auth.Middleware;
 using Depot.Auth.Persistence;
+using Depot.Auth.Services;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +16,7 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
 
     private readonly ITimeProvider _time;
 
-    private readonly ITokenGenerator _tokens;
+    private readonly ITokenService _tokens;
 
     private readonly IUserContext _user;
 
@@ -25,7 +24,7 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
         AuthDbContext context,
         IUserContext user,
         ITimeProvider time,
-        ITokenGenerator tokens)
+        ITokenService tokens)
     {
         _context = context;
         _user = user;
@@ -53,24 +52,18 @@ public class RefreshHandler : IMessageHandler<RefreshCommand, ErrorOr<RefreshRes
 
         var now = _time.UtcNow;
 
-        var result = user.RefreshSession(message.RefreshToken, _tokens.GenerateRefreshToken(now).ToRefreshToken(), now);
+        var result = user.RefreshSession(message.RefreshToken, _tokens.GetRefreshToken(now), now);
 
         if (result.Value is not { } session)
         {
-            return ErrorOr<RefreshResponse>.From(result.Errors);
+            return Error.Unauthorized();
         }
 
         await _context.SaveChangesAsync(token);
 
         return new RefreshResponse
         {
-            AccessToken = _tokens
-                .GenerateAccessToken(
-                    user.Id.Value,
-                    session.Id.Value,
-                    [],
-                    now)
-                .ToAccessToken(),
+            AccessToken = _tokens.GetAccessToken(user, session, now),
             RefreshToken = session.RefreshToken
         };
     }

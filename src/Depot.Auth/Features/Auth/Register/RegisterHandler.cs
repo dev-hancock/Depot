@@ -1,9 +1,8 @@
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Domain.Users;
 using Depot.Auth.Domain.Users.Errors;
-using Depot.Auth.Mappings;
 using Depot.Auth.Persistence;
+using Depot.Auth.Services;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -18,13 +17,13 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
     private readonly ITimeProvider _time;
 
-    private readonly ITokenGenerator _tokens;
+    private readonly ITokenService _tokens;
 
     public RegisterHandler(
         AuthDbContext context,
         ITimeProvider time,
         ISecretHasher hasher,
-        ITokenGenerator tokens)
+        ITokenService tokens)
     {
         _context = context;
         _time = time;
@@ -65,7 +64,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             Password.Create(_hasher.Hash(message.Password)),
             now);
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
+        var result = user.CreateSession(_tokens.GetRefreshToken(now));
 
         if (result.Value is not { } session)
         {
@@ -78,13 +77,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
 
         return new RegisterResponse
         {
-            AccessToken = _tokens
-                .GenerateAccessToken(
-                    user.Id.Value,
-                    session.Id.Value,
-                    [],
-                    now)
-                .ToAccessToken(),
+            AccessToken = _tokens.GetAccessToken(user, session, now),
             RefreshToken = session.RefreshToken
         };
     }

@@ -1,10 +1,9 @@
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Domain.Users;
 using Depot.Auth.Domain.Users.Errors;
-using Depot.Auth.Mappings;
 using Depot.Auth.Middleware;
 using Depot.Auth.Persistence;
+using Depot.Auth.Services;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +18,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
     private readonly ITimeProvider _time;
 
-    private readonly ITokenGenerator _tokens;
+    private readonly ITokenService _tokens;
 
     private readonly IUserContext _user;
 
@@ -27,7 +26,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
         AuthDbContext context,
         IUserContext user,
         ISecretHasher hasher,
-        ITokenGenerator tokens,
+        ITokenService tokens,
         ITimeProvider time)
     {
         _context = context;
@@ -64,7 +63,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
+        var result = user.CreateSession(_tokens.GetRefreshToken(now));
 
         if (result.Value is not { } session)
         {
@@ -75,13 +74,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         return new ChangePasswordResponse
         {
-            AccessToken = _tokens
-                .GenerateAccessToken(
-                    user.Id.Value,
-                    session.Id.Value,
-                    [],
-                    now)
-                .ToAccessToken(),
+            AccessToken = _tokens.GetAccessToken(user, session, now),
             RefreshToken = session.RefreshToken
         };
     }

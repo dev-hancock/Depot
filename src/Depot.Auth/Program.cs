@@ -1,5 +1,4 @@
 ﻿using Asp.Versioning;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Endpoints;
 using Depot.Auth.Extensions;
 using Depot.Auth.Middleware;
@@ -106,7 +105,7 @@ public class Program
         services.AddSingleton<ISecureRandom, SecureRandom>();
         services.AddSingleton<ISecretHasher, SecretHasher>();
 
-        services.AddSingleton<ITokenGenerator, TokenGenerator>();
+        services.AddSingleton<ITokenService, TokenService>();
 
         services.AddScoped<IUserContext, UserContext>();
         services.AddScoped<ITenantContext, TenantContext>();

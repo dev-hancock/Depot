@@ -1,28 +1,17 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using Depot.Auth.Domain.Interfaces;
-using Depot.Auth.Extensions;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Depot.Auth.Services;
 
-public class TokenGenerator : ITokenGenerator
+public class TokenGenerator(string issuer, string audience, SecurityKey key)
 {
     private readonly JwtSecurityTokenHandler _handler = new();
 
-    private readonly JwtOptions _options;
+    private readonly SigningCredentials _signing = new(key, SecurityAlgorithms.EcdsaSha256);
 
-    private readonly SigningCredentials _signing;
-
-    public TokenGenerator(IOptions<JwtOptions> options, SecurityKey key)
-    {
-        _options = options.Value;
-        _signing = new SigningCredentials(key, SecurityAlgorithms.EcdsaSha256);
-    }
-
-    public Token GenerateAccessToken(Guid sub, Guid sid, string[] roles, DateTimeOffset now, int version = 0)
+    public string GenerateAccessToken(Guid sub, Guid sid, string[] roles, DateTimeOffset now, DateTimeOffset expiry, int version = 0)
     {
         var jti = Guid.NewGuid();
 
@@ -40,22 +29,20 @@ public class TokenGenerator : ITokenGenerator
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var expires = now + _options.AccessTokenLifetime;
-
         var access = new JwtSecurityToken(
-            _options.Issuer,
-            _options.Audience,
+            issuer,
+            audience,
             claims,
             now.UtcDateTime,
-            expires.UtcDateTime,
+            expiry.UtcDateTime,
             _signing);
 
         var token = _handler.WriteToken(access);
 
-        return new Token(token, expires.UtcDateTime);
+        return token;
     }
 
-    public Token GenerateRefreshToken(DateTime now, int length = 64)
+    public string GenerateRefreshToken(int length = 64)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -68,8 +55,6 @@ public class TokenGenerator : ITokenGenerator
             token[i] = chars[bytes[i] % chars.Length];
         }
 
-        var expires = now + _options.RefreshTokenLifetime;
-
-        return new Token(new string(token), expires);
+        return new string(token);
     }
 }

@@ -10,6 +10,8 @@ public class SessionBuilder(UserBuilder user)
 
     public bool IsRevoked { get; private set; }
 
+    public int Version { get; private set; } = 1;
+
     public string RefreshToken { get; private set; } = Faker.Random.AlphaNumeric(32);
 
     public Session Build()
@@ -18,9 +20,11 @@ public class SessionBuilder(UserBuilder user)
             new SessionId(Id),
             new UserId(user.Id),
             new RefreshToken(RefreshToken, Expiry),
-            IsRevoked
+            IsRevoked,
+            Version
         );
     }
+
 
     public SessionBuilder WithExpiry(DateTime expiry)
     {
@@ -46,6 +50,7 @@ public class SessionBuilder(UserBuilder user)
     public SessionBuilder WithRevoked(bool revoked = true)
     {
         IsRevoked = revoked;
+        Version = 2;
 
         return this;
     }

@@ -1,22 +1,22 @@
 namespace Depot.Auth.Tests.Features.Auth.Logout;
 
-public class LogoutFailureTests
+public class LogoutFailureTests : TestBase
 {
     [Test]
     public async Task Logout_WithoutAccessToken_ReturnsUnauthorized()
     {
         var user = Arrange.User.WithSession().Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var response = await Requests.Logout(payload).SendAsync();
+        var response = await Api.Logout(payload).SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+        await Assert.That(response.StatusCode).IsUnauthorized();
 
         var result = await response.ReadAsAsync<ProblemDetails>();
 

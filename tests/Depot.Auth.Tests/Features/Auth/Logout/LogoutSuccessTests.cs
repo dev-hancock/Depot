@@ -1,18 +1,39 @@
 namespace Depot.Auth.Tests.Features.Auth.Logout;
 
-public class LogoutSuccessTests
+public class LogoutSuccessTests : TestBase
 {
     private static readonly Faker Faker = new();
 
-    private static async Task AssertDatabase(UserId id, int expected)
+    private async Task AssertDatabase(UserId id, int expected)
     {
-        var entity = await Database.FindUserAsync(id);
+        var entity = await Fixture.Db.FindUserAsync(id);
 
         var user = await Assert.That(entity).IsNotNull();
 
         var revoked = user.Sessions.Where(x => x.IsRevoked).ToList();
 
         await Assert.That(revoked.Count).IsEqualTo(expected);
+
+        foreach (var session in user.Sessions)
+        {
+            await AssertSession(session);
+        }
+    }
+
+    private async Task AssertSession(Session session)
+    {
+        var version = await Fixture.Cache.GetSessionAsync(session.Id);
+
+        if (session.IsRevoked)
+        {
+            await Assert.That(session.Version).IsEqualTo(2);
+            await Assert.That(version).IsEquivalentTo(2);
+        }
+        else
+        {
+            await Assert.That(session.Version).IsEqualTo(1);
+            await Assert.That(version).IsEquivalentTo(1);
+        }
     }
 
     [Test]
@@ -22,18 +43,18 @@ public class LogoutSuccessTests
             .WithSession(x => x.WithExpiry(DateTime.UtcNow.AddDays(-1)))
             .Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var response = await Requests.Logout(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Logout(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+        await Assert.That(response.StatusCode).IsNoContent();
 
         await AssertDatabase(user.Id, 0);
     }
@@ -43,18 +64,18 @@ public class LogoutSuccessTests
     {
         var user = Arrange.User.WithSession().Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = Faker.Random.String(32)
         };
 
-        var response = await Requests.Logout(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Logout(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+        await Assert.That(response.StatusCode).IsNoContent();
 
         await AssertDatabase(user.Id, 0);
     }
@@ -64,18 +85,18 @@ public class LogoutSuccessTests
     {
         var user = Arrange.User.WithSessions(5).Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = null
         };
 
-        var response = await Requests.Logout(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Logout(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+        await Assert.That(response.StatusCode).IsNoContent();
 
         await AssertDatabase(user.Id, 5);
     }
@@ -85,18 +106,18 @@ public class LogoutSuccessTests
     {
         var user = Arrange.User.WithSessions(5).Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var response = await Requests.Logout(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Logout(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+        await Assert.That(response.StatusCode).IsNoContent();
 
         await AssertDatabase(user.Id, 1);
     }
@@ -108,18 +129,18 @@ public class LogoutSuccessTests
             .WithSession(x => x.WithRevoked())
             .Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new LogoutCommand
         {
             RefreshToken = user.Sessions[0].RefreshToken
         };
 
-        var response = await Requests.Logout(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Logout(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.NoContent);
+        await Assert.That(response.StatusCode).IsNoContent();
 
         await AssertDatabase(user.Id, 1);
     }

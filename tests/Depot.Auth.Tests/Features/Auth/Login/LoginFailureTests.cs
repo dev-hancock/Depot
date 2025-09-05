@@ -1,6 +1,6 @@
 namespace Depot.Auth.Tests.Features.Auth.Login;
 
-public class LoginFailureTests
+public class LoginFailureTests : TestBase
 {
     private static readonly Faker Faker = new();
 
@@ -28,9 +28,18 @@ public class LoginFailureTests
         yield return (null, WrongEmail, WrongPassword);
     }
 
+    private static async Task AssertProblem(ProblemDetails content)
+    {
+        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(401));
+        await Assert.That(content.Status).IsEqualTo(401);
+        await Assert.That(content.Detail!).IsNotEmpty();
+    }
+
     [Before(Class)]
     public static async Task Setup()
     {
+        var instance = await TestFixture.Instance;
+
         var user = Arrange.User
             .WithId(Id)
             .WithUsername(Username)
@@ -38,7 +47,7 @@ public class LoginFailureTests
             .WithPassword(Password)
             .Build();
 
-        await Database.SeedAsync(user);
+        await instance.SeedAsync(user);
     }
 
     [Test]
@@ -52,16 +61,14 @@ public class LoginFailureTests
             Password = password
         };
 
-        var response = await Requests.Login(payload).SendAsync();
+        var response = await Api.Login(payload).SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.Unauthorized);
+        await Assert.That(response.StatusCode).IsUnauthorized();
 
         var result = await response.ReadAsAsync<ProblemDetails>();
 
         var content = await Assert.That(result).IsNotNull();
 
-        await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(401));
-        await Assert.That(content.Status).IsEqualTo(401);
-        await Assert.That(content.Detail!).IsNotEmpty();
+        await AssertProblem(content);
     }
 }

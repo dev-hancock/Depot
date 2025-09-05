@@ -7,12 +7,12 @@ public static class TokenExtensions
         return token.Claims.Single(x => x.Type == type)?.Value;
     }
 
-    public static Guid GetSessionId(this JwtSecurityToken token)
+    public static Guid GetSession(this JwtSecurityToken token)
     {
         return Guid.Parse(token.Claims.Single(x => x.Type == "sid").Value);
     }
 
-    public static Guid GetUserId(this JwtSecurityToken token)
+    public static Guid GetUser(this JwtSecurityToken token)
     {
         return Guid.Parse(token.Claims.Single(x => x.Type == "sub").Value);
     }

@@ -1,8 +1,8 @@
 using System.Reactive.Linq;
 using Depot.Auth.Domain.Auth;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Middleware;
 using Depot.Auth.Persistence;
+using Depot.Auth.Services;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;

@@ -1,9 +1,8 @@
-using Depot.Auth.Events;
 using Depot.Auth.Features.Auth.Refresh;
 
 namespace Depot.Auth.Tests.Features.Auth.Refresh;
 
-public class RefreshSuccessTests
+public class RefreshSuccessTests : TestBase
 {
     private static readonly JwtSecurityTokenHandler Handler = new();
 
@@ -12,8 +11,6 @@ public class RefreshSuccessTests
     private static readonly Guid SessionId = Guid.NewGuid();
 
     private const string RefreshToken = "valid-refresh-token";
-
-    private static IDistributedCache Cache => Service.Get<IDistributedCache>();
 
     private static async Task AssertSession(RefreshResponse content)
     {
@@ -24,15 +21,15 @@ public class RefreshSuccessTests
 
     private static async Task AssertToken(JwtSecurityToken token)
     {
-        await Assert.That(token.GetUserId()).IsEqualTo(UserId);
-        await Assert.That(token.GetSessionId()).IsEqualTo(SessionId);
+        await Assert.That(token.GetUser()).IsEqualTo(UserId);
+        await Assert.That(token.GetSession()).IsEqualTo(SessionId);
     }
 
-    private static async Task AssertDatabase(JwtSecurityToken token)
+    private async Task AssertDatabase(JwtSecurityToken token)
     {
-        var id = token.GetSessionId();
+        var id = token.GetSession();
 
-        var entity = await Database.FindSessionAsync(id);
+        var entity = await Fixture.Db.FindSessionAsync(id);
 
         var session = await Assert.That(entity).IsNotNull();
 
@@ -41,13 +38,13 @@ public class RefreshSuccessTests
         // TODO: more assertions
     }
 
-    private static async Task AssertCache(JwtSecurityToken token)
+    private async Task AssertCache(JwtSecurityToken token)
     {
-        var id = CacheKeys.Session(token.GetSessionId());
+        var id = token.GetSession();
 
-        var exists = await Cache.GetAsync(id);
+        var exists = await Fixture.Cache.GetSessionAsync(id);
 
-        await Assert.That(exists).IsNotNull();
+        await Assert.That(exists).IsEqualTo(2);
     }
 
     [Test]
@@ -58,21 +55,21 @@ public class RefreshSuccessTests
             .WithSession(x => x
                 .WithId(SessionId)
                 .WithRefreshToken(RefreshToken)
-                .WithExpiry(DateTime.UtcNow.AddDays(1)))
+                .WithExpiry(DateTime.UtcNow.AddHours(1)))
             .Build();
 
-        await Database.SeedAsync(user);
+        await Fixture.SeedAsync(user);
 
         var payload = new RefreshCommand
         {
             RefreshToken = RefreshToken
         };
 
-        var response = await Requests.Refresh(payload)
-            .WithAuthorization(x => x.WithUser(user))
+        var response = await Api.Refresh(payload)
+            .Authorize(x => x.WithUser(user))
             .SendAsync();
 
-        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.OK);
+        await Assert.That(response.StatusCode).IsOk();
 
         var result = await response.ReadAsAsync<RefreshResponse>();
 

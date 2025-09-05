@@ -1,8 +1,7 @@
 using System.Reactive.Linq;
-using Depot.Auth.Domain.Interfaces;
 using Depot.Auth.Domain.Users;
-using Depot.Auth.Mappings;
 using Depot.Auth.Persistence;
+using Depot.Auth.Services;
 using ErrorOr;
 using Mestra.Abstractions;
 using Microsoft.EntityFrameworkCore;
@@ -17,9 +16,9 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
     private readonly ITimeProvider _time;
 
-    private readonly ITokenGenerator _tokens;
+    private readonly ITokenService _tokens;
 
-    public LoginHandler(AuthDbContext context, ITimeProvider time, ISecretHasher hasher, ITokenGenerator tokens)
+    public LoginHandler(AuthDbContext context, ITimeProvider time, ISecretHasher hasher, ITokenService tokens)
     {
         _context = context;
         _time = time;
@@ -56,7 +55,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GenerateRefreshToken(now).ToRefreshToken());
+        var result = user.CreateSession(_tokens.GetRefreshToken(now));
 
         if (result.Value is not { } session)
         {
@@ -67,15 +66,16 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         return new LoginResponse
         {
-            AccessToken = _tokens
-                .GenerateAccessToken(
-                    user.Id,
-                    session.Id,
-                    [], // TODO: Add roles and permissions
-                    now,
-                    session.Version)
-                .ToAccessToken(),
+            AccessToken = _tokens.GetAccessToken(user, session, now),
             RefreshToken = session.RefreshToken
         };
+    }
+}
+
+public class AccessToken
+{
+    public static AccessToken Create()
+    {
+        return new AccessToken();
     }
 }

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
 
@@ -20,6 +21,11 @@ public static class Global
 
     public static HttpClient Client = null!;
 
+    public static T GetService<T>() where T : notnull
+    {
+        return Application.Services.GetRequiredService<T>();
+    }
+
     [Before(TestSession)]
     public static async Task Setup()
     {
@@ -27,8 +33,6 @@ public static class Global
         await Cache.StartAsync();
 
         Client = Application.CreateClient();
-
-        await Database.Setup();
     }
 
     [After(TestSession)]
@@ -38,7 +42,5 @@ public static class Global
         await Cache.DisposeAsync();
 
         await Application.DisposeAsync();
-
-        await Database.Teardown();
     }
 }

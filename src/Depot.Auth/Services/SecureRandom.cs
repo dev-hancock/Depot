@@ -1,8 +1,12 @@
 using System.Security.Cryptography;
-using Depot.Auth.Domain.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Depot.Auth.Services;
+
+public interface ISecureRandom
+{
+    string Next(int length);
+}
 
 public class SecureRandom : ISecureRandom
 {
