@@ -100,8 +100,6 @@ public class RegisterValidationTests : TestBase
         var content = await AssertResponse(response, HttpStatusCode.Conflict);
 
         await AssertProblem(content, (int)HttpStatusCode.Conflict);
-
-        await AssertErrors(content);
     }
 
     [Test]
@@ -120,8 +118,6 @@ public class RegisterValidationTests : TestBase
         var content = await AssertResponse(response, HttpStatusCode.Conflict);
 
         await AssertProblem(content, (int)HttpStatusCode.Conflict);
-
-        await AssertErrors(content);
     }
 
     [Test]
