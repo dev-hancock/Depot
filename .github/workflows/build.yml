@@ -93,7 +93,7 @@ jobs:
 
       - name: Generate Cobertura Report
         run: |
-          reportgenerator -reports:coverage.xml -targetdir:. -reporttypes:cobertura
+          reportgenerator -reports:coverage.xml -targetdir:. -reporttypes:sonarqube
 
       - name: Sonar End
         env:
