@@ -79,7 +79,7 @@ jobs:
             -c Release --no-build --no-restore \
             -- \
             --coverage \
-            --coverage-output-format opencover \
+            --coverage-output-format xml \
             --report-trx \
             --results-directory TestResults
 
