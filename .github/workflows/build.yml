@@ -59,8 +59,8 @@ jobs:
             /o:"dev-hancock" \
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.vstest.reportsPaths="**/*.trx" \
-            /d:sonar.cs.vscoveragexml.reportsPaths="**/*.cobertura.xml"
+            /d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" \
+            /d:sonar.cs.vscoveragexml.reportsPaths="**/TestResults/*.cobertura.xml"
 
       - name: Build
         run: |
@@ -76,7 +76,6 @@ jobs:
             -- \
             --coverage \
             --coverage-output-format cobertura \
-            --coverage-output TestResults/coverage.cobertura.xml \
             --report-trx \
             --results-directory TestResults
 
