@@ -60,7 +60,7 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" \
-            /d:sonar.cs.vscoveragexml.reportsPaths="**/TestResults/*.cobertura.xml"
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/*.cobertura.xml"
 
       - name: Build
         run: |
@@ -90,8 +90,6 @@ jobs:
           echo "=== TRX Files ==="
           find . -name "*.trx" -type f | head -10
           echo ""
-          echo "=== Coverage File Content ==="
-          find TestResults -name "*.cobertura.xml" -exec sh -c 'echo "=== $1 ==="; head -10 "$1"; echo ""' _ {} \; 2>/dev/null || echo "No coverage files to show"
 
       - name: Sonar End
         env:
