@@ -26,6 +26,10 @@ jobs:
           dotnet-version: |
             9.0.x
 
+      - name: Setup DotNet Coverage
+        run: |
+          dotnet tool install -g dotnet-coverage
+
       - name: Cache SonarQube Cloud packages
         uses: actions/cache@v4
         with:
@@ -60,7 +64,7 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" \
-            /d:sonar.cs.coverageReportPaths="**/TestResults/*.cobertura.xml"
+            /d:sonar.cs.opencover.reportsPaths="coverage.xml"
 
       - name: Build
         run: |
@@ -75,9 +79,13 @@ jobs:
             -c Release --no-build --no-restore \
             -- \
             --coverage \
-            --coverage-output-format cobertura \
+            --coverage-output-format opencover \
             --report-trx \
             --results-directory TestResults
+
+      - name: Merge Coverage Reports
+        run: |
+          dotnet-coverage merge **/*.cobertura.xml -f xml -o coverage.xml
 
       - name: Debug - Show Test Results
         run: |
