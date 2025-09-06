@@ -7,7 +7,7 @@ on:
     types: [ opened, synchronize, reopened ]
 jobs:
   build:
-    name: Build and analyze
+    name: Build and Analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +50,7 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Sonar begin
+      - name: Sonar Begin
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
@@ -85,7 +85,21 @@ jobs:
             --report-trx \
             --results-directory TestResults
 
-      - name: Sonar end
+      - name: Debug - Show Test Results
+        run: |
+          echo "=== TestResults directory contents ==="
+          ls -la TestResults/ || echo "No TestResults directory"
+          echo ""
+          echo "=== Coverage Files ==="
+          find . -name "*.cobertura.xml" -type f | head -10
+          echo ""
+          echo "=== TRX Files ==="
+          find . -name "*.trx" -type f | head -10
+          echo ""
+          echo "=== Coverage File Content ==="
+          find TestResults -name "*.cobertura.xml" -exec sh -c 'echo "=== $1 ==="; head -10 "$1"; echo ""' _ {} \; 2>/dev/null || echo "No coverage files to show"
+
+      - name: Sonar End
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
