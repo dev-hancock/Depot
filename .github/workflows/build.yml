@@ -85,7 +85,7 @@ jobs:
 
       - name: Merge Coverage Reports
         run: |
-          dotnet-coverage merge **/*.cobertura.xml -f opencover -o coverage.xml
+          dotnet-coverage merge **/*.cobertura.xml -f coverage -o coverage.xml
 
       - name: Debug - Show Test Results
         run: |
