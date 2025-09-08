@@ -96,13 +96,20 @@ jobs:
         run: |
           mkdir -p TestResults
           
-          for project in $(find . -name "*.Tests.csproj" -o -name "*Test*.csproj"); do
+          for project in $(find . -name "*.Tests.csproj"); do
+          
             project_name=$(basename "$project" .csproj)
-            coverlet "./bin/Release/net9.0/$project_name.dll" \
-              --target "dotnet" \
-              --targetargs "test $project --no-build --logger trx --results-directory TestResults" \
-              --format opencover \
-              --output "coverage-$project_name.xml"
+            project_dir=$(dirname "$project")
+          
+            dll_path=$(find "$project_dir" -name "$project_name.dll" -path "*/Release/*" | head -1)
+          
+            if [ -f "$dll_path" ]; then
+              coverlet "$dll_path" \
+                --target "dotnet" \
+                --targetargs "test $project --no-build --logger trx --results-directory TestResults" \
+                --format opencover \
+                --output "coverage-$project_name.xml"
+            fi
           done
 
       - name: Merge Coverage Reports
