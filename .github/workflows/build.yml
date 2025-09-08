@@ -108,19 +108,21 @@ jobs:
                 --target "dotnet" \
                 --targetargs "test $project --no-build --configuration Release --logger trx --results-directory TestResults" \
                 --format opencover \
-                --output "coverage-$project_name.xml"
+                --output "coverage-$project_name.xml" \
+                --include "[Depot.*]*" \
+                --exclude "[*.Tests]*"
             fi
           done
-
-      - name: Merge Coverage Reports
-        run: |
-          dotnet-coverage merge **/*.xml -f xml -o coverage.xml
-          
-          sed -i "s|$(pwd)/||g" coverage.xml
-
-      - name: Generate Cobertura Report
-        run: |
-          reportgenerator -reports:coverage.xml -targetdir:. -reporttypes:opencover
+      #
+      #      - name: Merge Coverage Reports
+      #        run: |
+      #          dotnet-coverage merge **/*.xml -f xml -o coverage.xml
+      #          
+      #          sed -i "s|$(pwd)/||g" coverage.xml
+      #
+      #      - name: Generate Cobertura Report
+      #        run: |
+      #          reportgenerator -reports:coverage.xml -targetdir:. -reporttypes:opencover
 
       - name: Sonar End
         env:
