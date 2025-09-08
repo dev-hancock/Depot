@@ -84,14 +84,15 @@ jobs:
             -- \
             --coverage \
             --coverage-output-format xml \
+            --coverage-include-test-assembly \
             --report-trx \
             --results-directory TestResults
 
       - name: Merge Coverage Reports
         run: |
           dotnet-coverage merge **/*.xml -f xml -o coverage.xml
-          
-          sed -i "s|$(pwd)/||g" coverage.xml
+      
+      #          sed -i "s|$(pwd)/||g" coverage.xml
 
       - name: Generate Cobertura Report
         run: |
