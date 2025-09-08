@@ -30,104 +30,46 @@ jobs:
         run: |
           dotnet tool install -g dotnet-coverage
 
-      - name: Install ReportGenerator
-        run: |
-          dotnet tool install -g dotnet-reportgenerator-globaltool
-
-      - name: Install Coverlet
-        run: dotnet tool install -g coverlet.console
-
-      - name: Cache SonarQube Cloud packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.sonar/cache
-          key: ${{ runner.os }}-sonar
-          restore-keys: ${{ runner.os }}-sonar
-
-      - name: Cache SonarQube Cloud scanner
-        id: cache-sonar-scanner
-        uses: actions/cache@v4
-        with:
-          path: ./.sonar/scanner
-          key: ${{ runner.os }}-sonar-scanner
-          restore-keys: ${{ runner.os }}-sonar-scanner
-
-      - name: Install SonarQube Cloud scanner
-        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p ./.sonar/scanner
-          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
+      - name: Install Sonar
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Restore
         run: dotnet restore
-
-      - name: Sonar Begin
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          ./.sonar/scanner/dotnet-sonarscanner begin \
-            /k:"dev-hancock_Depot" \
-            /o:"dev-hancock" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.vstest.reportsPaths="**/TestResults/*.trx" \
-            /d:sonar.cs.vscoveragexml.reportsPaths="coverage.xml" 
 
       - name: Build
         run: |
           dotnet build -c Release --no-incremental --no-restore
           
-          #      - name: Test
-          #        continue-on-error: true
-          #        run: |
-          #          mkdir -p TestResults
-          #          
-          #          dotnet test \
-          #            -c Release --no-build --no-restore \
-          #            -- \
-          #            --coverage \
-          #            --coverage-output-format xml \
-          #            --coverage-include-test-assembly \
-          #            --report-trx \
-          #            --results-directory TestResults
-
-      - name: Test with Coverage
+      - name: Test
         continue-on-error: true
         run: |
-          mkdir -p TestResults
-          
-          for project in $(find . -name "*.Tests.csproj"); do
-          
-            project_name=$(basename "$project" .csproj)
-            project_dir=$(dirname "$project")
-          
-            dll_path=$(find "$project_dir" -name "$project_name.dll" -path "*/Release/*" | head -1)
-          
-            if [ -f "$dll_path" ]; then
-              coverlet "$dll_path" \
-                --target "dotnet" \
-                --targetargs "test $project --no-build --configuration Release --logger trx --results-directory TestResults" \
-                --format opencover \
-                --output "coverage-$project_name.xml" \
-                --include "[Depot.*]*" \
-                --exclude "[*.Tests]*"
-            fi
-          done
-      #
-      #      - name: Merge Coverage Reports
-      #        run: |
-      #          dotnet-coverage merge **/*.xml -f xml -o coverage.xml
-      #          
-      #          sed -i "s|$(pwd)/||g" coverage.xml
-      #
-      #      - name: Generate Cobertura Report
-      #        run: |
-      #          reportgenerator -reports:coverage.xml -targetdir:. -reporttypes:opencover
+          dotnet test \
+            -c Release --no-build --no-restore \
+            -- \
+            --coverage \
+            --coverage-output-format xml \
+            --report-trx \
+            --results-directory TestResults
 
-      - name: Sonar End
+      - name: Coverage
+        run: |
+          dotnet-coverage merge **/*.xml -f xml -o coverage.xml
+      
+      - name: Sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          ./.sonar/scanner/dotnet-sonarscanner end \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
-          
+          sonar-scanner \
+            -Dsonar.token="${{ secrets.SONAR_TOKEN }}" \
+            -Dsonar.organization=dev-hancock
+            -Dsonar.projectName=Depot
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.exclusions=**/obj/**,**/bin/**
+            -Dsonar.test.exclusions=tests/**
+            -Dsonar.cs.vscoveragexml.reportsPaths=coverage.xml
+            -Dsonar.cs.file.suffixes=.cs
+            -Dsonar.sourceEncoding=UTF-8
