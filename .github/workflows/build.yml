@@ -31,7 +31,7 @@ jobs:
           dotnet tool install -g dotnet-coverage
 
       - name: Install Sonar
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -58,18 +58,20 @@ jobs:
         run: |
           dotnet-coverage merge **/*.xml -f xml -o coverage.xml
       
-      - name: Sonar
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Sonar Configuration
         run: |
-          sonar-scanner \
-            -Dsonar.token="${{ secrets.SONAR_TOKEN }}" \
-            -Dsonar.organization=dev-hancock
-            -Dsonar.projectName=Depot
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.exclusions=**/obj/**,**/bin/**
-            -Dsonar.test.exclusions=tests/**
-            -Dsonar.cs.vscoveragexml.reportsPaths=coverage.xml
-            -Dsonar.cs.file.suffixes=.cs
-            -Dsonar.sourceEncoding=UTF-8
+          cat > sonar-project.properties << EOF
+          sonar.projectKey=dev-hancock_Depot
+          sonar.organization=dev-hancock
+          sonar.projectName=Depot
+          sonar.sources=src
+          sonar.tests=tests
+          sonar.exclusions=**/obj/**,**/bin/**
+          sonar.cs.opencover.reportsPaths=coverage.opencover.xml
+          EOF
+
+      - name: Sonar
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
