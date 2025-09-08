@@ -106,7 +106,7 @@ jobs:
             if [ -f "$dll_path" ]; then
               coverlet "$dll_path" \
                 --target "dotnet" \
-                --targetargs "test $project --no-build --logger trx --results-directory TestResults" \
+                --targetargs "test $dll_path --no-build --logger trx --results-directory TestResults" \
                 --format opencover \
                 --output "coverage-$project_name.xml"
             fi
