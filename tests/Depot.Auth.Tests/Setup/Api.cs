@@ -1,6 +1,3 @@
-using Depot.Auth.Features.Auth.Refresh;
-using Depot.Auth.Features.Auth.Register;
-
 namespace Depot.Auth.Tests.Setup;
 
 public static class Api
@@ -23,5 +20,10 @@ public static class Api
     public static RequestBuilder Register(RegisterCommand command)
     {
         return Requests.Post("api/v1/auth/register", command);
+    }
+
+    public static RequestBuilder Me()
+    {
+        return Requests.Get("api/v1/users/me");
     }
 }

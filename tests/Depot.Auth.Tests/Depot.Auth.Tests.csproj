@@ -8,18 +8,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bogus" Version="35.6.3"/>
-        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.7"/>
-        <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6"/>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.6"/>
-        <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2"/>
-        <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="1.8.4"/>
-        <PackageReference Include="TUnit" Version="*"/>
+        <PackageReference Include="Bogus" Version="35.6.3" />
+        <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.7" />
+        <PackageReference Include="Testcontainers.PostgreSql" Version="4.6.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.6" />
+        <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
+        <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="1.8.4" />
+        <PackageReference Include="TUnit" Version="*" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Depot.Auth\Depot.Auth.csproj"/>
+        <ProjectReference Include="..\..\src\Depot.Auth\Depot.Auth.csproj" />
     </ItemGroup>
 
 </Project>

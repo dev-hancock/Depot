@@ -1,0 +1,34 @@
+<Solution>
+  <Folder Name="/keys/">
+    <File Path="keys/jwt_private.pem" />
+    <File Path="keys/jwt_public.pem" />
+  </Folder>
+  <Folder Name="/scripts/">
+    <File Path="scripts/gen-keys.sh" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".env" />
+    <File Path=".gitignore" />
+    <File Path="docker-compose.yml" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/Solution Items/workflows/">
+    <File Path=".github/workflows/build.yml" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Depot.Auth.Domain/Depot.Auth.Domain.csproj" />
+    <Project Path="src/Depot.Auth.Migrations/Depot.Auth.Migrations.csproj" />
+    <Project Path="src/Depot.Auth/Depot.Auth.csproj" />
+    <Project Path="src/Depot.Common/Depot.Common.csproj" />
+    <Project Path="src/Depot.Gateway/Depot.Gateway.csproj" />
+    <Project Path="src/Depot.Licensing/Depot.Licensing.csproj" />
+    <Project Path="src/Depot.Repository.Migrations/Depot.Repository.Migrations.csproj" />
+    <Project Path="src/Depot.Repository/Depot.Repository.csproj" />
+    <Project Path="src/Depot.Storage/Depot.Storage.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Depot.Auth.Tests/Depot.Auth.Tests.csproj" />
+    <Project Path="tests/Depot.Repository.Tests/Depot.Repository.Tests.csproj" />
+  </Folder>
+</Solution>

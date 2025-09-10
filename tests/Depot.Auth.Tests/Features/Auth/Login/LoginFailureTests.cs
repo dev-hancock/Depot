@@ -32,7 +32,7 @@ public class LoginFailureTests : TestBase
     {
         await Assert.That(content.Title).IsEqualTo(ReasonPhrases.GetReasonPhrase(401));
         await Assert.That(content.Status).IsEqualTo(401);
-        await Assert.That(content.Detail!).IsNotEmpty();
+        await Assert.That(content.Detail).IsNotEmpty();
     }
 
     [Before(Class)]
