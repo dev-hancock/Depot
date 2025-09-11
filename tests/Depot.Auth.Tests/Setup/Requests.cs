@@ -17,6 +17,11 @@ public static partial class Requests
         return Request(HttpMethod.Post, uri).WithContent(payload);
     }
 
+    public static RequestBuilder Patch(string uri, object payload)
+    {
+        return Request(HttpMethod.Patch, uri).WithContent(payload);
+    }
+
     public static RequestBuilder Put(string uri, object payload)
     {
         return Request(HttpMethod.Put, uri).WithContent(payload);

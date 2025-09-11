@@ -31,11 +31,10 @@ public static class UsersEndpoints
         return api;
     }
 
-    private static Task<IResult> ChangePasswordAsync([FromServices] IMediator mediator, HttpContext context)
+    private static Task<IResult> ChangePasswordAsync([FromBody] ChangePasswordCommand request, [FromServices] IMediator mediator, HttpContext context)
     {
-        return mediator.Send(new ChangePasswordCommand()).ToTask(context.RequestAborted).ToOkAsync();
+        return mediator.Send(request).ToTask(context.RequestAborted).ToOkAsync();
     }
-
 
     private static async Task<IResult> GetOrganisationsAsync([FromServices] IMediator mediator, HttpContext context)
     {

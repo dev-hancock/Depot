@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using Depot.Auth.Domain.Auth;
 using Depot.Auth.Domain.Users;
 using Depot.Auth.Domain.Users.Errors;
 using Depot.Auth.Middleware;
@@ -41,11 +42,12 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
         return Observable.FromAsync(token => Handle(message, token));
     }
 
-    private async Task<ErrorOr<ChangePasswordResponse>> Handle(ChangePasswordCommand message, CancellationToken ct)
+    private async Task<ErrorOr<ChangePasswordResponse>> Handle(ChangePasswordCommand message, CancellationToken token)
     {
         var user = await _context.Users
-            .Where(x => x.Id.Equals(_user.UserId))
-            .SingleOrDefaultAsync(ct);
+            .Where(x => x.Id == new UserId(_user.UserId))
+            .Include(x => x.Sessions)
+            .SingleOrDefaultAsync(token);
 
         if (user is null)
         {
@@ -70,7 +72,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
             return ErrorOr<ChangePasswordResponse>.From(result.Errors);
         }
 
-        await _context.SaveChangesAsync(ct);
+        await _context.SaveChangesAsync(token);
 
         return new ChangePasswordResponse
         {

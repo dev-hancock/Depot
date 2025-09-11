@@ -26,4 +26,9 @@ public static class Api
     {
         return Requests.Get("api/v1/users/me");
     }
+
+    public static RequestBuilder ChangePassword(ChangePasswordCommand payload)
+    {
+        return Requests.Patch("api/v1/users/password", payload);
+    }
 }
