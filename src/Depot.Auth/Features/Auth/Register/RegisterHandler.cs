@@ -64,12 +64,7 @@ public class RegisterHandler : IMessageHandler<RegisterCommand, ErrorOr<Register
             Password.Create(_hasher.Hash(message.Password)),
             now);
 
-        var result = user.CreateSession(_tokens.GetRefreshToken(now));
-
-        if (result.Value is not { } session)
-        {
-            return ErrorOr<RegisterResponse>.From(result.Errors);
-        }
+        var session = user.CreateSession(_tokens.GetRefreshToken(now));
 
         _context.Users.Add(user);
 

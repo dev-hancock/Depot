@@ -22,4 +22,8 @@
         <ProjectReference Include="..\..\src\Depot.Auth\Depot.Auth.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Domain\" />
+    </ItemGroup>
+
 </Project>

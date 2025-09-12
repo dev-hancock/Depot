@@ -1,10 +1,14 @@
 namespace Depot.Auth.Tests.Setup;
 
-public class SessionBuilder(UserBuilder user)
+public class SessionBuilder
 {
     private static readonly Faker Faker = new();
 
-    public Guid Id { get; private set; } = Faker.Random.Guid();
+    private Guid? _id;
+
+    public Guid Id => _id ?? Faker.Random.Guid();
+
+    public Guid UserId { get; private set; }
 
     public DateTime Expiry { get; private set; } = Faker.Date.Soon(1, DateTime.UtcNow);
 
@@ -18,13 +22,19 @@ public class SessionBuilder(UserBuilder user)
     {
         return new Session(
             new SessionId(Id),
-            new UserId(user.Id),
+            new UserId(UserId),
             new RefreshToken(RefreshToken, Expiry),
             IsRevoked,
             Version
         );
     }
 
+    public SessionBuilder WithUser(Guid id)
+    {
+        UserId = id;
+
+        return this;
+    }
 
     public SessionBuilder WithExpiry(DateTime expiry)
     {
@@ -35,7 +45,7 @@ public class SessionBuilder(UserBuilder user)
 
     public SessionBuilder WithId(Guid id)
     {
-        Id = id;
+        _id = id;
 
         return this;
     }

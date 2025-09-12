@@ -65,12 +65,7 @@ public class ChangePasswordHandler : IMessageHandler<ChangePasswordCommand, Erro
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GetRefreshToken(now));
-
-        if (result.Value is not { } session)
-        {
-            return ErrorOr<ChangePasswordResponse>.From(result.Errors);
-        }
+        var session = user.CreateSession(_tokens.GetRefreshToken(now));
 
         await _context.SaveChangesAsync(token);
 

@@ -36,9 +36,6 @@ public class AuthDbContext : DbContext
                 u => u.Username,
                 x =>
                 {
-                    x.WithOwner()
-                        .HasForeignKey(p => p.UserId);
-
                     x.Property(p => p.Value)
                         .HasMaxLength(64)
                         .IsRequired();
@@ -47,7 +44,7 @@ public class AuthDbContext : DbContext
                         .HasMaxLength(64)
                         .IsRequired();
 
-                    x.HasIndex(p => p.Normalized)
+                    x.HasIndex(nameof(Username.Normalized))
                         .IsUnique();
                 });
 
@@ -63,7 +60,7 @@ public class AuthDbContext : DbContext
                         .HasMaxLength(128)
                         .IsRequired();
 
-                    x.HasIndex(p => p.Normalized)
+                    x.HasIndex(nameof(Email.Normalized))
                         .IsUnique();
                 });
 
@@ -121,10 +118,10 @@ public class AuthDbContext : DbContext
                     x => new UserId(x))
                 .IsRequired();
 
-            e.HasIndex(t => new
-            {
-                t.OrganisationId, t.Slug
-            }).IsUnique();
+            e.HasIndex(
+                nameof(Tenant.OrganisationId),
+                nameof(Tenant.Slug)
+            ).IsUnique();
 
             e.HasOne(t => t.Organisation)
                 .WithMany(o => o.Tenants)
@@ -141,10 +138,10 @@ public class AuthDbContext : DbContext
 
             e.Property(r => r.Name).HasMaxLength(64).IsRequired();
 
-            e.HasIndex(r => new
-            {
-                r.TenantId, r.Name
-            }).IsUnique();
+            e.HasIndex(
+                nameof(Role.TenantId),
+                nameof(Role.Name)
+            ).IsUnique();
 
             e.HasOne(r => r.Tenant)
                 .WithMany(t => t.Roles)
@@ -160,7 +157,8 @@ public class AuthDbContext : DbContext
             e.Property(p => p.Id).ValueGeneratedNever();
 
             e.Property(p => p.Name).HasMaxLength(128).IsRequired();
-            e.HasIndex(p => p.Name).IsUnique();
+
+            e.HasIndex(nameof(Permission.Name)).IsUnique();
         });
 
         builder.Entity<RolePermission>(e =>
@@ -232,7 +230,12 @@ public class AuthDbContext : DbContext
                     t.Property(p => p.Value).HasMaxLength(512).IsRequired();
                     t.Property(p => p.ExpiresAt).IsRequired();
 
-                    t.HasIndex(p => p.Value).IsUnique();
+                    t.Property<Guid>(nameof(UserId));
+
+                    t.HasIndex(
+                        nameof(UserId),
+                        nameof(RefreshToken.Value)
+                    ).IsUnique();
                 });
 
             e.Property(x => x.IsRevoked).IsRequired();

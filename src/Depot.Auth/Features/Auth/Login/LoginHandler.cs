@@ -55,12 +55,7 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
 
         var now = _time.UtcNow;
 
-        var result = user.CreateSession(_tokens.GetRefreshToken(now));
-
-        if (result.Value is not { } session)
-        {
-            return ErrorOr<LoginResponse>.From(result.Errors);
-        }
+        var session = user.CreateSession(_tokens.GetRefreshToken(now));
 
         await _context.SaveChangesAsync(ct);
 
@@ -69,13 +64,5 @@ public class LoginHandler : IMessageHandler<LoginCommand, ErrorOr<LoginResponse>
             AccessToken = _tokens.GetAccessToken(user, session, now),
             RefreshToken = session.RefreshToken
         };
-    }
-}
-
-public class AccessToken
-{
-    public static AccessToken Create()
-    {
-        return new AccessToken();
     }
 }

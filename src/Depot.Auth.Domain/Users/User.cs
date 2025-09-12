@@ -64,22 +64,15 @@ public class User : Root
         Raise(new EmailChangedEvent(this));
     }
 
-    public ErrorOr<Success> ChangePassword(Password updated)
+    public void ChangePassword(Password updated)
     {
         Password = updated;
 
         Raise(new PasswordChangedEvent(this));
-
-        return Result.Success;
     }
 
-    public ErrorOr<Session> CreateSession(RefreshToken token)
+    public Session CreateSession(RefreshToken token)
     {
-        if (FindSession(token).Value is { } _)
-        {
-            return Error.Conflict();
-        }
-
         var session = Session.Create(Id, token);
 
         Sessions.Add(session);
@@ -89,26 +82,11 @@ public class User : Root
         return session;
     }
 
-    public ErrorOr<Session> FindSession(string token)
+    public ErrorOr<Session> RefreshSession(string token, RefreshToken updated, DateTime now)
     {
-        var session = Sessions.SingleOrDefault(t => t.RefreshToken.Value == token);
+        var session = Sessions.SingleOrDefault(x => x.RefreshToken == token);
 
         if (session is null)
-        {
-            return Error.NotFound();
-        }
-
-        return session;
-    }
-
-    public Session? FindSession(SessionId? id = null)
-    {
-        return Sessions.SingleOrDefault(t => t.Id == id);
-    }
-
-    public ErrorOr<Session> RefreshSession(string current, RefreshToken updated, DateTime now)
-    {
-        if (FindSession(current).Value is not { } session)
         {
             return Error.NotFound();
         }

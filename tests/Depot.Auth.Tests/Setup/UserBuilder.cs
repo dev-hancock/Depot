@@ -12,7 +12,9 @@ public class UserBuilder
 
     private readonly List<SessionBuilder> _sessions = [];
 
-    public Guid Id { get; private set; } = Faker.Random.Guid();
+    private Guid? _id;
+
+    public Guid Id => _id ?? Faker.Random.Guid();
 
     public DateTime CreatedAt { get; private set; } = Faker.Date.Past(1, DateTime.UtcNow);
 
@@ -28,6 +30,8 @@ public class UserBuilder
 
     public User Build()
     {
+        var id = new UserId(Id);
+
         return new User(
             new UserId(Id),
             new Username(Username),
@@ -54,7 +58,7 @@ public class UserBuilder
 
     public UserBuilder WithId(Guid id)
     {
-        Id = id;
+        _id = id;
 
         return this;
     }
@@ -75,7 +79,7 @@ public class UserBuilder
 
     public UserBuilder WithSession(Action<SessionBuilder>? configure = null)
     {
-        var builder = new SessionBuilder(this);
+        var builder = new SessionBuilder();
 
         configure?.Invoke(builder);
 
@@ -88,7 +92,7 @@ public class UserBuilder
     {
         for (var i = 0; i < count; i++)
         {
-            _sessions.Add(new SessionBuilder(this));
+            _sessions.Add(new SessionBuilder());
         }
 
         return this;

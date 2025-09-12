@@ -1,5 +1,4 @@
 using System.Text;
-using Depot.Auth.Domain.Auth;
 using ErrorOr;
 
 namespace Depot.Auth.Domain.Users;
@@ -13,8 +12,6 @@ public record Username
             .Normalize(NormalizationForm.FormKC)
             .ToLowerInvariant();
     }
-
-    public UserId? UserId { get; set; }
 
     public string Value { get; } = null!;
 
